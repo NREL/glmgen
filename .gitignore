@@ -1,11 +1,35 @@
-*.pyc
-log.txt
-*.sublime-project
-*.sublime-workspace
-analyses/*
-logs/*.log
-data/Analysis/*
-data/Study/*
-# But include a few example analyses:
-!analyses/public_z*
-S3KEY.*
+*.py[cod]
+
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+nosetests.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
