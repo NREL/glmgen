@@ -1,3 +1,3 @@
-''' The Open Modeling Framework for Power System Simulation. '''
+''' omf-glm-generator '''
 
-__version__ = 0.1
+__version__ = 0.1.0

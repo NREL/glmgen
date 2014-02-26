@@ -1,1 +1,0 @@
-start python omf.py
