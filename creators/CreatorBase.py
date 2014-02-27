@@ -1,43 +1,92 @@
+
 from abc import abstractmethod
 
-class Params: pass
+class ParamDescriptor: pass
+    """
+    Information describing a paramter.
+    """
+    def __init__(self, name, description, index, required=True, default_value=None, parser=None):
+        """
+        Create a new ParamDescriptor
+        
+        @type name: string
+        @param name: The parameter's name.
+        @type description: string
+        @param description: The parameter's description.
+        @type index: int
+        @param index: Index of this descriptor in a given set of descriptors.
+        @type required: boolean
+        @param required: Whether or not the user is required to provide this parameter.
+        @type default_value: the parameter's type, or convertible by parser
+        @param default_value: A default value for this parameter.
+        @type parser: functor
+        @param parser: Function for processing parameter values into standard form.
+        """
+        self.name = name
+        self.description = description
+        self.required = required
+        self.default_value = default_value
+        if (default_value is not None) and (parser is not None):
+            self.default_value = parser(default_value)
+        self.parser = parser
+        
+    def __str__(self): 
+        required_str = ('required' if self.required else 'optional')
+        default_value_str = (print('\n    default_value: ',default_value) if default_value is not None else '')
+        return '{:s} - {:s}\n    {:s}{:s}'.format(name,required_str,description,default_value_str)
+        
+
+class Params:
     """
     Base class for dictionary-based params with json serialization.
     """
-    # save to json
-    # save json template
-    # load from json
-    # parameter documentation
-    #   - description  
-    #   - required or not
-    #   - default value
-    #   - parsing method
-    # valid?
     
     __schema = {}
     """
-    @ivar: Dict of parameter descriptors of the form 
-           {param_name = [description, required, default value, parsing method]}.
+    @ivar: dict of ParamDescriptors keyed off of name
     """
     
-    def __init__(self, values = {}): pass
+    def __init__(self, values = {}):
         """
         Initialize a Params object with values.
         
         @type values: dict of param_name, param_value
         @param values: User's parameter values.
         """
-        
-        # loop through values and keep the ones that fit the schema
         self.__values = {}
+        for name, value in values.item():
+            self.set(name,value)
         
-    def __str__(self): pass
-  
-    def get(self, param_name): pass
-  
-    def set(self, param_name, param_value): pass
+    def __str__(self):
+        result = 'Values:\n\n'
+        for pair in self.__sorted_values(): 
+            result += print(pair[0],': ',pair[1],'\n')
+        result += '\nDescriptors:\n\n'
+        for descriptor in self.__sorted_descriptors():
+            result += print(descriptor,'\n\n')
+        return result
     
-    def clear(self, param_name): pass
+    def get(self, param_name, return_default=False): 
+        if param_name in self.__values:
+            return self.__values[param_name]
+        elif return_default and (param_name in self.__schema):
+            descriptor = self.__schema[param_name]
+            return descriptor.default_value
+        return None            
+  
+    def set(self, param_name, param_value):
+        if param_name in self.__schema:
+            descriptor = self.__schema[param_name]
+            if descriptor.parser is not None:
+                self.__values[param_name] = descriptor.parser(param_value)
+            else:
+                self.__values[param_name] = param_value            
+        else:
+            raise RuntimeError("{:s} is not a valid parameter.".format(param_name))
+    
+    def clear(self, param_name): 
+        if param_name in self.__values:
+            del self.__values[param_name]
     
     def __getattr__(self, param_name): 
         return self.get(param_name)
@@ -57,13 +106,21 @@ class Params: pass
     def save_template(self, path): pass
   
     @abstractmethod
-    def load(self, path):
+    def load(path):
   
-    def valid(self): pass
+    def valid(self): 
+        for name, descriptor in self.__schema:
+            if descriptor.required:
+                return False if name not in self.__values
+        return True
     
     def __nonzero__(self): 
         return self.valid()
-  
-  
+        
+    def __sorted_values: 
+        return sorted(self.__values.items(), key=lambda pair: self.__schema[pair[0]].index)
+    
+    def __sorted_descriptors: 
+        return sorted(self.__schema.values(), key=lambda descriptor: descriptor.index)  
 
 class Creator: pass
