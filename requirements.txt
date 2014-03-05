@@ -5,3 +5,4 @@ nose
 numpy
 pyparsing
 six
+pandas
