@@ -1,6 +1,8 @@
 
 from abc import abstractmethod
 
+import os
+
 def base_path():
     return os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -76,7 +78,7 @@ class Params:
             result += "{:s}\n\n".format(descriptor)
         return result
     
-    def get(self, param_name, return_default=False): 
+    def get(self, param_name, return_default=True): 
         if param_name in self.__values:
             return self.__values[param_name]
         elif return_default and (param_name in self.__schema):
@@ -128,7 +130,12 @@ class Params:
 class Creator:
 
     def __init__(self, out_dir, params, resources_dir = None):
-        self.out_dir = out_dir
+        self.out_dir = os.path.realpath(out_dir)
         self.params = params
         self.resources_dir = resources_dir
+        if not self.params.valid():
+            raise RuntimeError("Cannot create glm files with invalid parameters:\n{:s}".format(self.params))
+        
+    @abstractmethod
+    def create(self): pass
         

@@ -1,8 +1,8 @@
-Jinja2
 argparse
+Jinja2
 matplotlib
 nose
 numpy
+pandas
 pyparsing
 six
-pandas
