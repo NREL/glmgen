@@ -13,8 +13,21 @@ def test_create_case_simplest():
     params = ComputationalCaseParams()
     params.set("base_feeder","R1-12.47-1.glm")
     out_dir = "test_results"
-    if os.path.exists(out_dir):
-        shutil.rmtree(out_dir)
     creator = ComputationalCaseCreator(out_dir,params)
     creator.create()
     assert os.path.exists(out_dir)
+    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-1_1h/model.glm"))
+    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-1_1h/schedules"))
+    
+def test_create_case_sub_script():
+    params = ComputationalCaseParams()
+    params.set("base_feeder","R1-12.47-2.glm")
+    params.set("sub_template","run_script.sub.template")
+    out_dir = "test_results"
+    creator = ComputationalCaseCreator(out_dir,params)
+    creator.create()
+    assert os.path.exists(out_dir)
+    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h/model.glm"))
+    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h/run_script.sub"))
+    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h/schedules"))
+    

@@ -1,8 +1,10 @@
 
-from CreatorBase import Params, ParamDescriptor, Creator, base_path
+from CreatorBase import Params, ParamDescriptor, Creator, base_path, to_walltime
 
 import feeder
 from makeGLM import makeGLM
+
+import jinja2
 
 import datetime
 import numpy
@@ -36,25 +38,34 @@ class ComputationalCaseParams(Params):
     #         False,
     #         datetime.timedelta(minutes=1),
     #         to_timedelta)
-    #     schema["technolgies"] = ParamDescriptor(
-    #         "technologies",
-    #         "Technologies to apply to the feeder.",
-    #         3,
-    #         False,
-    #         [0])
+        schema["technology"] = ParamDescriptor(
+            "technology",
+            "Technology case to apply to the feeder.",
+            2,
+            False,
+            0,
+            None,
+            [-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13])
         schema["case_name"] = ParamDescriptor(
             "case_name",
             "User defined case name. Will compose one from other parameters if not provided.",
-            2,
+            3,
             False)
         schema["sub_template"] = ParamDescriptor(
             "sub_template",
             "Batch submission script template.",
-            3,
+            4,
             False,
             None,
-            find_sub_template,
+            None, # jinja2 FileSystemLoader handles the default location
             installed_sub_templates)
+        schema["compute_efficiency"] = ParamDescriptor(
+            "compute_efficiency",
+            "Ratio of simulated time to computation time (e.g. 100 for '100 times faster than real time'). Used to set walltime in the batch submission script.",
+            5,
+            False,
+            100.0)            
+            
         Params.__init__(self, schema, values)
 
     def load(path): pass        
@@ -101,7 +112,19 @@ class ComputationalCaseCreator(Creator):
         
         # make glm file and save to case folder
         glm_dict = feeder.parse(self.params.get("base_feeder"))
-        generated_taxonomy_feeder_paths = makeGLM(self.__get_clock(),None,glm_dict,0,None,case_name)
+        generated_taxonomy_feeder_paths = makeGLM(self.__get_clock(),
+                                                  None,
+                                                  glm_dict,
+                                                  self.params.get("technology"),
+                                                  None,
+                                                  case_name)
+        glm_file_name = "model.glm"
+        for subdir, dirs, files in os.walk(case_name):
+            for file in files:
+               if os.path.splitext(file)[1] == ".glm":
+                   print("Renaming {:s}/{:s} to {:s}/{:s}.".format(case_name,file,case_name,glm_file_name))
+                   shutil.move(os.path.realpath(case_name + "/" + file),
+                               os.path.realpath(case_name + "/" + glm_file_name))
                 
         # get and save or verify resources
         schedules_dir = os.path.realpath(case_name + "/schedules")
@@ -109,6 +132,22 @@ class ComputationalCaseCreator(Creator):
         shutil.copytree(schedules_source_dir,schedules_dir)
         
         # populate sub template and save to case folder
+        template_path = self.params.get("sub_template")
+        if template_path is not None:        
+            batch_job_walltime = datetime.timedelta(seconds=(1.0/self.params.get("compute_efficiency")) * 
+                                                            self.params.get("sim_duration").total_seconds())
+            env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.realpath(base_path() + "/data/Templates")),
+                                     trim_blocks=True,
+                                     lstrip_blocks=True)
+            template = env.get_template(template_path)
+            things = {}
+            things["to_walltime"] = to_walltime
+            things["batch_job_walltime"] = batch_job_walltime
+            things["case_name"] = case_name
+            things["datetime"] = datetime
+            things["datetime.timedelta"] = datetime.timedelta
+            f = open(os.path.realpath(case_name + "/run_script.sub"),'w')
+            f.write(template.render(things))
         
         os.chdir(original_dir)
         
@@ -129,7 +168,7 @@ class ComputationalCaseCreator(Creator):
         n_hours = dt.seconds // 3600
         n_mins = (dt.seconds // 60 ) % 60
         result = ""
-        if n_days > 0: result += "{:s}d".format(n_days) 
+        if n_days > 0: result += "{:d}d".format(n_days) 
         if n_hours > 0: result += "{:d}h".format(n_hours)
         if n_mins > 0: result += "{:d}m".format(n_mins)
         return result
@@ -164,14 +203,6 @@ def installed_feeders():
     for subdir, dirs, files in os.walk(feeder_path):
         for file in files:
             result.append(file)
-
-def find_sub_template():
-    result = os.path.realpath(feeder)
-    if not os.path.exists(result):
-        result = os.path.realpath(base_path() + "/data/Templates/" + feeder)
-    if not os.path.exists(result):
-        raise RuntimeError("Cannot locate template batch file '{:s}'.".format(feeder))   
-    return result
 
 def installed_sub_templates():
     result = []

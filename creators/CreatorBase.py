@@ -5,6 +5,19 @@ import os
 
 def base_path():
     return os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    
+def to_walltime(dt):
+    """
+    @type dt: timedelta
+    @param dt: Walltime parameter in timedelta format.
+    @rtype: string
+    @return: dt converted to "DD:HH:MM:SS"
+    """
+    n_days = dt.days
+    n_hours = dt.seconds // 3600
+    n_mins = (dt.seconds // 60 ) % 60
+    n_secs = dt.seconds % 60
+    return "{:02d}:{:02d}:{:02d}:{:02d}".format(n_days,n_hours,n_mins,n_secs)
 
 class ParamDescriptor:
     """
@@ -48,7 +61,7 @@ class ParamDescriptor:
         
     def __str__(self): 
         required_str = ('required' if self.required else 'optional')
-        default_value_str = ("\n    default_value: {:s}".format(self.default_value) if self.default_value is not None else "")
+        default_value_str = ("\n    default_value: {:s}".format(str(self.default_value)) if self.default_value is not None else "")
         return '{:s} - {:s}\n    {:s}{:s}'.format(self.name,required_str,self.description,default_value_str)
         
 
