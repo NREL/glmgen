@@ -137,7 +137,7 @@ class Params:
                 self.__values[param_name] = descriptor.parser(param_value)
             else:
                 self.__values[param_name] = param_value
-            self.__refresh_schema()
+            self.__refresh_schema(param_name)
         else:
             raise RuntimeError("{:s} is not a valid parameter.".format(param_name))
     
@@ -159,7 +159,7 @@ class Params:
     def valid(self): 
         for param_name, descriptor in self.__schema.items():
             if descriptor.required:
-                if param_name not in self.__values:
+                if self.get(param_name) is None:
                     return False
         return True
     
@@ -172,7 +172,7 @@ class Params:
     def __sorted_descriptors(self): 
         return sorted(self.__schema.values(), key=lambda descriptor: descriptor.index)  
         
-    def __refresh_schema(self):
+    def __refresh_schema(self,param_name):
         return
 
 class Creator:
