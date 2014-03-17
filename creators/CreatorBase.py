@@ -1,6 +1,7 @@
 
 from abc import abstractmethod
 
+import copy
 import os
 
 def base_path():
@@ -64,6 +65,26 @@ class ParamDescriptor:
         default_value_str = ("\n    default_value: {:s}".format(str(self.default_value)) if self.default_value is not None else "")
         return '{:s} - {:s}\n    {:s}{:s}'.format(self.name,required_str,self.description,default_value_str)
         
+def create_choice_descriptor(name,
+                             choices,
+                             description_prefix,
+                             index,
+                             required=True,
+                             default_value=None):
+    return  ParamDescriptor(name,
+                            "{:s} {:s}.".format(description_prefix,print_choice_list(choices)),
+                            0,
+                            required,
+                            default_value,
+                            lambda x: x if x in choices else None,
+                            choices)
+
+def print_choice_list(choices):
+    str = "('{:s}'".format(choices[0])
+    for x in choices[1:]:
+        str = "{:s}|'{:s}'".format(str,x)
+    str = "{:s})".format(str)
+    return str
 
 class Params:
     """
@@ -90,6 +111,16 @@ class Params:
         for descriptor in self.__sorted_descriptors():
             result += "{:s}\n\n".format(descriptor)
         return result
+        
+    def schema(self):
+        """
+        Returns a deep copy of the schema. (A Params schema cannot be modified, but others 
+        may need to inspect it.)
+        
+        @rtype: dict of ParamDescriptors
+        @return: Deep copy of this Params object's schema.
+        """
+        return copy.deepcopy(self.__schema)
     
     def get(self, param_name, return_default=True): 
         if param_name in self.__values:
@@ -105,7 +136,8 @@ class Params:
             if descriptor.parser is not None:
                 self.__values[param_name] = descriptor.parser(param_value)
             else:
-                self.__values[param_name] = param_value            
+                self.__values[param_name] = param_value
+            self.__refresh_schema()
         else:
             raise RuntimeError("{:s} is not a valid parameter.".format(param_name))
     
@@ -139,6 +171,9 @@ class Params:
     
     def __sorted_descriptors(self): 
         return sorted(self.__schema.values(), key=lambda descriptor: descriptor.index)  
+        
+    def __refresh_schema(self):
+        return
 
 class Creator:
 

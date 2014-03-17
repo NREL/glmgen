@@ -1,4 +1,5 @@
 
+from CreatorBase import ParamDescriptor
 from ComputationalCaseCreator import ComputationalCaseParams, ComputationalCaseCreator
 
 import os
@@ -8,6 +9,18 @@ def test_params():
     params = ComputationalCaseParams()
     assert not params.valid()
     print(params)
+    
+def test_schema_getter():
+    params = ComputationalCaseParams()
+    schema = params.schema()
+    schema["base_feeder"] = ParamDescriptor(
+        "base_feeder",
+        "Adulterated copy of base_feeder",
+        0,
+        True)
+    assert not (schema["base_feeder"].description == params.schema()["base_feeder"].description)
+    params.set("base_feeder","R1-12.47-1.glm")
+    assert os.path.exists(params.get("base_feeder"))
     
 def test_create_case_simplest():
     params = ComputationalCaseParams()
