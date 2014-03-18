@@ -173,8 +173,33 @@ class ComputationalStudyParams(Params):
         
     
 class ComputationalStudyCreator(Creator):
- 
-    def __init__(self, out_dir, params, resources_dir = None): pass
+    def __init__(self, out_dir, params, resources_dir = None): 
+        """
+        Get ready to create a computational study. 
+        
+        @type out_dir: path 
+        @param out_dir: The output directory of the computational study. If it exists, its contents will be deleted first.
+        @type params: ComputationalStudyParams
+        @param params: Object containing the sub-creator and study parameters.
+        @type resources_dir: path
+        @param resources_dir: Optional (shared) directory where resources are to be stored.
+        """
+        if not isinstance(params, ComputationalStudyParams):
+            raise RuntimeError("ComputationalStudyCreator must be instantiated with a valid instance of ComputationalStudyParams.")
+        Creator.__init__(self,out_dir,params,resources_dir)
+                        
+    def create(self): pass
+        # remove if necessary, and then make, out_dir
+        
+        # get the study_type and related parameters
+        
+        # delegate work to the study_type-specific create method
+        
+    def __full_factorial(self): pass
+    
+    def __lhs(self): pass
+    
+    def __run_sub_creator(self,arg_values): pass
 
 def main(argv): pass
   # print params template json file
