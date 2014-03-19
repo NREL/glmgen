@@ -4,5 +4,6 @@ matplotlib
 nose
 numpy
 pandas
+pyDOE
 pyparsing
 six
