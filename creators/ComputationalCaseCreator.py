@@ -14,7 +14,7 @@ import shutil
 
 class ComputationalCaseParams(Params):         
 
-    def __init__(self, values = {}):
+    def __init__(self, *arg, **kw):
         schema = {}
         schema["base_feeder"] = ParamDescriptor(
             "base_feeder",
@@ -66,7 +66,7 @@ class ComputationalCaseParams(Params):
             False,
             100.0)            
             
-        Params.__init__(self, schema, values)
+        Params.__init__(self, schema, *arg, **kw)
 
     def load(path): pass        
 
@@ -101,7 +101,7 @@ class ComputationalCaseCreator(Creator):
         os.chdir(self.out_dir)
         
         # get or make case_name
-        case_name = self.params.get("case_name")
+        case_name = self.params["case_name"]
         if case_name is None:
             case_name = "{:s}_{:s}".format(self.__base_feeder_name(),self.__sim_duration_dhm())
         
@@ -111,11 +111,11 @@ class ComputationalCaseCreator(Creator):
         os.mkdir(case_name)
         
         # make glm file and save to case folder
-        glm_dict = feeder.parse(self.params.get("base_feeder"))
+        glm_dict = feeder.parse(self.params["base_feeder"])
         generated_taxonomy_feeder_paths = makeGLM(self.__get_clock(),
                                                   None,
                                                   glm_dict,
-                                                  self.params.get("technology"),
+                                                  self.params["technology"],
                                                   None,
                                                   case_name)
         glm_file_name = "model.glm"
@@ -132,10 +132,10 @@ class ComputationalCaseCreator(Creator):
         shutil.copytree(schedules_source_dir,schedules_dir)
         
         # populate sub template and save to case folder
-        template_path = self.params.get("sub_template")
+        template_path = self.params["sub_template"]
         if template_path is not None:        
-            batch_job_walltime = datetime.timedelta(seconds=(1.0/self.params.get("compute_efficiency")) * 
-                                                            self.params.get("sim_duration").total_seconds())
+            batch_job_walltime = datetime.timedelta(seconds=(1.0/self.params["compute_efficiency"]) * 
+                                                            self.params["sim_duration"].total_seconds())
             env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.realpath(base_path() + "/data/Templates")),
                                      trim_blocks=True,
                                      lstrip_blocks=True)
@@ -160,10 +160,10 @@ class ComputationalCaseCreator(Creator):
         @rtype: string
         @return: The base feeder glm file's name, divorced from parent directories and file extension.
         """
-        return os.path.splitext(os.path.split(self.params.get("base_feeder"))[1])[0]
+        return os.path.splitext(os.path.split(self.params["base_feeder"])[1])[0]
         
     def __sim_duration_dhm(self):
-        dt = self.params.get("sim_duration")
+        dt = self.params["sim_duration"]
         n_days = dt.days
         n_hours = dt.seconds // 3600
         n_mins = (dt.seconds // 60 ) % 60
@@ -175,7 +175,7 @@ class ComputationalCaseCreator(Creator):
         
     def __get_clock(self):
         sim_start = datetime.datetime(2020,6,1,0)
-        sim_duration = self.params.get("sim_duration")
+        sim_duration = self.params["sim_duration"]
         warmup_duration = datetime.timedelta(0)
         clock = {}
         clock[str(sim_start)] = [str(sim_start - warmup_duration),

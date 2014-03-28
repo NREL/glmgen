@@ -19,12 +19,12 @@ def test_schema_getter():
         0,
         True)
     assert not (schema["base_feeder"].description == params.schema()["base_feeder"].description)
-    params.set("base_feeder","R1-12.47-1.glm")
-    assert os.path.exists(params.get("base_feeder"))
+    params["base_feeder"] = "R1-12.47-1.glm"
+    assert os.path.exists(params["base_feeder"])
     
 def test_create_case_simplest():
     params = ComputationalCaseParams()
-    params.set("base_feeder","R1-12.47-1.glm")
+    params["base_feeder"] = "R1-12.47-1.glm"
     out_dir = "test_results"
     creator = ComputationalCaseCreator(out_dir,params)
     creator.create()
@@ -34,8 +34,8 @@ def test_create_case_simplest():
     
 def test_create_case_sub_script():
     params = ComputationalCaseParams()
-    params.set("base_feeder","R1-12.47-2.glm")
-    params.set("sub_template","run_script.sub.template")
+    params["base_feeder"] = "R1-12.47-2.glm"
+    params["sub_template"] = "run_script.sub.template"
     out_dir = "test_results"
     creator = ComputationalCaseCreator(out_dir,params)
     creator.create()

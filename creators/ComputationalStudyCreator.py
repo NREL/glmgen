@@ -17,13 +17,13 @@ class ComputationalStudyParams(Params):
     creator.params.schema(). In general, this class defines its schema iteratively, 
     that is, as parameter values are set, the schema may be modified.
     """
-    def __init__(self, creator, values = {}): 
+    def __init__(self, creator, *arg, **kw): 
         schema = {}
         schema["study_type"] = create_choice_descriptor("study_type",
                                                         ["full_factorial","lhs"],
                                                         "Type of study to construct",
                                                         0)
-        Params.__init__(self, schema, values)
+        Params.__init__(self, schema, *arg, **kw)
         
         # now each param (argument) in creator can be fixed, list, or range
         choices = ["fixed","list","range"] # default is fixed
@@ -111,7 +111,7 @@ class ComputationalStudyParams(Params):
             param_type = self.get_param_type(arg_name)
             if param_type == "fixed":
                 if include_fixed:
-                    result.append( (arg_name, param_type, self.creator.params.get(arg_name)) )
+                    result.append( (arg_name, param_type, self.creator.params[arg_name]) )
             elif param_type == "list":
                 result.append( (arg_name, param_type, self.get_values_list(arg_name)) )
             else:
@@ -133,7 +133,7 @@ class ComputationalStudyParams(Params):
                         None,
                         lambda x: int(x) if int(x) > 0 else None)
             elif "num_samples" in self._Params__schema:
-                self.clear("num_samples")
+                del self["num_samples"]
                 del self._Params__schema["num_samples"]
                 
         # a creator parameter type was set (to fixed, list, or range)
@@ -157,20 +157,20 @@ class ComputationalStudyParams(Params):
                 if param_type == "fixed":
                     # delete any list parameters
                     if values_list_param_name in self._Params__schema:
-                        self.clear(values_list_param_name)
+                        del self[values_list_param_name]
                         del self._Params__schema[values_list_param_name]
                     # delete any range parameters
                     if range_min_param_name in self._Params__schema:
-                        self.clear(range_min_param_name)
+                        del self[range_min_param_name]
                         del self._Params__schema[range_min_param_name]
                     if range_max_param_name in self._Params__schema:
-                        self.clear(range_max_param_name)
+                        del self[range_max_param_name]
                         del self._Params__schema[range_max_param_name]
                     if range_to_number_param_name in self._Params__schema:
-                        self.clear(range_to_number_param_name)
+                        del self[range_to_number_param_name]
                         del self._Params__schema[range_to_number_param_name]
                     if range_from_number_param_name in self._Params__schema:
-                        self.clear(range_from_number_param_name)
+                        del self[range_from_number_param_name]
                         del self._Params__schema[range_from_number_param_name]
                     
                 elif param_type == "list":
@@ -181,16 +181,16 @@ class ComputationalStudyParams(Params):
                         index + 1)
                     # delete any range parameters
                     if range_min_param_name in self._Params__schema:
-                        self.clear(range_min_param_name)
+                        del self[range_min_param_name]
                         del self._Params__schema[range_min_param_name]
                     if range_max_param_name in self._Params__schema:
-                        self.clear(range_max_param_name)
+                        del self[range_max_param_name]
                         del self._Params__schema[range_max_param_name]
                     if range_to_number_param_name in self._Params__schema:
-                        self.clear(range_to_number_param_name)
+                        del self[range_to_number_param_name]
                         del self._Params__schema[range_to_number_param_name]
                     if range_from_number_param_name in self._Params__schema:
-                        self.clear(range_from_number_param_name)
+                        del self[range_from_number_param_name]
                         del self._Params__schema[range_from_number_param_name]                        
                         
                 else:
@@ -218,7 +218,7 @@ class ComputationalStudyParams(Params):
                         lambda x: x)
                     # delete any list parameters
                     if values_list_param_name in self._Params__schema:
-                        self.clear(values_list_param_name)
+                        del self[values_list_param_name]
                         del self._Params__schema[values_list_param_name]                    
                     
     def __is_param_type(self,param_name): 
@@ -266,9 +266,9 @@ class ComputationalStudyCreator(Creator):
             
         # get the study_type and related parameters
         # delegate work to the study_type-specific create method
-        study_type = self.params.get("study_type")     
+        study_type = self.params["study_type"]
         if study_type == "lhs":
-            num_samples = self.params.get("num_samples")
+            num_samples = self.params["num_samples"]
             assert (num_samples is not None)
             self.__lhs(num_samples)
         else :
@@ -344,7 +344,7 @@ class ComputationalStudyCreator(Creator):
             assert(len(arg_names) == len(point))
             index = 0
             for value in point:
-                self.params.creator.params.set(arg_names[index],value)
+                self.params.creator.params[arg_names[index]] = value
                 index += 1
             self.params.creator.create()
 
