@@ -86,12 +86,12 @@ def print_choice_list(choices):
     str = "{:s})".format(str)
     return str
 
-class Params:
+class Params(dict):
     """
     Base class for dictionary-based params with json serialization.
     """
    
-    def __init__(self, schema, values = {}):
+    def __init__(self, schema, *arg, **kw):
         """
         Initialize a Params object with values.
         
@@ -99,9 +99,7 @@ class Params:
         @param values: User's parameter values.
         """
         self.__schema = schema
-        self.__values = {}
-        for param_name, param_value in values.items():
-            self.set(param_name,param_value)
+        super(Params, self).__init__(*arg,**kw)
         
     def __str__(self):
         result = 'Values:\n\n'
@@ -122,29 +120,29 @@ class Params:
         """
         return copy.deepcopy(self.__schema)
     
-    def get(self, param_name, return_default=True): 
-        if param_name in self.__values:
-            return self.__values[param_name]
-        elif return_default and (param_name in self.__schema):
+    def __getitem__(self, param_name):
+        if param_name in self:
+            return super(Params, self).__getitem__(param_name)
+        elif param_name in self.__schema:
             descriptor = self.__schema[param_name]
             return descriptor.default_value
-        return None            
-  
-    def set(self, param_name, param_value):
+        return None      
+
+    def get(self, param_name):
+        # do not use derived method -- use code in __getitem__
+        return self.__getitem__(param_name)    
+              
+    def __setitem__(self, param_name, param_value):
         if param_name in self.__schema:
             descriptor = self.__schema[param_name]
             if descriptor.parser is not None:
-                self.__values[param_name] = descriptor.parser(param_value)
+                super(Params, self).__setitem__(param_name, descriptor.parser(param_value))
             else:
-                self.__values[param_name] = param_value
+                super(Params, self).__setitem__(param_name, param_value)
             self.__refresh_schema(param_name)
         else:
             raise RuntimeError("{:s} is not a valid parameter.".format(param_name))
-    
-    def clear(self, param_name): 
-        if param_name in self.__values:
-            del self.__values[param_name]
-  
+ 
     def to_json(self): pass
   
     def save(self, path): pass
@@ -167,7 +165,7 @@ class Params:
         return self.valid()
         
     def __sorted_values(self): 
-        return sorted(self.__values.items(), key=lambda pair: self.__schema[pair[0]].index)
+        return sorted(self.items(), key=lambda pair: self.__schema[pair[0]].index)
     
     def __sorted_descriptors(self): 
         return sorted(self.__schema.values(), key=lambda descriptor: descriptor.index)  
