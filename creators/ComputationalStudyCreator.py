@@ -30,11 +30,17 @@ class ComputationalStudyParams(Params):
         index = 10
         self.__param_types = { "fixed": [], "list": [], "range": [] }
         for arg_name, arg_descriptor in creator.params.schema().items():
-            schema[self.param_type_param_name(arg_name)] = create_choice_descriptor(
-                self.param_type_param_name(arg_name),
+            schema[self.param_name(arg_name)] = ParamDescriptor(
+                self.param_name(arg_name),
+                "Parameter to set to change how the Computational Study will treat {:s}. Pass in a fixed value, list, or tuple of length 2 (range).".format(arg_name),
+                index,
+                True,
+                "processed")                
+            schema[self.__param_type_param_name(arg_name)] = create_choice_descriptor(
+                self.__param_type_param_name(arg_name),
                 choices,
                 "How {:s} values are to be sampled".format(arg_name),
-                index,
+                index+1,
                 True,
                 "fixed")
             self.__param_types["fixed"].append(arg_name)
@@ -58,24 +64,9 @@ class ComputationalStudyParams(Params):
         result.extend(copy.deepcopy(self.__param_types["list"]))
         result.extend(copy.deepcopy(self.__param_types["range"]))
         return result
-    
-    def param_type_param_name(self,arg_name):
-        return "{:s}_param_type".format(arg_name)
-    
-    def values_list_param_name(self,arg_name):
-        return "{:s}_values_list".format(arg_name)
         
-    def range_min_param_name(self,arg_name):
-        return "{:s}_range_min".format(arg_name)
-                
-    def range_max_param_name(self,arg_name):
-        return "{:s}_range_max".format(arg_name)
-        
-    def range_to_number_param_name(self,arg_name):
-        return "{:s}_to_number".format(arg_name)
-        
-    def range_from_number_param_name(self,arg_name):
-        return "{:s}_from_number".format(arg_name)
+    def param_name(self,arg_name):
+        return "{:s}_param".format(arg_name)
     
     def get_param_type(self, arg_name): 
         if arg_name in self.__param_types["fixed"]:
@@ -88,19 +79,31 @@ class ComputationalStudyParams(Params):
     
     def get_values_list(self, arg_name): 
         assert self.get_param_type(arg_name) == "list"
-        return self.get(self.values_list_param_name(arg_name))
+        return self[self.__values_list_param_name(arg_name)]
     
     def get_values_range(self, arg_name): 
         assert self.get_param_type(arg_name) == "range"
-        return (self.get(self.range_min_param_name(arg_name)),self.get(self.range_max_param_name(arg_name)))
+        return (self[self.__range_min_param_name(arg_name)],self[self.__range_max_param_name(arg_name)])
         
     def get_to_number(self, arg_name):
         assert self.get_param_type(arg_name) == "range"
-        return self.get(self.range_to_number_param_name(arg_name))
+        return self[self.__range_to_number_param_name(arg_name)]
+        
+    def set_to_number(self, arg_name, to_number): 
+        assert self.get_param_type(arg_name) == "range"
+        self[self.__range_to_number_param_name(arg_name)] = to_number
         
     def get_from_number(self, arg_name):
         assert self.get_param_type(arg_name) == "range"
-        return self.get(self.range_from_number_param_name(arg_name))        
+        return self[self.__range_from_number_param_name(arg_name)]
+        
+    def set_from_number(self, arg_name, from_number): 
+        assert self.get_param_type(arg_name) == "range"
+        self[self.__range_from_number_param_name(arg_name)] = from_number
+    
+    def set_number_map(self, arg_name, to_and_from_number_tuple): 
+        self.set_to_number(arg_name, to_and_from_number_tuple[0])
+        self.set_from_number(arg_name, to_and_from_number_tuple[1])
         
     def get_arg_values(self,include_fixed=False):
         """
@@ -118,7 +121,25 @@ class ComputationalStudyParams(Params):
                 assert (param_type == "range")
                 result.append( (arg_name, param_type, self.get_values_range(arg_name)) )
         return result
+        
+    def __param_type_param_name(self,arg_name):
+        return "{:s}_param_type".format(arg_name)
     
+    def __values_list_param_name(self,arg_name):
+        return "{:s}_values_list".format(arg_name)
+        
+    def __range_min_param_name(self,arg_name):
+        return "{:s}_range_min".format(arg_name)
+                
+    def __range_max_param_name(self,arg_name):
+        return "{:s}_range_max".format(arg_name)
+        
+    def __range_to_number_param_name(self,arg_name):
+        return "{:s}_to_number".format(arg_name)
+        
+    def __range_from_number_param_name(self,arg_name):
+        return "{:s}_from_number".format(arg_name)
+        
     def _Params__refresh_schema(self,param_name): 
         # the study_type was set
         if param_name == "study_type":
@@ -137,23 +158,44 @@ class ComputationalStudyParams(Params):
                 del self._Params__schema["num_samples"]
                 
         # a creator parameter type was set (to fixed, list, or range)
-        if self.__is_param_type(param_name):
+        if self.__is_arg_param(param_name):
             arg_name = self.__get_arg_name(param_name)
-            param_type = self.get(param_name)
+            
+            # get value and determine param_type. nothing to do if value = "processed"
+            param_value = self[param_name]
+            if param_value == "processed":
+                return
+            param_type = "fixed"
+            if isinstance(param_value,list):
+                param_type = "list"
+            elif isinstance(param_value,tuple):
+                # we only recognize tuples of length 2
+                if len(param_value) != 2:
+                    raise RuntimeError("{:s} only accepts fixed values, lists, and tuples of length 2.".format(param_name))
+                # is it a tuple that explicitly states param_type?
+                if param_value[0] in self._Params__schema[self.__param_type_param_name(arg_name)].suggested_values:
+                    param_type = param_value[0]
+                    param_value = param_value[1]
+                else:
+                    param_type = "range"
+            
             old_param_type = self.get_param_type(arg_name)
             if param_type != old_param_type:
+                # set type
+                self[self.__param_type_param_name(arg_name)] = param_type
+            
                 # adjust map
                 self.__param_types[old_param_type] = \
                     [x for x in self.__param_types[old_param_type] if not (x == arg_name)]
                 self.__param_types[param_type].append(arg_name)
                 
-                # adjust dependent parammeters
+                # adjust schema
                 index = self._Params__schema[param_name].index
-                values_list_param_name = self.values_list_param_name(arg_name)
-                range_min_param_name = self.range_min_param_name(arg_name)
-                range_max_param_name = self.range_max_param_name(arg_name)
-                range_to_number_param_name = self.range_to_number_param_name(arg_name)
-                range_from_number_param_name = self.range_from_number_param_name(arg_name)
+                values_list_param_name = self.__values_list_param_name(arg_name)
+                range_min_param_name = self.__range_min_param_name(arg_name)
+                range_max_param_name = self.__range_max_param_name(arg_name)
+                range_to_number_param_name = self.__range_to_number_param_name(arg_name)
+                range_from_number_param_name = self.__range_from_number_param_name(arg_name)
                 if param_type == "fixed":
                     # delete any list parameters
                     if values_list_param_name in self._Params__schema:
@@ -178,7 +220,7 @@ class ComputationalStudyParams(Params):
                     self._Params__schema[values_list_param_name] = ParamDescriptor(
                         values_list_param_name,
                         "Enumerated list of values for {:s}.".format(arg_name),
-                        index + 1)
+                        index + 2)
                     # delete any range parameters
                     if range_min_param_name in self._Params__schema:
                         del self[range_min_param_name]
@@ -199,40 +241,53 @@ class ComputationalStudyParams(Params):
                     self._Params__schema[range_min_param_name] = ParamDescriptor(
                         range_min_param_name,
                         "Minimum value in range for {:s}.".format(arg_name),
-                        index + 1)                    
+                        index + 2)                    
                     self._Params__schema[range_max_param_name] = ParamDescriptor(
                         range_max_param_name,
                         "Maximum value in range for {:s}.".format(arg_name),
-                        index + 2)
+                        index + 3)
                     self._Params__schema[range_to_number_param_name] = ParamDescriptor(
                         range_to_number_param_name,
                         "Function to convert range endpoints for {:s} into numbers.".format(arg_name),
-                        index + 3,
+                        index + 4,
                         True,
                         lambda x: x)
                     self._Params__schema[range_from_number_param_name] = ParamDescriptor(
                         range_from_number_param_name,
                         "Function to convert numbers into values within the range for {:s}.".format(arg_name),
-                        index + 4,
+                        index + 5,
                         True,
                         lambda x: x)
                     # delete any list parameters
                     if values_list_param_name in self._Params__schema:
                         del self[values_list_param_name]
-                        del self._Params__schema[values_list_param_name]                    
+                        del self._Params__schema[values_list_param_name]  
+
+            # set value
+            if param_type == "fixed":
+                self.creator.params[arg_name] = param_value
+            elif param_type == "list":
+                self[self.__values_list_param_name(arg_name)] = param_value
+            else:
+                assert (param_type == "range")
+                self[self.__range_min_param_name(arg_name)] = param_value[0]
+                self[self.__range_max_param_name(arg_name)] = param_value[1]
+                
+            # set param_name to "processed"
+            self[param_name] = "processed"
                     
-    def __is_param_type(self,param_name): 
+    def __is_arg_param(self,param_name): 
         """
-        Returns true if param_name is of the form of "{:s}_param_type".format(arg_name).
+        Returns true if param_name is of the form of "{:s}_param".format(arg_name).
         """
-        return re.match('.+_param_type',param_name)
+        return re.match('.+_param',param_name) and (not re.match('.+_param_type',param_name))
         
     def __get_arg_name(self,param_name): 
         """
-        If self.__is_param_type(param_name), returns the arg_name.
+        If self.__is_arg_param(param_name), returns the arg_name.
         """
-        assert self.__is_param_type(param_name)
-        return re.match('(.+)_param_type',param_name).group(1)
+        assert self.__is_arg_param(param_name)
+        return re.match('(.+)_param',param_name).group(1)
         
     
 class ComputationalStudyCreator(Creator):
