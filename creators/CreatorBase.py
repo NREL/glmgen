@@ -2,6 +2,8 @@
 from abc import abstractmethod
 
 import copy
+import datetime
+import json
 import os
 
 def base_path():
@@ -85,6 +87,17 @@ def print_choice_list(choices):
         str = "{:s}|'{:s}'".format(str,x)
     str = "{:s})".format(str)
     return str
+    
+class ParamsEncoder(json.JSONEncoder):
+    """
+    Json encoding for all possible Params types. May need to be extended when
+    a new class is derived from Params.
+    """
+    def default(self, obj):
+        if isinstance(obj, datetime.timedelta):
+            # serialize datetime.timedelta as number of seconds
+            return obj.total_seconds()
+        return json.JSONEncoder.default(self,obj)
 
 class Params(dict):
     """
@@ -143,9 +156,17 @@ class Params(dict):
         else:
             raise RuntimeError("{:s} is not a valid parameter.".format(param_name))
  
-    def to_json(self): pass
+    def to_json(self): 
+        return json.dumps(self, 
+                          cls=ParamsEncoder,
+                          sort_keys=True,
+                          indent=4,
+                          separators=(',', ': '))
   
-    def save(self, path): pass
+    def save(self, path): 
+        f = open(path,'w')
+        f.write(self.to_json())
+        f.close()
   
     def json_template(self): pass
   

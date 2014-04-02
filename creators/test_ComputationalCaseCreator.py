@@ -9,6 +9,8 @@ def test_params():
     params = ComputationalCaseParams()
     assert not params.valid()
     print(params)
+    p = "test_results/params.json"
+    params.save(p)
     
 def test_schema_getter():
     params = ComputationalCaseParams()
@@ -21,6 +23,8 @@ def test_schema_getter():
     assert not (schema["base_feeder"].description == params.schema()["base_feeder"].description)
     params["base_feeder"] = "R1-12.47-1.glm"
     assert os.path.exists(params["base_feeder"])
+    p = "test_results/schema_getter.json"
+    params.save(p)
     
 def test_create_case_simplest():
     params = ComputationalCaseParams()
@@ -31,6 +35,8 @@ def test_create_case_simplest():
     assert os.path.exists(out_dir)
     assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-1_1h/model.glm"))
     assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-1_1h/schedules"))
+    p = "test_results/create_case_simplest.json"
+    params.save(p)
     
 def test_create_case_sub_script():
     params = ComputationalCaseParams()
@@ -43,4 +49,6 @@ def test_create_case_sub_script():
     assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h/model.glm"))
     assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h/run_script.sub"))
     assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h/schedules"))
+    p = "test_results/create_case_sub_script.json"
+    params.save(p)
     

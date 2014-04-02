@@ -21,6 +21,8 @@ def test_study_type_refresh():
     assert (params["num_samples"] == 100)
     params["study_type"] = "full_factorial"
     assert (params["num_samples"] is None)
+    p = "test_results/study_type_refresh.json"
+    params.save(p)
     
 def test_valid_params():
     params = ComputationalStudyParams(basic_case_creator())
@@ -39,6 +41,8 @@ def test_valid_params():
     params["study_type"] = "lhs"
     params["num_samples"] = 24
     assert params.valid()
+    p = "test_results/valid_params.json"
+    params.save(p)
     
 def test_full_factorial():
     params = ComputationalStudyParams(basic_case_creator())
@@ -47,6 +51,8 @@ def test_full_factorial():
     assert (params.get_param_type("base_feeder") == "list")
     params[params.param_name("sim_duration")] = [datetime.timedelta(hours=1),datetime.timedelta(hours=24)]
     assert (params.get_param_type("sim_duration") == "list")
+    p = "test_results/full_factorial.json"
+    params.save(p)    
     out_dir = os.path.realpath("test_results/full_factorial")
     if not os.path.exists(os.path.dirname(out_dir)):
         os.mkdir(os.path.dirname(out_dir))
@@ -67,6 +73,8 @@ def test_lhs():
                           (lambda x: x.total_seconds(),
                            lambda x: datetime.timedelta(seconds=math.floor(x))))
     assert (params.get_param_type("sim_duration") == "range")
+    p = "test_results/lhs.json"
+    params.save(p)    
     out_dir = os.path.realpath("test_results/lhs")
     if not os.path.exists(os.path.dirname(out_dir)):
         os.mkdir(os.path.dirname(out_dir))
