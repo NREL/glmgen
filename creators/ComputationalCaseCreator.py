@@ -14,6 +14,9 @@ import shutil
 
 class ComputationalCaseParams(Params):         
 
+    def class_name(self):
+        return "ComputationalCaseParams"
+
     def __init__(self, *arg, **kw):
         schema = {}
         schema["base_feeder"] = ParamDescriptor(

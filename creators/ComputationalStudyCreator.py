@@ -17,6 +17,9 @@ class ComputationalStudyParams(Params):
     creator.params.schema(). In general, this class defines its schema iteratively, 
     that is, as parameter values are set, the schema may be modified.
     """
+    def class_name(self):
+        return "ComputationalStudyParams"    
+    
     def __init__(self, creator, *arg, **kw): 
         schema = {}
         schema["study_type"] = create_choice_descriptor("study_type",

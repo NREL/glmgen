@@ -4,7 +4,8 @@ from abc import abstractmethod
 import copy
 import datetime
 import json
-import lambdaJSON
+# import lambdaJSON
+import marshal
 import os
 
 def base_path():
@@ -98,12 +99,32 @@ class ParamsEncoder(json.JSONEncoder):
         if isinstance(obj, datetime.timedelta):
             # serialize datetime.timedelta as number of seconds
             return obj.total_seconds()
+        if hasattr(obj, '__call__'):
+            code = None
+            if hasattr(obj, '__code__'):
+                code = obj.__code__
+            else:
+                code = obj.func_code
+            defaults = obj.__defaults__ or tuple()
+            return str(marshal.dumps({'code': code, 'defaults': defaults}))
         return json.JSONEncoder.default(self,obj)
+        
+# def load_timedelta():
+#     return datetime.timedelta(seconds=num_seconds)
+
+# def load_function():
+#     function = marshal.loads(obj)
+#     code = function['code']
+#     defaults = function['defaults']
+#     return FunctionType(code, 'func', defaults)
 
 class Params(dict):
     """
     Base class for dictionary-based params with json serialization.
     """
+    
+    @abstractmethod
+    def class_name(self): pass    
    
     def __init__(self, schema, *arg, **kw):
         """
@@ -158,11 +179,13 @@ class Params(dict):
             raise RuntimeError("{:s} is not a valid parameter.".format(param_name))
  
     def to_json(self): 
-        return lambdaJSON.serialize(self, 
-                                    cls=ParamsEncoder,
-                                    sort_keys=True,
-                                    indent=4,
-                                    separators=(',', ': '))
+        d = dict(self.items())
+        d["class_name"] = self.class_name()
+        return json.dumps(d, 
+                          cls=ParamsEncoder,
+                          sort_keys=True,
+                          indent=4,
+                          separators=(',', ': '))
   
     def save(self, path): 
         f = open(path,'w')
