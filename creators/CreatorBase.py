@@ -101,7 +101,7 @@ class Params(dict):
     """
     
     @abstractmethod
-    def class_name(self): pass    
+    def get_class_name(self): pass    
    
     def __init__(self, schema, *arg, **kw):
         """
@@ -116,7 +116,7 @@ class Params(dict):
     def __str__(self):
         result = 'Values:\n\n'
         for pair in self.__sorted_values(): 
-            result += "{:s}: {:s}\n".format(pair[0],pair[1])
+            result += "{:s}: {:s}\n".format(pair[0],str(pair[1]))
         result += '\nDescriptors:\n\n'
         for descriptor in self.__sorted_descriptors():
             result += "{:s}\n\n".format(descriptor)
@@ -155,10 +155,13 @@ class Params(dict):
         else:
             raise RuntimeError("{:s} is not a valid parameter.".format(param_name))
  
-    def to_json(self): 
+    def to_json_dict(self):
         d = dict(self.items())
-        d["class_name"] = self.class_name()
-        return json.dumps(d, 
+        d["class_name"] = self.get_class_name()    
+        return d    
+ 
+    def to_json(self): 
+        return json.dumps(self.to_json_dict(), 
                           cls=ParamsEncoder,
                           sort_keys=True,
                           indent=4,
@@ -172,9 +175,6 @@ class Params(dict):
     def json_template(self): pass
   
     def save_template(self, path): pass
-  
-    @abstractmethod
-    def load(path): pass
   
     def valid(self): 
         for param_name, descriptor in self.__schema.items():
@@ -199,6 +199,9 @@ class Creator:
     """
     Base class for classes that create one or more simulations in separate run folders.
     """
+    @abstractmethod
+    def get_class_name(self): pass    
+    
     def __init__(self, out_dir, params, resources_dir = None):
         self.out_dir = os.path.realpath(out_dir)
         self.params = params
@@ -208,6 +211,12 @@ class Creator:
         
     @abstractmethod
     def create(self): pass
+    
+    def to_json_dict(self): 
+        return {"class_name": self.get_class_name(),
+                "out_dir": self.out_dir,
+                "params": self.params.to_json_dict(),
+                "resources_dir": self.resources_dir}
 
 ########################################
 # Internal Helper Functions and Classes
@@ -248,8 +257,8 @@ class ParamsEncoder(json.JSONEncoder):
     """
     def default(self, obj):
         if isinstance(obj, datetime.timedelta):
-            # serialize datetime.timedelta as number of seconds
-            return obj.total_seconds()
+            # serialize datetime.timedelta as string that can be parsed
+            return to_walltime(obj)
         return json.JSONEncoder.default(self,obj)
         
 # def load_timedelta():

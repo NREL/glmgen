@@ -18,8 +18,10 @@ class ComputationalStudyParams(Params):
     creator.params.schema(). In general, this class defines its schema iteratively, 
     that is, as parameter values are set, the schema may be modified.
     """
-    def class_name(self):
-        return "ComputationalStudyParams"    
+    class_name = "ComputationalStudyParams"    
+        
+    def get_class_name(self):
+        return ComputationalStudyParams.class_name
     
     def __init__(self, creator, *arg, **kw): 
         schema = {}
@@ -33,7 +35,7 @@ class ComputationalStudyParams(Params):
         choices = ["fixed","list","range"] # default is fixed
         index = 10
         self.__param_types = { "fixed": [], "list": [], "range": [] }
-        for arg_name, arg_descriptor in creator.params.schema().items():
+        for arg_name, arg_descriptor in sorted(creator.params.schema().items(), key=lambda pair: pair[1].index) :
             schema[self.param_name(arg_name)] = ParamDescriptor(
                 self.param_name(arg_name),
                 "Parameter to set to change how the Computational Study will treat {:s}. Pass in a fixed value, list, or tuple of length 2 (range).".format(arg_name),
@@ -51,8 +53,6 @@ class ComputationalStudyParams(Params):
             index += 10
             
         self.creator = creator
-    
-    def load(path): pass
     
     def valid(self):
         result = Params.valid(self)
@@ -106,6 +106,42 @@ class ComputationalStudyParams(Params):
                 result.append( (arg_name, param_type, self.get_values_range(arg_name)) )
         return result
         
+    def to_json_dict(self):
+        d = Params.to_json_dict(self)
+        d["sub_creator"] = self.creator.to_json_dict()
+        return d        
+        
+    @staticmethod
+    def load(json_dict, creator): 
+        result = ComputationalStudyParams(creator)
+        
+        # if possible, set the study type, and delete items already used
+        if "study_type" in json_dict:
+            result["study_type"] = json_dict["study_type"]
+            del json_dict["study_type"]
+        del json_dict["class_name"]
+        del json_dict["sub_creator"]
+        
+        arg_name = None
+        for key, item in sorted(json_dict.items()):
+            if result.__is_arg_param(key):
+                # process meta-parameters on arg_name
+                arg_name = result.__get_arg_name(key)
+                value = None
+                param_type = json_dict[result.__param_type_param_name(arg_name)]
+                if param_type == "fixed":
+                    continue
+                elif param_type == "list":
+                    value = json_dict[result.__values_list_param_name(arg_name)]
+                elif param_type == "range":
+                    value = (json_dict[result.__range_min_param_name(arg_name)],
+                             json_dict[result.__range_max_param_name(arg_name)])
+                result[key] = value
+            elif (arg_name is None) or (not re.match("{:s}_.*".format(arg_name),key)):
+                # study parameter
+                result[key] = item
+        return result        
+                
     def __param_type_param_name(self,arg_name):
         return "{:s}_param_type".format(arg_name)
     
@@ -172,6 +208,8 @@ class ComputationalStudyParams(Params):
                 values_list_param_name = self.__values_list_param_name(arg_name)
                 range_min_param_name = self.__range_min_param_name(arg_name)
                 range_max_param_name = self.__range_max_param_name(arg_name)
+                value_parser = self.creator.params.schema()[arg_name].parser
+                parser = value_parser
                 if param_type == "fixed":
                     # delete any list parameters
                     if values_list_param_name in self._Params__schema:
@@ -187,10 +225,15 @@ class ComputationalStudyParams(Params):
                     
                 elif param_type == "list":
                     # ensure list parameters
+                    if value_parser is not None:
+                        parser = lambda lst: [value_parser(x) for x in lst]
                     self._Params__schema[values_list_param_name] = ParamDescriptor(
                         values_list_param_name,
                         "Enumerated list of values for {:s}.".format(arg_name),
-                        index + 2)
+                        index + 2,
+                        True,
+                        None,
+                        parser)
                     # delete any range parameters
                     if range_min_param_name in self._Params__schema:
                         del self[range_min_param_name]
@@ -201,15 +244,21 @@ class ComputationalStudyParams(Params):
                         
                 else:
                     assert (param_type == "range")
-                    # ensure range paramters
+                    # ensure range paramters                  
                     self._Params__schema[range_min_param_name] = ParamDescriptor(
                         range_min_param_name,
                         "Minimum value in range for {:s}.".format(arg_name),
-                        index + 2)                    
+                        index + 2,
+                        True,
+                        None,
+                        parser)                    
                     self._Params__schema[range_max_param_name] = ParamDescriptor(
                         range_max_param_name,
                         "Maximum value in range for {:s}.".format(arg_name),
-                        index + 3)
+                        index + 3,
+                        True,
+                        None,
+                        parser)
                     # delete any list parameters
                     if values_list_param_name in self._Params__schema:
                         del self[values_list_param_name]
@@ -243,6 +292,11 @@ class ComputationalStudyParams(Params):
         
     
 class ComputationalStudyCreator(Creator):
+    class_name = "ComputationalStudyCreator"
+        
+    def get_class_name(self):
+        return ComputationalStudyCreator.class_name
+
     def __init__(self, out_dir, params, resources_dir = None): 
         """
         Get ready to create a computational study. 
@@ -285,8 +339,6 @@ class ComputationalStudyCreator(Creator):
     def __full_factorial(self): 
         # should only contain "list" arguments
         arg_values = self.params.get_arg_values()
-        print("\n\nFull Factorial===============")
-        print(arg_values)
         prev_points = [[]]
         current_points = [[]]
         arg_names = []
@@ -305,16 +357,12 @@ class ComputationalStudyCreator(Creator):
                     current_points.extend(prev_points_copy)
                 first = False
             prev_points = copy.deepcopy(current_points)
-            
-        print(arg_names)
-        print(current_points)
+
         self.__run_sub_creator(arg_names,current_points)
     
     def __lhs(self,num_samples): 
         # can contain "list" and "range" arguments          
         arg_values = self.params.get_arg_values() # [(arg_name, param_type, value(s)/range)]
-        print("\n\nLHS =========================")
-        print(arg_values)
         lhs_design = lhs(len(arg_values), samples=num_samples)
         assert (len(lhs_design) == num_samples)        # list of samples
         assert (len(lhs_design[0]) == len(arg_values)) # each sample has value for each arg
@@ -343,8 +391,6 @@ class ComputationalStudyCreator(Creator):
             arg_index += 1
             
         assert (len(points) == num_samples)
-        print(arg_names)
-        print(points)
         self.__run_sub_creator(arg_names,points)        
     
     def __run_sub_creator(self,arg_names,arg_values): 

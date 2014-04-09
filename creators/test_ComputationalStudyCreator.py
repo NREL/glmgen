@@ -1,6 +1,7 @@
 
-from ComputationalCaseCreator import ComputationalCaseParams, ComputationalCaseCreator
+from ComputationalCaseCreator import ComputationalCaseParams, ComputationalCaseCreator, installed_feeders
 from ComputationalStudyCreator import ComputationalStudyParams, ComputationalStudyCreator
+import CreatorFactory
 
 import datetime
 import math
@@ -80,4 +81,27 @@ def test_lhs():
     for subdir, dirs, files in os.walk(out_dir):
         assert(len(dirs) == 10) # ten samples were requested
         break
+        
+def test_lhs_from_json():
+    params = ComputationalStudyParams(basic_case_creator())
+    params["study_type"] = "lhs"
+    params["num_samples"] = 5
+    params[params.param_name("base_feeder")] = installed_feeders()
+    params[params.param_name("sim_duration")] = (datetime.timedelta(minutes=5),datetime.timedelta(days=1))
+    p = "test_results/lhs_from_json.json"
+    params.save(p)
+    loaded_params = CreatorFactory.load(p)
+    out_dir = "test_results/lhs_from_json"
+    if not os.path.exists(os.path.dirname(out_dir)):
+        os.mkdir(os.path.dirname(out_dir))    
+    creator = ComputationalStudyCreator(out_dir,loaded_params)
+    creator.create()
+    for subdir, dirs, files in os.walk(out_dir):
+        assert(len(dirs) == 5) # five samples were requested
+        break    
+    print("--- ORIGINAL ---")
+    print(params)
+    print("--- LOADED ---")
+    print(loaded_params)
+    # assert(str(params) == str(loaded_params))        
         
