@@ -121,7 +121,9 @@ class ComputationalCaseCreator(Creator):
         # get or make case_name
         case_name = self.params["case_name"]
         if case_name is None:
-            case_name = "{:s}_{:s}".format(self.__base_feeder_name(),self.__sim_duration_dhm())
+            case_name = "{:s}_{:s}_t{:d}".format(self.__base_feeder_name(),
+                                                 self.__sim_duration_dhm(),
+                                                 self.params["technology"])
         
         # make case folder
         if os.path.exists(case_name):
