@@ -1,0 +1,16 @@
+#!/bin/bash
+#PBS -l walltime={{ to_walltime(batch_job_walltime) }}
+#PBS -l nodes={{ num_nodes }}:ppn={{ num_processes }}
+#PBS -N {{ study_name }}
+{% if (batch_job_walltime <= datetime.timedelta(hours=4)) %}
+#PBS -q short
+{% endif %}
+#PBS -A cpe-testbed
+#PBS -o "stdout"
+#PBS -e "stderr"
+
+module purge
+module use /projects/cpe-testbed/opt/modulefiles
+module load epel xerces-c/3.1.1 gridlab-d/3.0
+
+# HERE -- How to start/queue multiple gridlab processes.
