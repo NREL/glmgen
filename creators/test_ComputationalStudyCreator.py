@@ -1,6 +1,7 @@
 
-from ComputationalCaseCreator import ComputationalCaseParams, ComputationalCaseCreator
+from ComputationalCaseCreator import ComputationalCaseParams, ComputationalCaseCreator, installed_feeders
 from ComputationalStudyCreator import ComputationalStudyParams, ComputationalStudyCreator
+import CreatorFactory
 
 import datetime
 import math
@@ -21,6 +22,8 @@ def test_study_type_refresh():
     assert (params["num_samples"] == 100)
     params["study_type"] = "full_factorial"
     assert (params["num_samples"] is None)
+    p = "test_results/study_type_refresh.json"
+    params.save(p)
     
 def test_valid_params():
     params = ComputationalStudyParams(basic_case_creator())
@@ -39,6 +42,8 @@ def test_valid_params():
     params["study_type"] = "lhs"
     params["num_samples"] = 24
     assert params.valid()
+    p = "test_results/valid_params.json"
+    params.save(p)
     
 def test_full_factorial():
     params = ComputationalStudyParams(basic_case_creator())
@@ -47,6 +52,8 @@ def test_full_factorial():
     assert (params.get_param_type("base_feeder") == "list")
     params[params.param_name("sim_duration")] = [datetime.timedelta(hours=1),datetime.timedelta(hours=24)]
     assert (params.get_param_type("sim_duration") == "list")
+    p = "test_results/full_factorial.json"
+    params.save(p)    
     out_dir = os.path.realpath("test_results/full_factorial")
     if not os.path.exists(os.path.dirname(out_dir)):
         os.mkdir(os.path.dirname(out_dir))
@@ -63,10 +70,9 @@ def test_lhs():
     params[params.param_name("base_feeder")] = ["R1-12.47-1.glm","R1-12.47-2.glm","R1-12.47-3.glm"]
     assert (params.get_param_type("base_feeder") == "list")
     params[params.param_name("sim_duration")] = (datetime.timedelta(hours=1),datetime.timedelta(days=30))
-    params.set_number_map("sim_duration", 
-                          (lambda x: x.total_seconds(),
-                           lambda x: datetime.timedelta(seconds=math.floor(x))))
     assert (params.get_param_type("sim_duration") == "range")
+    p = "test_results/lhs.json"
+    params.save(p)    
     out_dir = os.path.realpath("test_results/lhs")
     if not os.path.exists(os.path.dirname(out_dir)):
         os.mkdir(os.path.dirname(out_dir))
@@ -75,4 +81,27 @@ def test_lhs():
     for subdir, dirs, files in os.walk(out_dir):
         assert(len(dirs) == 10) # ten samples were requested
         break
+        
+def test_lhs_from_json():
+    params = ComputationalStudyParams(basic_case_creator())
+    params["study_type"] = "lhs"
+    params["num_samples"] = 5
+    params[params.param_name("base_feeder")] = installed_feeders()
+    params[params.param_name("sim_duration")] = (datetime.timedelta(minutes=5),datetime.timedelta(days=1))
+    p = "test_results/lhs_from_json.json"
+    params.save(p)
+    loaded_params = CreatorFactory.load(p)
+    out_dir = "test_results/lhs_from_json"
+    if not os.path.exists(os.path.dirname(out_dir)):
+        os.mkdir(os.path.dirname(out_dir))    
+    creator = ComputationalStudyCreator(out_dir,loaded_params)
+    creator.create()
+    for subdir, dirs, files in os.walk(out_dir):
+        assert(len(dirs) == 5) # five samples were requested
+        break    
+    print("--- ORIGINAL ---")
+    print(params)
+    print("--- LOADED ---")
+    print(loaded_params)
+    # assert(str(params) == str(loaded_params))        
         

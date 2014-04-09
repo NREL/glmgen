@@ -9,10 +9,16 @@ import jinja2
 import datetime
 import numpy
 import os
+import re
 import pandas
 import shutil
 
 class ComputationalCaseParams(Params):         
+
+    class_name = "ComputationalCaseParams"
+        
+    def get_class_name(self):
+        return ComputationalCaseParams.class_name
 
     def __init__(self, *arg, **kw):
         schema = {}
@@ -67,14 +73,26 @@ class ComputationalCaseParams(Params):
             100.0)            
             
         Params.__init__(self, schema, *arg, **kw)
-
-    def load(path): pass        
+        
+    @staticmethod
+    def load(json_dict): 
+        result = ComputationalCaseParams()
+        for key, item in json_dict.items():
+            if not (key == "class_name"):
+                result[key] = item
+        return result
 
 class ComputationalCaseCreator(Creator): 
     """
     Class for creating a glm file, in its own run directory, along with needed resources and (optionally), a 
     batch submission script.
     """
+    
+    class_name = "ComputationalCaseCreator"
+        
+    def get_class_name(self):
+        return ComputationalCaseCreator.class_name
+    
     def __init__(self, out_dir, params, resources_dir = None):
         """
         Get ready to make a new glm file in its own run directory.
@@ -151,6 +169,11 @@ class ComputationalCaseCreator(Creator):
         
         os.chdir(original_dir)
         
+    @staticmethod
+    def load(json_dict): 
+        return ComputationalCaseCreator(json_dict["out_dir"],
+                                        ComputationalCaseParams.load(json_dict["params"]),
+                                        json_dict["resources_dir"])        
         
     def __base_feeder_name(self):
         """
@@ -203,6 +226,7 @@ def installed_feeders():
     for subdir, dirs, files in os.walk(feeder_path):
         for file in files:
             result.append(file)
+    return result
 
 def installed_sub_templates():
     result = []
@@ -210,18 +234,32 @@ def installed_sub_templates():
     for subdir, dirs, files in os.walk(feeder_path):
         for file in files:
             result.append(file)
+    return result
     
 def to_timedelta(timedelta): 
     """
-    Tries to convert timedelta to a real datetime.timedelta. Raises a RuntimeError if not successful.
+    Tries to convert timedelta to a real datetime.timedelta, rounded to the 
+    nearest second. Raises a RuntimeError if not successful.
     """
+    result = None
     try:
         if type(timedelta) in [type(datetime.timedelta()), type(numpy.timedelta64())]:
-            return timedelta
+            result = timedelta
         else:
-            return pandas.to_timedelta(timedelta)
+            result = pandas.to_timedelta(timedelta)    
     except:
-        raise RuntimeError("Could not convert {:s} to datetime.timedelta.".format(timedelta))
+        try:
+            m = re.match('([0-9]{2}):([0-9]{2}):([0-9]{2}):([0-9]{2})',timedelta)
+            result = datetime.timedelta(days=int(m.group(1)),
+                                        hours=int(m.group(2)),
+                                        minutes=int(m.group(3)),
+                                        seconds=int(m.group(4)))
+        except:
+            raise RuntimeError("Could not convert {:s} to datetime.timedelta.".format(timedelta))
+    # round to nearest second
+    result = datetime.timedelta(seconds=round(result.total_seconds()))
+    return result
+        
 
 def main(argv): pass
   # print params template json file
