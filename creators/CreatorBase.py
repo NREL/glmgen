@@ -4,26 +4,18 @@ from abc import abstractmethod
 import copy
 import datetime
 import json
-# import lambdaJSON
 import marshal
 import os
 
 def base_path():
+    """
+    Returns the base path of the omf-glm-generator project.
+    
+    @rtype: string
+    @return: base path of the omf-glm-generator
+    """
     return os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     
-def to_walltime(dt):
-    """
-    @type dt: timedelta
-    @param dt: Walltime parameter in timedelta format.
-    @rtype: string
-    @return: dt converted to "DD:HH:MM:SS"
-    """
-    n_days = dt.days
-    n_hours = dt.seconds // 3600
-    n_mins = (dt.seconds // 60 ) % 60
-    n_secs = dt.seconds % 60
-    return "{:02d}:{:02d}:{:02d}:{:02d}".format(n_days,n_hours,n_mins,n_secs)
-
 class ParamDescriptor:
     """
     Information describing a paramter.
@@ -75,6 +67,26 @@ def create_choice_descriptor(name,
                              index,
                              required=True,
                              default_value=None):
+    """
+    Helper method for describing parameters whose values should be chosen from a list.
+    
+    @type name: string
+    @param name: The parameter's name.
+    @type choices: list
+    @param choices: List of valid choices for the parameter value.
+    @type description_prefix: string
+    @param description_prefix: String to be pre-pended to the choice list. Composite 
+        string will be the parameter's description.
+    @type index: int
+    @param index: Index of this descriptor in a given set of descriptors. Used to order 
+        items for display purposes.
+    @type required: boolean
+    @param required: Whether or not the user is required to provide this parameter.
+    @type default_value: the parameter's type
+    @param default_value: A default value for this parameter, must be in choices.
+    
+    @rtype: ParamDescriptor
+    """
     return  ParamDescriptor(name,
                             "{:s} {:s}.".format(description_prefix,print_choice_list(choices)),
                             0,
@@ -82,41 +94,6 @@ def create_choice_descriptor(name,
                             default_value,
                             lambda x: x if x in choices else None,
                             choices)
-
-def print_choice_list(choices):
-    str = "('{:s}'".format(choices[0])
-    for x in choices[1:]:
-        str = "{:s}|'{:s}'".format(str,x)
-    str = "{:s})".format(str)
-    return str
-   
-class ParamsEncoder(json.JSONEncoder):
-    """
-    Json encoding for all possible Params types. May need to be extended when
-    a new class is derived from Params.
-    """
-    def default(self, obj):
-        if isinstance(obj, datetime.timedelta):
-            # serialize datetime.timedelta as number of seconds
-            return obj.total_seconds()
-        if hasattr(obj, '__call__'):
-            code = None
-            if hasattr(obj, '__code__'):
-                code = obj.__code__
-            else:
-                code = obj.func_code
-            defaults = obj.__defaults__ or tuple()
-            return str(marshal.dumps({'code': code, 'defaults': defaults}))
-        return json.JSONEncoder.default(self,obj)
-        
-# def load_timedelta():
-#     return datetime.timedelta(seconds=num_seconds)
-
-# def load_function():
-#     function = marshal.loads(obj)
-#     code = function['code']
-#     defaults = function['defaults']
-#     return FunctionType(code, 'func', defaults)
 
 class Params(dict):
     """
@@ -217,9 +194,11 @@ class Params(dict):
         
     def __refresh_schema(self,param_name):
         return
-
+        
 class Creator:
-
+    """
+    Base class for classes that create one or more simulations in separate run folders.
+    """
     def __init__(self, out_dir, params, resources_dir = None):
         self.out_dir = os.path.realpath(out_dir)
         self.params = params
@@ -229,4 +208,49 @@ class Creator:
         
     @abstractmethod
     def create(self): pass
+
+########################################
+# Internal Helper Functions and Classes
+########################################
+    
+def print_choice_list(choices):
+    """
+    @type choices: list
+    @param choices: List of choices. Each must be printable using "{:s}".format(x).
+    @rtype: string
+    @return
+    """
+    str = "('{:s}'".format(choices[0])
+    for x in choices[1:]:
+        str = "{:s}|'{:s}'".format(str,x)
+    str = "{:s})".format(str)
+    return str    
+    
+def to_walltime(dt):
+    """
+    Method to convert a timedelta object into a walltime string for use by submit scripts.
+    
+    @type dt: timedelta
+    @param dt: Walltime parameter in timedelta format.
+    @rtype: string
+    @return: dt converted to "DD:HH:MM:SS"
+    """
+    n_days = dt.days
+    n_hours = dt.seconds // 3600
+    n_mins = (dt.seconds // 60 ) % 60
+    n_secs = dt.seconds % 60
+    return "{:02d}:{:02d}:{:02d}:{:02d}".format(n_days,n_hours,n_mins,n_secs)
+    
+class ParamsEncoder(json.JSONEncoder):
+    """
+    Json encoding for all possible Params types. May need to be extended when
+    a new class is derived from Params.
+    """
+    def default(self, obj):
+        if isinstance(obj, datetime.timedelta):
+            # serialize datetime.timedelta as number of seconds
+            return obj.total_seconds()
+        return json.JSONEncoder.default(self,obj)
         
+# def load_timedelta():
+#     return datetime.timedelta(seconds=num_seconds)        

@@ -69,9 +69,6 @@ def test_lhs():
     params[params.param_name("base_feeder")] = ["R1-12.47-1.glm","R1-12.47-2.glm","R1-12.47-3.glm"]
     assert (params.get_param_type("base_feeder") == "list")
     params[params.param_name("sim_duration")] = (datetime.timedelta(hours=1),datetime.timedelta(days=30))
-    params.set_number_map("sim_duration", 
-                          (lambda x: x.total_seconds(),
-                           lambda x: datetime.timedelta(seconds=math.floor(x))))
     assert (params.get_param_type("sim_duration") == "range")
     p = "test_results/lhs.json"
     params.save(p)    

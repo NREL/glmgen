@@ -216,13 +216,18 @@ def installed_sub_templates():
     
 def to_timedelta(timedelta): 
     """
-    Tries to convert timedelta to a real datetime.timedelta. Raises a RuntimeError if not successful.
+    Tries to convert timedelta to a real datetime.timedelta, rounded to the 
+    nearest second. Raises a RuntimeError if not successful.
     """
     try:
+        result = None
         if type(timedelta) in [type(datetime.timedelta()), type(numpy.timedelta64())]:
-            return timedelta
+            result = timedelta
         else:
-            return pandas.to_timedelta(timedelta)
+            result = pandas.to_timedelta(timedelta)
+        # round to nearest second
+        result = datetime.timedelta(seconds=round(result.total_seconds()))
+        return result
     except:
         raise RuntimeError("Could not convert {:s} to datetime.timedelta.".format(timedelta))
 

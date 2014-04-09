@@ -6,6 +6,7 @@ from pyDOE import lhs
 from scipy.stats.distributions import uniform, randint
 
 import copy
+import datetime
 import os
 import re
 import shutil
@@ -88,26 +89,6 @@ class ComputationalStudyParams(Params):
         assert self.get_param_type(arg_name) == "range"
         return (self[self.__range_min_param_name(arg_name)],self[self.__range_max_param_name(arg_name)])
         
-    def get_to_number(self, arg_name):
-        assert self.get_param_type(arg_name) == "range"
-        return self[self.__range_to_number_param_name(arg_name)]
-        
-    def set_to_number(self, arg_name, to_number): 
-        assert self.get_param_type(arg_name) == "range"
-        self[self.__range_to_number_param_name(arg_name)] = to_number
-        
-    def get_from_number(self, arg_name):
-        assert self.get_param_type(arg_name) == "range"
-        return self[self.__range_from_number_param_name(arg_name)]
-        
-    def set_from_number(self, arg_name, from_number): 
-        assert self.get_param_type(arg_name) == "range"
-        self[self.__range_from_number_param_name(arg_name)] = from_number
-    
-    def set_number_map(self, arg_name, to_and_from_number_tuple): 
-        self.set_to_number(arg_name, to_and_from_number_tuple[0])
-        self.set_from_number(arg_name, to_and_from_number_tuple[1])
-        
     def get_arg_values(self,include_fixed=False):
         """
         @rtype: List of tuples (arg_name, param_type, value(s)/range)
@@ -136,12 +117,6 @@ class ComputationalStudyParams(Params):
                 
     def __range_max_param_name(self,arg_name):
         return "{:s}_range_max".format(arg_name)
-        
-    def __range_to_number_param_name(self,arg_name):
-        return "{:s}_to_number".format(arg_name)
-        
-    def __range_from_number_param_name(self,arg_name):
-        return "{:s}_from_number".format(arg_name)
         
     def _Params__refresh_schema(self,param_name): 
         # the study_type was set
@@ -197,8 +172,6 @@ class ComputationalStudyParams(Params):
                 values_list_param_name = self.__values_list_param_name(arg_name)
                 range_min_param_name = self.__range_min_param_name(arg_name)
                 range_max_param_name = self.__range_max_param_name(arg_name)
-                range_to_number_param_name = self.__range_to_number_param_name(arg_name)
-                range_from_number_param_name = self.__range_from_number_param_name(arg_name)
                 if param_type == "fixed":
                     # delete any list parameters
                     if values_list_param_name in self._Params__schema:
@@ -211,12 +184,6 @@ class ComputationalStudyParams(Params):
                     if range_max_param_name in self._Params__schema:
                         del self[range_max_param_name]
                         del self._Params__schema[range_max_param_name]
-                    if range_to_number_param_name in self._Params__schema:
-                        del self[range_to_number_param_name]
-                        del self._Params__schema[range_to_number_param_name]
-                    if range_from_number_param_name in self._Params__schema:
-                        del self[range_from_number_param_name]
-                        del self._Params__schema[range_from_number_param_name]
                     
                 elif param_type == "list":
                     # ensure list parameters
@@ -230,13 +197,7 @@ class ComputationalStudyParams(Params):
                         del self._Params__schema[range_min_param_name]
                     if range_max_param_name in self._Params__schema:
                         del self[range_max_param_name]
-                        del self._Params__schema[range_max_param_name]
-                    if range_to_number_param_name in self._Params__schema:
-                        del self[range_to_number_param_name]
-                        del self._Params__schema[range_to_number_param_name]
-                    if range_from_number_param_name in self._Params__schema:
-                        del self[range_from_number_param_name]
-                        del self._Params__schema[range_from_number_param_name]                        
+                        del self._Params__schema[range_max_param_name]                     
                         
                 else:
                     assert (param_type == "range")
@@ -249,18 +210,6 @@ class ComputationalStudyParams(Params):
                         range_max_param_name,
                         "Maximum value in range for {:s}.".format(arg_name),
                         index + 3)
-                    self._Params__schema[range_to_number_param_name] = ParamDescriptor(
-                        range_to_number_param_name,
-                        "Function to convert range endpoints for {:s} into numbers.".format(arg_name),
-                        index + 4,
-                        True,
-                        lambda x: x)
-                    self._Params__schema[range_from_number_param_name] = ParamDescriptor(
-                        range_from_number_param_name,
-                        "Function to convert numbers into values within the range for {:s}.".format(arg_name),
-                        index + 5,
-                        True,
-                        lambda x: x)
                     # delete any list parameters
                     if values_list_param_name in self._Params__schema:
                         del self[values_list_param_name]
@@ -362,15 +311,15 @@ class ComputationalStudyCreator(Creator):
         self.__run_sub_creator(arg_names,current_points)
     
     def __lhs(self,num_samples): 
-        # can contain "list" and "range" arguments              
-        arg_values = self.params.get_arg_values()               
+        # can contain "list" and "range" arguments          
+        arg_values = self.params.get_arg_values() # [(arg_name, param_type, value(s)/range)]
         print("\n\nLHS =========================")
         print(arg_values)
         lhs_design = lhs(len(arg_values), samples=num_samples)
-        assert (len(lhs_design) == num_samples)
-        assert (len(lhs_design[0]) == len(arg_values))
-        # now apply uniform distribution
-        points = []
+        assert (len(lhs_design) == num_samples)        # list of samples
+        assert (len(lhs_design[0]) == len(arg_values)) # each sample has value for each arg
+        # convert lhs_design[i][j] values by mapping 0-1 to arg_values[j] with uniform distribution
+        points = [] # same dimensions as lhs_design, to contain converted values
         for i in range(num_samples): points.append([])
         arg_index = 0
         arg_names = []
@@ -382,8 +331,9 @@ class ComputationalStudyCreator(Creator):
                 convert_function = lambda x: arg[2][(randint(0,len(arg[2])-1).ppf(x)).astype(numpy.int16)]
             else:
                 assert (arg[1] == "range")
-                to_number = self.params.get_to_number(arg[0])
-                from_number = self.params.get_from_number(arg[0])
+                transforms = to_from_number_transforms(arg[2][0])
+                to_number = transforms[0]
+                from_number = transforms[1]
                 convert_function = lambda x: from_number(uniform(to_number(arg[2][0]),to_number(arg[2][1])).ppf(x))
                 
             point_index = 0
@@ -405,6 +355,21 @@ class ComputationalStudyCreator(Creator):
                 self.params.creator.params[arg_names[index]] = value
                 index += 1
             self.params.creator.create()
+            
+def to_from_number_transforms(obj):
+    """
+    Returns a pair of functions for converting obj to a number, and converting a 
+    number back into an obj. Default implementation is a pair of identity functions.
+    
+    Non-default implementations:
+        - datetime.timedelta
+    
+    @rtype: (function, function)
+    @return: First function in tuple is to_number(obj) function. Second is from_number(num).
+    """
+    if isinstance(obj, datetime.timedelta):
+        return (lambda x: x.total_seconds(), lambda x: datetime.timedelta(seconds=x))
+    return (lambda x: x, lambda x: x)
 
 def main(argv): pass
   # print params template json file
@@ -412,3 +377,4 @@ def main(argv): pass
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+    
