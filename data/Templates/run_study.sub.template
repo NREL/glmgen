@@ -16,7 +16,7 @@ module load epel xerces-c/3.1.1 gridlab-d/3.0
 # run study in batches of 24
 # (poor woman's parallelization -- run jobs in background with sleep commands denoting batches)
 {% for i in range(len(samples)) %}
-gridlabd -W {{samples[i]}} {{samples[i]}}/model.glm %
+gridlabd -W {{samples[i]}} {{samples[i]}}/model.glm >& {{samples[i]}}/gridlabd.out %
 {% if (i+1) % 24 == 0 %}
 sleep {{ sleep_str }}
 {% endif %}
