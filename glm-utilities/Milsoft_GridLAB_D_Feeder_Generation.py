@@ -16,7 +16,7 @@ import AddLoadShapes
 import copy
 
 
-def GLD_Feeder(glmDict,case_flag,wdir,configuration_file=None,file_to_extract=None):
+def GLD_Feeder(glmDict,case_flag, wdir, resources_dir, configuration_file=None, file_to_extract=None):
   #glmDict is a dictionary containing all the objects in WindMIL model represented as equivalent GridLAB-D objects
 
   #case_flag is an integer indicating which technology case to tack on to the GridLAB-D model
@@ -50,7 +50,7 @@ def GLD_Feeder(glmDict,case_flag,wdir,configuration_file=None,file_to_extract=No
     case_flag = 13
   #print("Calling configuration.py\n")
   # Get information about each feeder from Configuration() and  TechnologyParameters()
-  config_data = Configuration.ConfigurationFunc(wdir,configuration_file,None,None)
+  config_data = Configuration.ConfigurationFunc(wdir,resources_dir,configuration_file,None,None)
 
   #set up default flags
   use_flags = {}
@@ -81,25 +81,25 @@ def GLD_Feeder(glmDict,case_flag,wdir,configuration_file=None,file_to_extract=No
 
   # Create dictionaries of preprocessor directives
   if use_flags['use_homes'] != 0:
-    glmCaseDict[last_key] = {'#include' : 'schedules\\appliance_schedules.glm'}
+    glmCaseDict[last_key] = {'#include' : '{:s}/appliance_schedules.glm'.format(resources_dir)}
     last_key += 1
-    glmCaseDict[last_key] = {'#include' : 'schedules\\water_and_setpoint_schedule_v5.glm'}
+    glmCaseDict[last_key] = {'#include' : '{:s}/water_and_setpoint_schedule_v5.glm'.format(resources_dir)}
     last_key += 1
 
   if use_flags['use_battery'] == 1 or use_flags['use_battery'] == 2:
-    glmCaseDict[last_key] = {'#include' : 'schedules\\battery_schedule.glm'}
+    glmCaseDict[last_key] = {'#include' : '{:s}/battery_schedule.glm'.format(resources_dir)}
     last_key += 1
 
   if use_flags['use_commercial'] == 1:
-    glmCaseDict[last_key] = {'#include' : 'schedules\\commercial_schedules.glm'}
+    glmCaseDict[last_key] = {'#include' : '{:s}/commercial_schedules.glm'.format(resources_dir)}
     last_key += 1
 
   if use_flags['use_market'] == 1 or use_flags['use_market'] == 2:
-    glmCaseDict[last_key] = {'#include' : 'schedules\\daily_elasticity_schedules.glm'}
+    glmCaseDict[last_key] = {'#include' : '{:s}/daily_elasticity_schedules.glm'.format(resources_dir)}
     last_key += 1
 
   if use_flags['use_ts'] == 2 or use_flags['use_ts'] == 4:
-    glmCaseDict[last_key] = {'#include' : 'schedules\\thermal_storage_schedule_R{:d}.glm'.format(config_data['region'])}
+    glmCaseDict[last_key] = {'#include' : '{:s}/thermal_storage_schedule_R{:d}.glm'.format(resources_dir,config_data['region'])}
     last_key += 1
 
   glmCaseDict[last_key] = {'#define' : 'stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0'}
@@ -777,7 +777,7 @@ def GLD_Feeder(glmDict,case_flag,wdir,configuration_file=None,file_to_extract=No
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
     else:
-      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir,configuration_file)
+      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir, resources_dir, configuration_file)
   # End addition of residential loads ########################################################################################################################
 
   # TODO: Call Commercial Function
@@ -786,7 +786,7 @@ def GLD_Feeder(glmDict,case_flag,wdir,configuration_file=None,file_to_extract=No
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
     else:
-      glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, wdir, configuration_file)
+      glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, wdir, resources_dir, configuration_file)
       
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
   if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:

@@ -35,8 +35,8 @@ def test_create_case_simplest():
     creator = ComputationalCaseCreator(out_dir,params)
     creator.create()
     assert os.path.exists(out_dir)
-    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-1_1h/model.glm"))
-    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-1_1h/schedules"))
+    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-1_1h_t0/model.glm"))
+    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-1_1h_t0/schedules"))
     p = "test_results/create_case_simplest.json"
     params.save(p)
     
@@ -48,16 +48,16 @@ def test_create_case_sub_script():
     creator = ComputationalCaseCreator(out_dir,params)
     creator.create()
     assert os.path.exists(out_dir)
-    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h/model.glm"))
-    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h/run_script.sub"))
-    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h/schedules"))
+    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h_t0/model.glm"))
+    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h_t0/run_script.sub"))
+    assert os.path.exists(os.path.realpath(out_dir + "/R1-12.47-2_1h_t0/schedules"))
     p = "test_results/create_case_sub_script.json"
     params.save(p)
     
 def test_create_case_from_json():
     params = ComputationalCaseParams()
     params["base_feeder"] = "R5-12.47-5.glm"
-    params["case_name"] = "R5-12.47-5_1d_FromJSON"
+    params["case_name"] = "R5-12.47-5_1d_t0_FromJSON"
     params["sim_duration"] = datetime.timedelta(days=1)
     p = "test_results/create_case_from_json.json"
     params.save(p)
@@ -66,8 +66,8 @@ def test_create_case_from_json():
     creator = ComputationalCaseCreator(out_dir,loaded_params)
     creator.create()
     assert os.path.exists(out_dir)
-    assert os.path.exists(os.path.realpath(out_dir + "/R5-12.47-5_1d_FromJSON/model.glm"))
-    assert os.path.exists(os.path.realpath(out_dir + "/R5-12.47-5_1d_FromJSON/schedules"))
+    assert os.path.exists(os.path.realpath(out_dir + "/R5-12.47-5_1d_t0_FromJSON/model.glm"))
+    assert os.path.exists(os.path.realpath(out_dir + "/R5-12.47-5_1d_t0_FromJSON/schedules"))
     print("--- ORIGINAL ---")
     print(params)
     print("--- LOADED ---")
