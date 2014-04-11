@@ -7,6 +7,7 @@ import json
 import marshal
 import numpy
 import os
+import re
 
 def base_path():
     """

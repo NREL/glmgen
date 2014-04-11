@@ -9,7 +9,6 @@ import jinja2
 
 import datetime as dt
 import os
-import re
 import pandas
 import shutil
 
@@ -164,7 +163,7 @@ class ComputationalCaseCreator(Creator):
             things["to_walltime"] = to_walltime
             things["batch_job_walltime"] = batch_job_walltime
             things["case_name"] = case_name
-            things["datetime"] = datetime
+            things["datetime"] = dt
             things["datetime.timedelta"] = dt.timedelta
             f = open(os.path.realpath(case_name + "/run_script.sub"),'w')
             f.write(template.render(things))
