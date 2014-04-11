@@ -14,6 +14,8 @@ def test_all_technologies_one_feeder():
     study_params = ComputationalStudyParams(case_creator)
     study_params["study_type"] = "full_factorial"
     study_params[study_params.param_name("technology")] = case_params.schema()["technology"].suggested_values
+    study_params["sub_template"] = "run_study.sub.template"
+    study_params["time_per_job"] = dt.timedelta(minutes=(15/100.0)) # 9 s per job
     out_dir = "test_results/all_technologies_one_feeder"
     study_creator = ComputationalStudyCreator(out_dir,study_params)
     study_creator.create()

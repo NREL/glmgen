@@ -2,9 +2,10 @@
 from abc import abstractmethod
 
 import copy
-import datetime
+import datetime as dt
 import json
 import marshal
+import numpy
 import os
 
 def base_path():
@@ -60,6 +61,30 @@ class ParamDescriptor:
         required_str = ('required' if self.required else 'optional')
         default_value_str = ("\n    default_value: {:s}".format(str(self.default_value)) if self.default_value is not None else "")
         return '{:s} - {:s}\n    {:s}{:s}'.format(self.name,required_str,self.description,default_value_str)
+        
+def to_timedelta(td): 
+    """
+    Tries to convert td to a real datetime.timedelta, rounded to the 
+    nearest second. Raises a RuntimeError if not successful.
+    """
+    result = None
+    try:
+        if type(td) in [type(dt.timedelta()), type(numpy.timedelta64())]:
+            result = td
+        else:
+            result = pandas.to_timedelta(td)    
+    except:
+        try:
+            m = re.match('([0-9]{2}):([0-9]{2}):([0-9]{2}):([0-9]{2})',td)
+            result = dt.timedelta(days=int(m.group(1)),
+                                  hours=int(m.group(2)),
+                                  minutes=int(m.group(3)),
+                                  seconds=int(m.group(4)))
+        except:
+            raise RuntimeError("Could not convert {:s} to datetime.timedelta.".format(td))
+    # round to nearest second
+    result = dt.timedelta(seconds=round(result.total_seconds()))
+    return result            
         
 def create_choice_descriptor(name,
                              choices,
@@ -235,6 +260,14 @@ def print_choice_list(choices):
     str = "{:s})".format(str)
     return str    
     
+def installed_sub_templates():
+    result = []
+    feeder_path = os.path.realpath(base_path() + "/data/Templates/")
+    for subdir, dirs, files in os.walk(feeder_path):
+        for file in files:
+            result.append(file)
+    return result    
+    
 def to_walltime(dt):
     """
     Method to convert a timedelta object into a walltime string for use by submit scripts.
@@ -256,10 +289,8 @@ class ParamsEncoder(json.JSONEncoder):
     a new class is derived from Params.
     """
     def default(self, obj):
-        if isinstance(obj, datetime.timedelta):
-            # serialize datetime.timedelta as string that can be parsed
+        if isinstance(obj, dt.timedelta):
+            # serialize dt.timedelta as string that can be parsed
             return to_walltime(obj)
         return json.JSONEncoder.default(self,obj)
-        
-# def load_timedelta():
-#     return datetime.timedelta(seconds=num_seconds)        
+     

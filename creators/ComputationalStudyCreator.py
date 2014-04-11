@@ -1,12 +1,16 @@
 
 from CreatorBase import Params, ParamDescriptor, Creator, create_choice_descriptor
+from CreatorBase import base_path, to_timedelta, installed_sub_templates, to_walltime
 
 import numpy
 from pyDOE import lhs
 from scipy.stats.distributions import uniform, randint
 
+import jinja2
+
 import copy
-import datetime
+import datetime as dt
+import math
 import os
 import re
 import shutil
@@ -53,6 +57,22 @@ class ComputationalStudyParams(Params):
             index += 10
             
         self.creator = creator
+        
+        schema["sub_template"] = ParamDescriptor(
+            "sub_template",
+            "Batch submission script template.",
+            index,
+            False,
+            None,
+            None, # jinja2 FileSystemLoader handles the default location
+            installed_sub_templates)
+        schema["time_per_job"] = ParamDescriptor(
+            "time_per_job",
+            "Approximate length of time per job (datetime.timedelta object).",
+            index + 1,
+            False,
+            dt.timedelta(minutes=30),
+            to_timedelta)
     
     def valid(self):
         result = Params.valid(self)
@@ -335,6 +355,8 @@ class ComputationalStudyCreator(Creator):
         else :
             assert study_type == "full_factorial"
             self.__full_factorial()
+            
+        return self.out_dir
                 
     def __full_factorial(self): 
         # should only contain "list" arguments
@@ -394,13 +416,74 @@ class ComputationalStudyCreator(Creator):
         self.__run_sub_creator(arg_names,points)        
     
     def __run_sub_creator(self,arg_names,arg_values): 
+        samples = []
         for point in arg_values:
             assert(len(arg_names) == len(point))
             index = 0
             for value in point:
                 self.params.creator.params[arg_names[index]] = value
                 index += 1
-            self.params.creator.create()
+            case_name = self.params.creator.create()
+            samples.append(case_name)
+            
+        # populate sub template and save to case folder
+        template_path = self.params["sub_template"]
+        if template_path is not None:        
+            time_per_job = self.__round_time_per_job(self.params["time_per_job"])
+            batch_job_walltime = dt.timedelta(seconds=((math.ceil(len(samples) / 24) + 1) * 
+                                                      time_per_job.total_seconds()))
+            if batch_job_walltime < dt.timedelta(minutes=15):
+                batch_job_walltime = dt.timedelta(minutes=15)
+            env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.realpath(base_path() + "/data/Templates")),
+                                     trim_blocks=True,
+                                     lstrip_blocks=True)
+            template = env.get_template(template_path)
+            things = {}
+            things["to_walltime"] = to_walltime
+            things["batch_job_walltime"] = batch_job_walltime
+            things["study_name"] = os.path.basename(os.path.normpath(self.out_dir))
+            things["datetime"] = dt
+            things["datetime.timedelta"] = dt.timedelta
+            things["range"] = range
+            things["len"] = len
+            things["samples"] = samples
+            things["sleep_str"] = self.__to_sleep_str(time_per_job)
+            f = open(os.path.realpath(self.out_dir + "/run_script.sub"),'w')
+            f.write(template.render(things))     
+
+    def __round_time_per_job(self,time_per_job):
+        n_days = time_per_job.days
+        n_hours = time_per_job.seconds // 3600
+        n_mins = (time_per_job.seconds // 60 ) % 60
+        n_secs = time_per_job.seconds % 60
+        if n_days > 0:
+            if n_hours > 0:
+                n_days += 1
+            return dt.timedelta(days=n_days)
+        if n_hours > 0:
+            if n_mins > 0:
+                n_hours += 1
+            return dt.timedelta(hours=n_hours)
+        if n_mins > 0:
+            if n_secs > 0:
+                n_mins += 1
+            return dt.timedelta(minutes=n_mins)
+        if n_secs == 0:
+            n_secs = 1
+        return dt.timedelta(seconds=n_secs)
+        
+    def __to_sleep_str(self,time_per_job):
+        n_days = time_per_job.days
+        n_hours = time_per_job.seconds // 3600
+        n_mins = (time_per_job.seconds // 60 ) % 60
+        n_secs = time_per_job.seconds % 60
+        if n_days > 0:
+            return "{:d}d".format(n_days)
+        if n_hours > 0:
+            return "{:d}h".format(n_hours)
+        if n_mins > 0:
+            return "{:d}m".format(n_mins)
+        return "{:d}s".format(n_secs)
             
 def to_from_number_transforms(obj):
     """
@@ -413,8 +496,8 @@ def to_from_number_transforms(obj):
     @rtype: (function, function)
     @return: First function in tuple is to_number(obj) function. Second is from_number(num).
     """
-    if isinstance(obj, datetime.timedelta):
-        return (lambda x: x.total_seconds(), lambda x: datetime.timedelta(seconds=x))
+    if isinstance(obj, dt.timedelta):
+        return (lambda x: x.total_seconds(), lambda x: dt.timedelta(seconds=x))
     return (lambda x: x, lambda x: x)
 
 def main(argv): pass

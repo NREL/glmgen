@@ -1,13 +1,13 @@
 
-from CreatorBase import Params, ParamDescriptor, Creator, base_path, to_walltime
+from CreatorBase import Params, ParamDescriptor, Creator
+from CreatorBase import base_path, to_timedelta, installed_sub_templates, to_walltime
 
 import feeder
 from makeGLM import makeGLM
 
 import jinja2
 
-import datetime
-import numpy
+import datetime as dt
 import os
 import re
 import pandas
@@ -35,14 +35,14 @@ class ComputationalCaseParams(Params):
             "How long the gridlabd simulation should run.",
             1,
             False,
-            datetime.timedelta(hours=1),
+            dt.timedelta(hours=1),
             to_timedelta)
     #     schema["sim_timestep"] = ParamDescriptor(
     #         "sim_timestep",
     #         "Minimum gridlabd timestep.",
     #         2,
     #         False,
-    #         datetime.timedelta(minutes=1),
+    #         dt.timedelta(minutes=1),
     #         to_timedelta)
         schema["technology"] = ParamDescriptor(
             "technology",
@@ -154,8 +154,8 @@ class ComputationalCaseCreator(Creator):
         # populate sub template and save to case folder
         template_path = self.params["sub_template"]
         if template_path is not None:        
-            batch_job_walltime = datetime.timedelta(seconds=(1.0/self.params["compute_efficiency"]) * 
-                                                            self.params["sim_duration"].total_seconds())
+            batch_job_walltime = dt.timedelta(seconds=(1.0/self.params["compute_efficiency"]) * 
+                                              self.params["sim_duration"].total_seconds())
             env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.realpath(base_path() + "/data/Templates")),
                                      trim_blocks=True,
                                      lstrip_blocks=True)
@@ -165,11 +165,12 @@ class ComputationalCaseCreator(Creator):
             things["batch_job_walltime"] = batch_job_walltime
             things["case_name"] = case_name
             things["datetime"] = datetime
-            things["datetime.timedelta"] = datetime.timedelta
+            things["datetime.timedelta"] = dt.timedelta
             f = open(os.path.realpath(case_name + "/run_script.sub"),'w')
             f.write(template.render(things))
         
         os.chdir(original_dir)
+        return case_name
         
     @staticmethod
     def load(json_dict): 
@@ -188,10 +189,10 @@ class ComputationalCaseCreator(Creator):
         return os.path.splitext(os.path.split(self.params["base_feeder"])[1])[0]
         
     def __sim_duration_dhm(self):
-        dt = self.params["sim_duration"]
-        n_days = dt.days
-        n_hours = dt.seconds // 3600
-        n_mins = (dt.seconds // 60 ) % 60
+        sim_duration = self.params["sim_duration"]
+        n_days = sim_duration.days
+        n_hours = sim_duration.seconds // 3600
+        n_mins = (sim_duration.seconds // 60 ) % 60
         result = ""
         if n_days > 0: result += "{:d}d".format(n_days) 
         if n_hours > 0: result += "{:d}h".format(n_hours)
@@ -199,9 +200,9 @@ class ComputationalCaseCreator(Creator):
         return result
         
     def __get_clock(self):
-        sim_start = datetime.datetime(2020,6,1,0)
+        sim_start = dt.datetime(2020,6,1,0)
         sim_duration = self.params["sim_duration"]
-        warmup_duration = datetime.timedelta(0)
+        warmup_duration = dt.timedelta(0)
         clock = {}
         clock[str(sim_start)] = [str(sim_start - warmup_duration),
                                  str(sim_start + sim_duration)]
@@ -228,40 +229,7 @@ def installed_feeders():
     for subdir, dirs, files in os.walk(feeder_path):
         for file in files:
             result.append(file)
-    return result
-
-def installed_sub_templates():
-    result = []
-    feeder_path = os.path.realpath(base_path() + "/data/Templates/")
-    for subdir, dirs, files in os.walk(feeder_path):
-        for file in files:
-            result.append(file)
-    return result
-    
-def to_timedelta(timedelta): 
-    """
-    Tries to convert timedelta to a real datetime.timedelta, rounded to the 
-    nearest second. Raises a RuntimeError if not successful.
-    """
-    result = None
-    try:
-        if type(timedelta) in [type(datetime.timedelta()), type(numpy.timedelta64())]:
-            result = timedelta
-        else:
-            result = pandas.to_timedelta(timedelta)    
-    except:
-        try:
-            m = re.match('([0-9]{2}):([0-9]{2}):([0-9]{2}):([0-9]{2})',timedelta)
-            result = datetime.timedelta(days=int(m.group(1)),
-                                        hours=int(m.group(2)),
-                                        minutes=int(m.group(3)),
-                                        seconds=int(m.group(4)))
-        except:
-            raise RuntimeError("Could not convert {:s} to datetime.timedelta.".format(timedelta))
-    # round to nearest second
-    result = datetime.timedelta(seconds=round(result.total_seconds()))
-    return result
-        
+    return result        
 
 def main(argv): pass
   # print params template json file
