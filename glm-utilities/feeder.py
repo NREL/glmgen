@@ -100,7 +100,7 @@ def dictToString(inDict):
 						warnings.warn("{:s} argument is longer that 64 characters. Truncating.".format(key), RuntimeWarning)
 						otherKeyValues += ('\t' + key + ' ' + inDict[key][0:62] + '; // truncated from {:s}\n'.format(inDict[key]))
 				else:
-					otherKeyValues += ('\t' + key + ' ' + inDict[key] + ';\n')
+					otherKeyValues += ('\t' + key + ' ' + str(inDict[key]) + ';\n')
 		return otherKeyValues
 	# Handle the different types of dictionaries that are leafs of the tree root:
 	if 'omftype' in inDict:
