@@ -138,18 +138,21 @@ class ComputationalCaseCreator(Creator):
         
         # make glm file and save to case folder
         glm_dict = feeder.parse(self.params["base_feeder"])
-        generated_taxonomy_feeder_paths = makeGLM(self.__get_clock(),
-                                                  None,
-                                                  glm_dict,
-                                                  self.params["technology"],
-                                                  None,
-                                                  case_name)
+        generated_taxonomy_feeder_paths = makeGLM(
+            self.__get_clock(),
+            None,
+            glm_dict,
+            self.params["technology"],
+            None,
+            case_name,
+            "../{:s}".format(rel_resources_dir) if rel_resources_dir is not None else 'schedules')
                 
         # get and save or verify resources
         if rel_resources_dir is None:
             rel_resources_dir = case_name + "/schedules"
         resources_source_dir = os.path.realpath(base_path() + "/glm-utilities/schedules")
-        shutil.copytree(resources_source_dir,rel_resources_dir)
+        if not os.path.exists(rel_resources_dir):
+            shutil.copytree(resources_source_dir,rel_resources_dir)
         
         # populate sub template and save to case folder
         template_path = self.params["sub_template"]
