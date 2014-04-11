@@ -17,7 +17,8 @@ def test_all_technologies_one_feeder():
     study_params["sub_template"] = "run_study.sub.template"
     study_params["time_per_job"] = dt.timedelta(minutes=(15/100.0)) # 9 s per job
     out_dir = "test_results/all_technologies_one_feeder"
-    study_creator = ComputationalStudyCreator(out_dir,study_params)
+    resources_dir = out_dir + "/resources"
+    study_creator = ComputationalStudyCreator(out_dir,study_params,resources_dir)
     study_creator.create()
     
 def test_sample_technologies_feeders(): pass

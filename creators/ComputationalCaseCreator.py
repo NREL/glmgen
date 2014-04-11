@@ -108,6 +108,13 @@ class ComputationalCaseCreator(Creator):
         Creator.__init__(self,out_dir, params, resources_dir)
         
     def create(self):    
+        # determine resources_dir relative to out_dir
+        rel_resources_dir = None
+        if self.resources_dir is not None:
+            rel_resources_dir = os.path.realpath(self.resources_dir)
+            temp_out_dir = os.path.realpath(self.out_dir)
+            rel_resources_dir = os.path.relpath(rel_resources_dir,temp_out_dir)            
+    
         # switch to out_dir or parent of out_dir; make out_dir if needed
         if not os.path.exists(self.out_dir):
             if os.path.exists(os.path.dirname(self.out_dir)):
@@ -137,18 +144,12 @@ class ComputationalCaseCreator(Creator):
                                                   self.params["technology"],
                                                   None,
                                                   case_name)
-        glm_file_name = "model.glm"
-        for subdir, dirs, files in os.walk(case_name):
-            for file in files:
-               if os.path.splitext(file)[1] == ".glm":
-                   print("Renaming {:s}/{:s} to {:s}/{:s}.".format(case_name,file,case_name,glm_file_name))
-                   shutil.move(os.path.realpath(case_name + "/" + file),
-                               os.path.realpath(case_name + "/" + glm_file_name))
                 
         # get and save or verify resources
-        schedules_dir = os.path.realpath(case_name + "/schedules")
-        schedules_source_dir = os.path.realpath(base_path() + "/glm-utilities/schedules")
-        shutil.copytree(schedules_source_dir,schedules_dir)
+        if rel_resources_dir is None:
+            rel_resources_dir = case_name + "/schedules"
+        resources_source_dir = os.path.realpath(base_path() + "/glm-utilities/schedules")
+        shutil.copytree(resources_source_dir,rel_resources_dir)
         
         # populate sub template and save to case folder
         template_path = self.params["sub_template"]
