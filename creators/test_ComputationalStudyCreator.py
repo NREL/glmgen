@@ -11,7 +11,7 @@ def basic_case_creator():
     params = ComputationalCaseParams()
     params["base_feeder"] = "R1-12.47-2.glm"
     params["sub_template"] = "run_script.sub.template"
-    out_dir = "test_results"
+    out_dir = "./test_results"
     return ComputationalCaseCreator(out_dir,params)
 
 def test_study_type_refresh():
@@ -22,7 +22,7 @@ def test_study_type_refresh():
     assert (params["num_samples"] == 100)
     params["study_type"] = "full_factorial"
     assert (params["num_samples"] is None)
-    p = "test_results/study_type_refresh.json"
+    p = "./test_results/study_type_refresh.json"
     params.save(p)
     
 def test_valid_params():
@@ -42,7 +42,7 @@ def test_valid_params():
     params["study_type"] = "lhs"
     params["num_samples"] = 24
     assert params.valid()
-    p = "test_results/valid_params.json"
+    p = "./test_results/valid_params.json"
     params.save(p)
     
 def test_full_factorial():
@@ -52,9 +52,9 @@ def test_full_factorial():
     assert (params.get_param_type("base_feeder") == "list")
     params[params.param_name("sim_duration")] = [datetime.timedelta(hours=1),datetime.timedelta(hours=24)]
     assert (params.get_param_type("sim_duration") == "list")
-    p = "test_results/full_factorial.json"
+    p = "./test_results/full_factorial.json"
     params.save(p)    
-    out_dir = os.path.realpath("test_results/full_factorial")
+    out_dir = os.path.realpath("./test_results/full_factorial")
     if not os.path.exists(os.path.dirname(out_dir)):
         os.mkdir(os.path.dirname(out_dir))
     creator = ComputationalStudyCreator(out_dir,params)
@@ -71,9 +71,9 @@ def test_lhs():
     assert (params.get_param_type("base_feeder") == "list")
     params[params.param_name("sim_duration")] = (datetime.timedelta(hours=1),datetime.timedelta(days=30))
     assert (params.get_param_type("sim_duration") == "range")
-    p = "test_results/lhs.json"
+    p = "./test_results/lhs.json"
     params.save(p)    
-    out_dir = os.path.realpath("test_results/lhs")
+    out_dir = os.path.realpath("./test_results/lhs")
     if not os.path.exists(os.path.dirname(out_dir)):
         os.mkdir(os.path.dirname(out_dir))
     creator = ComputationalStudyCreator(out_dir,params)
@@ -88,10 +88,10 @@ def test_lhs_from_json():
     params["num_samples"] = 5
     params[params.param_name("base_feeder")] = installed_feeders()
     params[params.param_name("sim_duration")] = (datetime.timedelta(minutes=5),datetime.timedelta(days=1))
-    p = "test_results/lhs_from_json.json"
+    p = "./test_results/lhs_from_json.json"
     params.save(p)
     loaded_params = CreatorFactory.load(p)
-    out_dir = "test_results/lhs_from_json"
+    out_dir = "./test_results/lhs_from_json"
     if not os.path.exists(os.path.dirname(out_dir)):
         os.mkdir(os.path.dirname(out_dir))    
     creator = ComputationalStudyCreator(out_dir,loaded_params)

@@ -30,7 +30,7 @@ def makeGLM(clock, calib_file, baseGLM, case_flag, feeder_config, dir, resources
   # Create populated dictionary.
   if calib_file is not None:
     print ('Populating feeder using calibration file '+calib_file+'.')
-    calib_fullpath = dir+'\\'+calib_file
+    calib_fullpath = dir+'/'+calib_file
   else:
     print ('Populating feeder using default calibrations.')
     calib_fullpath = None
@@ -107,7 +107,7 @@ def makeGLM(clock, calib_file, baseGLM, case_flag, feeder_config, dir, resources
                     
     # Turn dictionary into a *.glm string and print it to a file in the given directory.
     glmstring = feeder.sortedWrite(populated_dict)
-    file = open(dir+'\\'+filename, 'w')
+    file = open(dir+'/'+filename, 'w')
     file.write(glmstring)
     file.close()
     print ("\t"+filename+ " is ready.")
