@@ -28,6 +28,7 @@ pip install -I nose
 Run the tests with this environment activated:
 ```bash
 cd /scratch/username/omf-glm-generator/creators
+export PYTHONPATH=${PYTHONPATH}:/scratch/username/omf-glm-generator/glm-utilities/
 nosetests
 ```
 
