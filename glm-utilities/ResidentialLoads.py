@@ -68,19 +68,19 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
           if use_flags['use_billing'] == 1:
             ResTechDict[last_object_key]['bill_mode'] = 'UNIFORM'
             ResTechDict[last_object_key]['price'] = '{:.5f}'.format(tech_data['flat_price'][config_data['region']])
-            ResTechDict[last_object_key]['monthly_fee'] = '{:s}'.format(tech_data['monthly_fee'])
+            ResTechDict[last_object_key]['monthly_fee'] = '{:d}'.format(tech_data['monthly_fee'])
             ResTechDict[last_object_key]['bill_day'] = '1'
           elif use_flags['use_billing'] == 3:
             ResTechDict[last_object_key]['bill_mode'] = 'UNIFORM'
-            ResTechDict[last_object_key]['power_market'] = '{:s}'.format(tech_data['market_info'][1])
-            ResTechDict[last_object_key]['monthly_fee'] = '{:s}'.format(tech_data['monthly_fee'])
+            ResTechDict[last_object_key]['power_market'] = '{:d}'.format(tech_data['market_info'][1])
+            ResTechDict[last_object_key]['monthly_fee'] = '{:d}'.format(tech_data['monthly_fee'])
             ResTechDict[last_object_key]['bill_day'] = '1'
           last_object_key += 1
           #print('finished triplex_meter')
           # Create an array of parents for the residential thermal storage
           if use_flags['use_ts'] != 0:
             ts_residential_array[0] += 1
-            ts_residential_array[1].append('house{:s}_{:s}'.format(y,my_name))
+            ts_residential_array[1].append('house{:d}_{:s}'.format(y,my_name))
             
           # Create an array of parents for the residential solar
           if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0:
@@ -332,7 +332,10 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
             ResTechDict[last_object_key]['dlc_offset'] = '6'
 
           if (use_flags['use_market'] == 1 or use_flags['use_market'] == 2) and tech_data['use_tech'] == 1:
-            if market_penetration_random[y*len(residential_dict) + x] <= tech_data['market_info'][7]:
+            # brute force way to avoid crash
+            if ((y*len(residential_dict) + x) < len(market_penetration_random)) and \
+               (7 < len(tech_data['market_info'])) and \
+               (market_penetration_random[y*len(residential_dict) + x] <= tech_data['market_info'][7]):
               if ht == 'HP':
                 ResTechDict[last_object_key]['cooling_setpoint'] = '{:.2f}'.format(cool_night)
                 ResTechDict[last_object_key]['heating_setpoint'] = '{:.2f}'.format(cool_night - 3)
@@ -377,7 +380,10 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
             
           # Put in Controller objects for use_flags.use_market = 1 or 2 line 2239
           if (use_flags['use_market'] == 1 or use_flags['use_market'] == 2) and tech_data['use_tech'] == 1:
-            if market_penetration_random[y*len(residential_dict) + x] <= tech_data['market_info'][7]:
+            # brute force way to avoid crash
+            if ((y*len(residential_dict) + x) < len(market_penetration_random)) and \
+               (7 < len(tech_data['market_info'])) and \
+               (market_penetration_random[y*len(residential_dict) + x] <= tech_data['market_info'][7]):
               # TOU or TOU/CPP with technology
   
               # pull in the slider response level

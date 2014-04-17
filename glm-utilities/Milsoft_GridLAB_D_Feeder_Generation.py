@@ -14,6 +14,7 @@ import feeder
 import AddTapeObjects
 import AddLoadShapes
 import copy
+import re
 
 
 def GLD_Feeder(glmDict,case_flag, wdir, resources_dir, configuration_file=None, file_to_extract=None):
@@ -331,11 +332,11 @@ def GLD_Feeder(glmDict,case_flag, wdir, resources_dir, configuration_file=None, 
   # Add groupid's to lines and transformers
   for x in glmCaseDict:
     if 'object' in glmCaseDict[x]:
-      if glmCaseDict[x]['object'] == 'triplex_line':
+      if re.match("triplex_line.*",glmCaseDict[x]['object']):
         glmCaseDict[x]['groupid'] = 'Triplex_Line'
-      elif glmCaseDict[x]['object'] == 'transformer':
+      elif re.match("transformer.*",glmCaseDict[x]['object']):
         glmCaseDict[x]['groupid'] = 'Distribution_Trans'
-      elif glmCaseDict[x]['object'] == 'overhead_line' or glmCaseDict[x]['object'] == 'underground_line':
+      elif re.match("overhead_line.*",glmCaseDict[x]['object']) or re.match("underground_line.*",glmCaseDict[x]['object']):
         glmCaseDict[x]['groupid'] = 'Distribution_Line'
   
   #print('finished copying base glm\n')
@@ -347,7 +348,7 @@ def GLD_Feeder(glmDict,case_flag, wdir, resources_dir, configuration_file=None, 
     commercial_key = 0
 
     for x in glmCaseDict:
-      if 'object' in glmCaseDict[x] and glmCaseDict[x]['object'] == 'load':
+      if 'object' in glmCaseDict[x] and re.match("load.*",glmCaseDict[x]['object']):
         commercial_dict[commercial_key] = {'name' : glmCaseDict[x]['name'],
                            'parent' : 'None',
                            'load_classification' : 'None',
@@ -550,7 +551,7 @@ def GLD_Feeder(glmDict,case_flag, wdir, resources_dir, configuration_file=None, 
   if use_flags['use_homes'] == 1:
     residential_key = 0
     for x in glmCaseDict:
-      if 'object' in glmCaseDict[x] and glmCaseDict[x]['object'] == 'triplex_node':
+      if 'object' in glmCaseDict[x] and re.match("triplex_node.*",glmCaseDict[x]['object']):
         if 'power_1' in glmCaseDict[x] or 'power_12' in glmCaseDict[x]:
           residential_dict[residential_key] = {'name' : glmCaseDict[x]['name'],
                              'parent' : 'None',
@@ -773,23 +774,23 @@ def GLD_Feeder(glmDict,case_flag, wdir, resources_dir, configuration_file=None, 
 
   # Tack on residential loads
   if use_flags['use_homes'] != 0:
-    #print('calling ResidentialLoads.py\n')
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
     else:
+      print('calling ResidentialLoads.py with len(residential_dict) = {:d}\n'.format(len(residential_dict)))
       glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir, resources_dir, configuration_file)
   # End addition of residential loads ########################################################################################################################
 
-  # TODO: Call Commercial Function
   if use_flags['use_commercial'] != 0:
-    #print('calling CommercialLoads.py\n')
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
     else:
+      print('calling CommercialLoads.py with len(commercial_dict) = {:d}\n'.format(len(commercial_dict)))
       glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, wdir, resources_dir, configuration_file)
       
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
   if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
+    print('calling Solar_Technology.py\n')
     glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
     
   # Append recorders

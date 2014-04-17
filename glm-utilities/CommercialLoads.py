@@ -280,7 +280,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
 
           if use_flags["use_billing"] == 1:
             glmCaseDict[last_object_key].update( {"bill_mode" : "UNIFORM",
-                                "price" : "{:.5f}".format(tech_data["comm_flat_price"]),
+                                "price" : "{:s}".format(tech_data["comm_flat_price"]),
                                 "monthly_fee" : "{:.2f}".format(tech_data["comm_monthly_fee"]),
                                 "bill_day" : "1"} )
           elif (use_flags["use_billing"] == 2): # TIERED
@@ -437,7 +437,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
               
               if ( (use_flags["use_market"] == 1 or use_flags["use_market"] == 2) and tech_data["use_tech"] == 1):
                 # pull in the slider response level
-                slider = comm_slider_random(jjj);
+                slider = comm_slider_random[jjj];
 
                 s_tstat = 2;
                 hrh = -5+5*(1-slider);
@@ -669,7 +669,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
           # add the conditional billing mode properties
           if (use_flags["use_billing"] == 1):
             glmCaseDict[last_object_key].update({"bill_mode" : "UNIFORM",
-                               "price" : "{:.5f}".format(tech_data["comm_flat_price"]),
+                               "price" : "{:s}".format(tech_data["comm_flat_price"]),
                                "monthly_fee" : "{:.2f}".format(tech_data["comm_monthly_fee"]),
                                "bill_day" : "1"})
           elif (use_flags["use_billing"] == 2): # TIERED
