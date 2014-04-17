@@ -279,8 +279,9 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
             homes_stored = 0
 
           if use_flags["use_billing"] == 1:
+            # tech_data["comm_flat_price"] is a list -- ARBITRARILY choosing first value
             glmCaseDict[last_object_key].update( {"bill_mode" : "UNIFORM",
-                                "price" : "{:s}".format(tech_data["comm_flat_price"]),
+                                "price" : "{:.5f}".format(tech_data["comm_flat_price"][0]),
                                 "monthly_fee" : "{:.2f}".format(tech_data["comm_monthly_fee"]),
                                 "bill_day" : "1"} )
           elif (use_flags["use_billing"] == 2): # TIERED
@@ -668,8 +669,9 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
 
           # add the conditional billing mode properties
           if (use_flags["use_billing"] == 1):
+            # tech_data["comm_flat_price"] is a list -- ARBITRARILY choosing first value
             glmCaseDict[last_object_key].update({"bill_mode" : "UNIFORM",
-                               "price" : "{:s}".format(tech_data["comm_flat_price"]),
+                               "price" : "{:.5f}".format(tech_data["comm_flat_price"][0]),
                                "monthly_fee" : "{:.2f}".format(tech_data["comm_monthly_fee"]),
                                "bill_day" : "1"})
           elif (use_flags["use_billing"] == 2): # TIERED
@@ -1089,8 +1091,9 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
               meters_stored = 1
                             
             if (use_flags["use_billing"] == 1):
+              # tech_data["comm_flat_price"] is a list -- ARBITRARILY choosing first value
               glmCaseDict[last_object_key].update( {"bill_mode" : "UNIFORM",
-                        "price" : "{:.5f}".format(tech_data["comm_flat_price"]),
+                        "price" : "{:.5f}".format(tech_data["comm_flat_price"][0]),
                         "monthly_fee" : "{:.2f}".format(tech_data["comm_monthly_fee"]),
                         "bill_day" : "1"} )
             elif (use_flags["use_billing"] == 2): # TIERED
