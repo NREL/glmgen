@@ -17,7 +17,7 @@ import copy
 import re
 
 
-def GLD_Feeder(glmDict,case_flag, wdir, resources_dir, configuration_file=None, file_to_extract=None):
+def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configuration_file=None):
   #glmDict is a dictionary containing all the objects in WindMIL model represented as equivalent GridLAB-D objects
 
   #case_flag is an integer indicating which technology case to tack on to the GridLAB-D model
@@ -106,7 +106,10 @@ def GLD_Feeder(glmDict,case_flag, wdir, resources_dir, configuration_file=None, 
   glmCaseDict[last_key] = {'#define' : 'stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0'}
   last_key += 1
 
-  glmCaseDict[last_key] = {'#set' : 'minimum_timestep=300'}
+  if (options is not None) and ('minimum_timestep' in options):
+    glmCaseDict[last_key] = {'#set' : 'minimum_timestep={:.0f}'.format(options['minimum_timestep'])}
+  else:
+    glmCaseDict[last_key] = {'#set' : 'minimum_timestep=300'}
   last_key += 1
 
   glmCaseDict[last_key] = {'#set' : 'profiler=1'}

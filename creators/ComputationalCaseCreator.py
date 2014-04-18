@@ -36,13 +36,13 @@ class ComputationalCaseParams(Params):
             False,
             dt.timedelta(hours=1),
             to_timedelta)
-    #     schema["sim_timestep"] = ParamDescriptor(
-    #         "sim_timestep",
-    #         "Minimum gridlabd timestep.",
-    #         2,
-    #         False,
-    #         dt.timedelta(minutes=1),
-    #         to_timedelta)
+        schema["sim_timestep"] = ParamDescriptor(
+            "sim_timestep",
+            "Minimum gridlabd timestep.",
+            2,
+            False,
+            dt.timedelta(minutes=1),
+            to_timedelta)
         schema["technology"] = ParamDescriptor(
             "technology",
             "Technology case to apply to the feeder.",
@@ -136,6 +136,10 @@ class ComputationalCaseCreator(Creator):
             shutil.rmtree(case_name)
         os.mkdir(case_name)
         
+        # compile options
+        options = {}
+        options['minimum_timestep'] = self.params["sim_timestep"].total_seconds()
+        
         # make glm file and save to case folder
         glm_dict = feeder.parse(self.params["base_feeder"])
         generated_taxonomy_feeder_paths = makeGLM(
@@ -143,7 +147,7 @@ class ComputationalCaseCreator(Creator):
             None,
             glm_dict,
             self.params["technology"],
-            None,
+            options,
             case_name,
             "../{:s}".format(rel_resources_dir) if rel_resources_dir is not None else 'schedules')
                 

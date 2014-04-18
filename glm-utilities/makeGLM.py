@@ -17,14 +17,14 @@ use_mysql = 0 # 0 => .csv files; 1 => mysql database
 schema = 'CalibrationDB'
 
 
-def makeGLM(clock, calib_file, baseGLM, case_flag, feeder_config, dir, resources_dir='schedules'):
+def makeGLM(clock, calib_file, baseGLM, case_flag, options, dir, resources_dir='schedules'):
   '''Create populated dict and write it to .glm file
   
   - clock (dictionary) links the three seasonal dates with start and stop timestamps (start simulation full 24 hour before day we're recording)
   - calib_file (string) -- filename of one of the calibration files generated during a calibration round 
   - baseGLM (dictionary) -- orignal base dictionary for use in Milsoft_GridLAB_D_Feeder_Generation.py
   - case_flag (int) -- flag technologies to test
-  - feeder_config (string TODO: this is future work, leave as 'None')-- feeder configuration file (weather, sizing, etc)
+  - options -- parameters we want to override for CPE
   - dir(string)-- directory in which to store created .glm files
   '''
   # Create populated dictionary.
@@ -39,8 +39,8 @@ def makeGLM(clock, calib_file, baseGLM, case_flag, feeder_config, dir, resources
       case_flag,
       dir,
       resources_dir,
-      calib_fullpath,
-      feeder_config) 
+      options,
+      calib_fullpath) 
   
   fnames =  []
   for i in clock.keys():
