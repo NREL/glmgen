@@ -581,7 +581,7 @@ def TechnologyParametersFunc(use_flags, TechToTest):
 	if (use_flags["use_solar"] ==1 or use_flags["use_solar_res"] == 1 or use_flags["use_solar_com"] == 1):
 		data["Rated_Insolation"] = 92.902; #W/Sf for 1000 W/m2
 		data["efficiency_solar"] = 0.2; 
-		data["solar_averagepower"] = 4 #For solar residential
+		data["solar_averagepower_residential"] = 4 #For solar residential
 		data["solar_averagepower_stripmall"] = 10 #For solar stripmall
 		data["solar_averagepower_office"] = 100 #For solar commercial (offices)
 		data["solar_averagepower_bigbox"] = 100 #For solar commercial (bigbox)

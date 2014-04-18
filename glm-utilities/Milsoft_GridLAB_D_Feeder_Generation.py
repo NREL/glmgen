@@ -52,6 +52,10 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   #print("Calling configuration.py\n")
   # Get information about each feeder from Configuration() and  TechnologyParameters()
   config_data = Configuration.ConfigurationFunc(wdir,resources_dir,configuration_file,None,None)
+  
+  if options is not None:
+    if 'minimum_timestep' in options:
+        config_data['solar_penetration'] = options['solar_penetration'] # %
 
   #set up default flags
   use_flags = {}
@@ -794,7 +798,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
   if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
     print('calling Solar_Technology.py\n')
-    glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
+    glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, tech_data, last_key, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array)
     
   # Append recorders
   #glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict,case_flag,0,1,'four_node_basecase_test', last_key)

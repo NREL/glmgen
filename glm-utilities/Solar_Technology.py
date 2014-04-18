@@ -15,6 +15,8 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
     # Initialize psuedo-random seed
     random.seed(4)
     
+    print("Solar penetration = {:.0f}".format(config_data["solar_penetration"]))
+    
     # Populating solar as percentage of feeder peak load
     # Add Commercial PV
     if use_flags['use_solar'] != 0 or use_flags['use_solar_com'] != 0:
@@ -22,7 +24,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
         random.seed(4)
         
         # Determine solar penetrations for each of the three types of commercial configurations
-        if solar_stripmall_array == None and solar_bigbox_array == None and solar_office_array != None: # Have stripmalls only
+        if solar_stripmall_array == None and solar_bigbox_array == None and solar_office_array != None: # Have offices only
             penetration_stripmall = 0
             penetration_bigbox = 0
             penetration_office = config_data['solar_penetration']
@@ -30,7 +32,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
             penetration_stripmall = 0
             penetration_bigbox = config_data['solar_penetration']
             penetration_office = 0
-        elif solar_stripmall_array != None and solar_bigbox_array == None and solar_office_array == None: # Have offices only
+        elif solar_stripmall_array != None and solar_bigbox_array == None and solar_office_array == None: # Have stripmalls only
             penetration_stripmall = config_data['solar_penetration']
             penetration_bigbox = 0
             penetration_office = 0
@@ -59,7 +61,8 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
             
             # Create a randomized list of numbers 0 to total_office_number
             random_index = []
-            random_index = random.sample(list(xrange(total_office_number)),total_office_number);
+            random_index = random.sample(list(xrange(total_office_number)),
+                                         total_office_number);
             
             # Determine how many units to attach to each office building
             pv_units_per_office = int(math.ceil(total_office_pv_units / total_office_number))
@@ -85,7 +88,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
                                                   'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
-                                                  'group_id' : 'Commercial_m_solar_office'}
+                                                  'groupid' : 'Commercial_m_solar_office'}
                         
                         # Write the PV inverter
                         last_key += 1
@@ -117,7 +120,8 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
             
             # Create a randomized list of numbers 0 to total_bigbox_number
             random_index = []
-            random_index = random.sample(list(xrange(total_bigbox_number)),total_office_number);
+            random_index = random.sample(list(xrange(total_bigbox_number)),
+                                         total_bigbox_number);
             
             # Determine how many units to attach to each bigbox building
             pv_units_per_bigbox = int(math.ceil(total_bigbox_pv_units / total_bigbox_number))
@@ -143,7 +147,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
                                                   'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
-                                                  'group_id' : 'Commercial_m_solar_bigbox'}
+                                                  'groupid' : 'Commercial_m_solar_bigbox'}
                         
                         # Write the PV inverter
                         last_key += 1
@@ -175,10 +179,13 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
             
             # Create a randomized list of numbers 0 to total_stripmall_number
             random_index = []
-            random_index = random.sample(list(xrange(total_stripmall_number)),total_office_number);
+            random_index = random.sample(list(xrange(total_stripmall_number)),
+                                         total_stripmall_number);
             
             # Determine how many units to attach to each stripmall building
-            pv_units_per_stripmall = int(math.ceil(total_stripmall_pv_units / total_stripmall_number))
+            pv_units_per_stripmall = 0
+            if total_stripmall_number > 0:
+                pv_units_per_stripmall = int(math.ceil(total_stripmall_pv_units / total_stripmall_number))
             
             # Attach PV units to dictionary
             pv_unit = 0
@@ -201,7 +208,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
                                                   'nominal_voltage' : '120',
-                                                  'group_id' : 'Commercial_tm_solar_stripmall'}
+                                                  'groupid' : 'Commercial_tm_solar_stripmall'}
                         
                         # Write the PV inverter
                         last_key += 1
@@ -245,7 +252,8 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
             
             # Create a randomized list of numbers 0 to total_residential_number
             random_index = []
-            random_index = random.sample(list(xrange(total_residential_number)),total_office_number);
+            random_index = random.sample(list(xrange(total_residential_number)),
+                                         total_residential_number);
             
             # Determine how many units to attach to each residential house
             pv_units_per_residential = int(math.ceil(total_residential_pv_units / total_residential_number))
@@ -271,7 +279,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
                                                   'nominal_voltage' : '120',
-                                                  'group_id' : 'Residential_tm_solar'}
+                                                  'groupid' : 'Residential_tm_solar'}
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',

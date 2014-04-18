@@ -46,20 +46,27 @@ class ComputationalCaseParams(Params):
         schema["technology"] = ParamDescriptor(
             "technology",
             "Technology case to apply to the feeder.",
-            2,
+            3,
             False,
             0,
             None,
             [-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13])
+        schema["solar_penetration"] = ParamDescriptor(
+            "solar_penetration",
+            "Solar penetration (%).",
+            4,
+            False,
+            0.0,
+            lambda x: assert_bounds(x,0.0,100.0))
         schema["case_name"] = ParamDescriptor(
             "case_name",
             "User defined case name. Will compose one from other parameters if not provided.",
-            3,
+            5,
             False)
         schema["sub_template"] = ParamDescriptor(
             "sub_template",
             "Batch submission script template.",
-            4,
+            6,
             False,
             None,
             None, # jinja2 FileSystemLoader handles the default location
@@ -67,7 +74,7 @@ class ComputationalCaseParams(Params):
         schema["compute_efficiency"] = ParamDescriptor(
             "compute_efficiency",
             "Ratio of simulated time to computation time (e.g. 100 for '100 times faster than real time'). Used to set walltime in the batch submission script.",
-            5,
+            7,
             False,
             100.0)            
             
@@ -138,7 +145,8 @@ class ComputationalCaseCreator(Creator):
         
         # compile options
         options = {}
-        options['minimum_timestep'] = self.params["sim_timestep"].total_seconds()
+        options['minimum_timestep'] = self.params['sim_timestep'].total_seconds()
+        options['solar_penetration'] = self.params['solar_penetration']
         
         # make glm file and save to case folder
         glm_dict = feeder.parse(self.params["base_feeder"])
@@ -237,6 +245,11 @@ def installed_feeders():
         for file in files:
             result.append(file)
     return result        
+    
+def assert_bounds(x,lb,ub):
+    if (x < lb) or (x > ub):
+        raise RuntimeError("Value is not within bounds.")
+    return x
 
 def main(argv): pass
   # print params template json file
