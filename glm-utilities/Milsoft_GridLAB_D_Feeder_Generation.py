@@ -54,7 +54,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   config_data = Configuration.ConfigurationFunc(wdir,resources_dir,configuration_file,None,None)
   
   if options is not None:
-    if 'minimum_timestep' in options:
+    if 'solar_penetration' in options:
         config_data['solar_penetration'] = options['solar_penetration'] # %
 
   #set up default flags
