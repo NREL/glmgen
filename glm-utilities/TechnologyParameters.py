@@ -491,7 +491,7 @@ def TechnologyParametersFunc(use_flags, TechToTest):
 		# period, 
 		# mean, 
 		# stdev, 
-		# max slider setting (xrange: 0.001 - 1; NOTE: do not use zero;
+		# max slider setting (range: 0.001 - 1; NOTE: do not use zero;
 		# name of the price player/schedule)
 		# percent penetration,
 		if (use_flags["use_market"] == 1):

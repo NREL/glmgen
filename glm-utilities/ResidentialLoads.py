@@ -47,16 +47,16 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
         heat_sp = []
         sfh = list(map(lambda a,b:a*b,config_data['SFH'],thermal_integrity)) # Number of single-family homes in each subclass
         
-        #xrange(thermal_integrity.length)
-        for y in xrange(len(thermal_integrity)):
+        #range(thermal_integrity.length)
+        for y in range(len(thermal_integrity)):
           cool_sp.append([])
           heat_sp.append([])
-          for z in xrange(len(config_data['cooling_setpoint'])):
+          for z in range(len(config_data['cooling_setpoint'])):
             cool_sp[y].append(math.ceil(config_data['cooling_setpoint'][z][0] * thermal_integrity[y]))
             heat_sp[y].append(math.ceil(config_data['heating_setpoint'][z][0] * thermal_integrity[y]))
         #print('iterating over number of houses')
         # Start adding house dictionaries
-        for y in xrange(no_houses):
+        for y in range(no_houses):
           ResTechDict[last_object_key] = {'object' : 'triplex_meter',
                           'phases' : '{:s}'.format(phase),
                           'name' : 'tpm{:d}_{:s}'.format(y,my_name),
@@ -127,7 +127,7 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
           # and set the thermal integrity of said building
           size_a = len(thermal_integrity)
           
-          for z in xrange(len(thermal_integrity)):
+          for z in range(len(thermal_integrity)):
             if type(thermal_integrity[z]) == type([]):# Checks to see if contents of thermal_integrity are lists
               size_b = len(thermal_integrity[z])
             else:
@@ -389,7 +389,7 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
               # pull in the slider response level
               slider = slider_random[y*len(residential_dict) + x]
   
-              # set the pre-cool / pre-heat xrange to really small
+              # set the pre-cool / pre-heat range to really small
               # to get rid of it.
               s_tstat = 2
               hrh = -5 + 5*(1-slider)

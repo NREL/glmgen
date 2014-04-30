@@ -145,7 +145,7 @@ class Params(dict):
             result += "{:s}: {:s}\n".format(pair[0],str(pair[1]))
         result += '\nDescriptors:\n\n'
         for descriptor in self.__sorted_descriptors():
-            result += "{:s}\n\n".format(descriptor)
+            result += "{:s}\n\n".format(str(descriptor))
         return result
         
     def schema(self):

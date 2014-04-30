@@ -238,7 +238,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
                         "powerC_rating" : "50 kVA"}
         last_object_key += 1
         #print('iterating over number of offices')
-        for jjj in xrange(no_of_offices):
+        for jjj in range(no_of_offices):
           floor_area_choose = 40000 * (0.5 * random.random() + 0.5); #up to -50# #config_data.floor_area
           ceiling_height = 13;
           airchange_per_hour = 0.69;
@@ -295,7 +295,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
           
           #for phind = 1:3 #for each of three floors (5 zones each)
           #for phind = 1:no_of_phases #jlh
-          for phind in xrange(no_of_phases):
+          for phind in range(no_of_phases):
             glmCaseDict[last_object_key] = {"object" : "transformer",
                             "name" : "{:s}_CTTF_{:s}_{:.0f}".format(my_name,ph[phind],jjj),
                             "phases" : "{:s}S".format(ph[phind]),
@@ -333,7 +333,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
           elif (no_of_phases == 1):
             zones_per_phase = [has_phase_A*15, has_phase_B*15, has_phase_C*15]
           
-          for flrind in xrange(1,4): # for each of three floors (5 zones each) #jlh
+          for flrind in range(1,4): # for each of three floors (5 zones each) #jlh
             # skew each office zone identically per floor
             sk = round(2*random.normalvariate(0,1))
             skew_value = tech_data["commercial_skew_std"] * sk
@@ -342,7 +342,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
             elif (skew_value > tech_data["commercial_skew_max"]):
               skew_value = tech_data["commercial_skew_max"]
 
-            for zoneind in xrange(1,6):
+            for zoneind in range(1,6):
               # determine phase #jlh
               if (zones_per_phase[0]>0):
                 phind = 0
@@ -627,7 +627,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
                           "powerC_rating" : "50 kVA"}
           last_object_key += 1;
         #print('iterating over number of big boxes')
-        for jjj in xrange(no_of_bigboxes):
+        for jjj in range(no_of_bigboxes):
           floor_area_choose = 20000 * (0.5 + 1 * random.random()); #+/- 50#
           ceiling_height = 14;
           airchange_per_hour = 1.5;
@@ -693,7 +693,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
 
           total_index = 0;
 
-          for phind in xrange(no_of_phases):
+          for phind in range(no_of_phases):
             glmCaseDict[last_object_key] = {"object" : "transformer",
                             "name" : "{:s}_CTTF_{:s}_{:.0f}".format(my_name,ph[phind],jjj),
                             "phases" : "{:s}S".format(ph[phind]),
@@ -711,7 +711,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
             last_object_key += 1;
 
             zones_per_phase = int(6 / no_of_phases);
-            for zoneind in xrange(zones_per_phase):
+            for zoneind in range(zones_per_phase):
               total_index = total_index + 1;
               thermal_mass_per_floor_area = 3.9 * (0.8 + 0.4 * random.random()); #+/- 20#
               floor_area = floor_area_choose / 6;
@@ -1004,7 +1004,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
           ts_bigbox_array[0] += 1
           homes_stored = 0
         #print('iterating over number of stripmalls')    
-        for phind in xrange(no_of_phases):
+        for phind in range(no_of_phases):
           floor_area_choose = 2400 * (0.7 + 0.6 * random.random()); #+/- 30#
           ceiling_height = 12;
           airchange_per_hour = 1.76;
@@ -1020,7 +1020,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
           thermal_mass_per_floor_area = 3.9 * (0.5 + 1 * random.random()); #+/- 50#
           exterior_ceiling_fraction = 1;
 
-          for jjj in xrange(strip_per_phase):
+          for jjj in range(strip_per_phase):
             # skew each office zone identically per floor
             sk = round(2*random.normalvariate(0,1));
             skew_value = tech_data["commercial_skew_std"] * sk

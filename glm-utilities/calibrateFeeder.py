@@ -52,7 +52,7 @@ def applyWeights (w,su,wi,sh):
 	score = 0;
 	c = 0;
 	for j in [su,wi,sh]:
-		for i in xrange (len(j)):
+		for i in range (len(j)):
 			score = score + (w[c][i]*abs(j[i]));
 		c = c + 1;
 	return score;
@@ -86,12 +86,12 @@ def warnOutliers(metrics,tofile):
 	season_titles = ['Summer', 'Winter', 'Spring']
 	metric_titles = ['Peak Value', 'Peak Time', 'Total Energy', 'Min. Value', 'Min. Time']
 	warn = {'50%':[], '20%':[], '10%':[], '0%':[] }
-	for seasonID in xrange(3):
+	for seasonID in range(3):
 		if tofile == 1:
 			pass
 		else:
 			print ("\n")
-		for metricID in xrange(5):
+		for metricID in range(5):
 			if tofile == 1:
 				stats_log.write(str(round(metrics[seasonID][metricID],2)) + ",\t")
 			else:

@@ -12,6 +12,8 @@ def test_params():
     assert not params.valid()
     print(params)
     p = "./test_results/params.json"
+    if not os.path.exists(os.path.dirname(p)):
+        os.mkdir(os.path.dirname(p))    
     params.save(p)
     
 def test_schema_getter():
@@ -25,7 +27,9 @@ def test_schema_getter():
     assert not (schema["base_feeder"].description == params.schema()["base_feeder"].description)
     params["base_feeder"] = "R1-12.47-1.glm"
     assert os.path.exists(params["base_feeder"])
-    p = "./test_results/schema_getter.json"
+    p = "./test_results/schema_getter.json"    
+    if not os.path.exists(os.path.dirname(p)):
+        os.mkdir(os.path.dirname(p))    
     params.save(p)
     
 def test_create_case_simplest():

@@ -66,12 +66,16 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   tmy = config_data['weather']
 
   #find name of swingbus of static model dictionary
-  hit = 0
+  swing_bus_name = None
+  nom_volt = None
   for x in glmDict:
-    if hit < 1 and 'bustype' in glmDict[x] and glmDict[x]['bustype'] == 'SWING':
-      hit = 1
+    if ('bustype' in glmDict[x]) and (glmDict[x]['bustype'] == 'SWING'):
       swing_bus_name = glmDict[x]['name']
       nom_volt = glmDict[x]['nominal_voltage'] # Nominal voltage in V
+      print("Found swing bus '{:s}' with nominal voltage {:s} V".format(swing_bus_name,nom_volt))
+      break
+  assert(swing_bus_name is not None)
+  assert(nom_volt is not None)
 
   # Create new case dictionary
   glmCaseDict = {}
@@ -267,7 +271,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     if num_caps > 0:
       glmCaseDict[last_key]['capacitor_list'] = '"'
 
-      for x in xrange(num_caps):
+      for x in range(num_caps):
         if x < (num_caps - 1):
           glmCaseDict[last_key]['capacitor_list'] = glmCaseDict[last_key]['capacitor_list'] + '{:s},'.format(config_data['capacitor_outage'][x][0])
         else:
@@ -278,7 +282,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     num_eol = len(config_data['EOL_points'])
     glmCaseDict[last_key]['voltage_measurements'] = '"'
 
-    for x in xrange(num_eol):
+    for x in range(num_eol):
       if x < (num_eol - 1):
         glmCaseDict[last_key]['voltage_measurements'] = glmCaseDict[last_key]['voltage_measurements'] + '{:s},{:d},'.format(config_data['EOL_points'][x][0],config_data['EOL_points'][x][2])
       else:
@@ -718,7 +722,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
       # Make a large array so we don't run out
       if len(residential_dict) > 0:
         aa = len(residential_dict)*total_house_number
-        for x in xrange(aa):
+        for x in range(aa):
           market_penetration_random.append(random.random())
           dlc_rand.append(random.random()) # Used for dlc randomization
 
@@ -741,13 +745,13 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
         multiplier = 3.6
         xval = []
         elasticity_random = []
-        for x in xrange(aa):
+        for x in range(aa):
           xval.append(random.random())
           elasticity_random.append(multiplier * math.exp(-1 / (2 * pow(sigma,2))) * pow((math.log(xval[x]) - mu),2) / (xval[x] * sigma * math.sqrt(2 * math.pi)))
 
       if len(commercial_dict) > 0:
         aa = len(commercial_dict)*15*100
-        for x in xrange(aa):
+        for x in range(aa):
           # Limit slider randomization to Olypen style
           comm_slider_random.append(random.normalvariate(0.45,0.2))
           if comm_slider_random[x] > tech_data['market_info'][4]:

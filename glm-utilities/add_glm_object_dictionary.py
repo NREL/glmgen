@@ -959,7 +959,7 @@ def create_glm_object_dictionary(glm_dict,glm_object,glm_parameters):
             
 		#Create object dictionary in glm dictionary    
 		glm_dict[key] = {'object' : object}
-		for x in xrange(len(glm_props)):
+		for x in range(len(glm_props)):
 			if glm_props[x] != None:
 				if glm_objects[object][x] == 'comments':
 					glm_objects[object][x] = '//'

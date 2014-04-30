@@ -98,7 +98,7 @@ def getValues(dir,glm_filenames,days):
 			
 		# Determine what season this .glm was for.
 		season = None
-		for j in xrange(len(days)):
+		for j in range(len(days)):
 			if re.match(r'^.*'+days[j]+'.*$',i) is not None:
 				season = j
 		if season is None:
@@ -179,7 +179,7 @@ def calcDiffs (glm_vals, scada):
 	'''Calculate percent differences for [peak val, peak time, total energy, minimum val, minimum time] from recorder output from simulation of given glm on given day.'''
 
 	diffs = [];
-	for i in xrange(len(glm_vals)):
+	for i in range(len(glm_vals)):
 		if i == 1 or i == 4: # time of peak or time of minimum
 			j = round((glm_vals[i] - scada[i])/24,4);
 		else: 

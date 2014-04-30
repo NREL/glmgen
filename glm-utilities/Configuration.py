@@ -48,7 +48,7 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
     data["timezone"] = 'PST+8PDT'
     region = 4
     
-    if not region or region not in xrange(1,7):
+    if not region or region not in range(1,7):
       print ("No region ID found. Using region 1 (West Coast, Temperate) to fill in default house configurations.")
       region = 1
     data["region"] = region
@@ -279,7 +279,7 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
     # - thermal_properties[i][j] = [ R-ceil,R-wall,R-floor,window layers,window glass, glazing treatment, window frame, R-door, Air infiltrationS ]
     # - for i = subclassficaiton, j = classification
     thermal_properties = [None] * 6 
-    for i in xrange(6):
+    for i in range(6):
       thermal_properties[i] = [None] * 9  
       # Now we have a list of 6 lists of "None"
 
@@ -765,14 +765,14 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
     if x is None:
       pass
     else:
-      for j in xrange(len(x)):
+      for j in range(len(x)):
         x[j].insert(1,allsame_c)
         
   for x in heating_setpoint:
     if x is None:
       pass
     else:
-      for j in xrange(len(x)):
+      for j in range(len(x)):
         x[j].insert(1,allsame_h)
         
   cop_high_new = []
@@ -785,11 +785,11 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
   for x in cop_low:
     cop_low_new.append([round(COP_low*y,2) for y in x])
     
-  for i in xrange(len(thermal_properties)):
+  for i in range(len(thermal_properties)):
     if thermal_properties[i] is None:
       pass
     else:
-      for j in xrange(len(thermal_properties[i])):
+      for j in range(len(thermal_properties[i])):
         if thermal_properties[i][j] is None:
           pass
         else:
@@ -803,11 +803,11 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
   #Variables referenced by Feeder_Generator.m
   if classification != None :
     data["thermal_percentages"] = [None]*len(thermal_percentages)
-    for x in xrange(len(thermal_percentages)):
+    for x in range(len(thermal_percentages)):
       data["thermal_percentages"][x] = thermal_percentages[x][classID]
 
     data["thermal_properties"] = [None]*len(thermal_properties)
-    for x in xrange(len(thermal_properties)):
+    for x in range(len(thermal_properties)):
       data["thermal_properties"][x] = thermal_properties[x][classID]
 
     data["cooling_setpoint"] = cooling_setpoint[classID] 
@@ -821,17 +821,17 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
     data["wh_size"] = wh_size[classID]
     
     data["over_sizing_factor"] = [None]*len(over_sizing_factor)
-    for x in xrange(len(over_sizing_factor)):
+    for x in range(len(over_sizing_factor)):
       data["over_sizing_factor"][x] = over_sizing_factor[x][classID]
       
     data["AC_type"] = [None]*len(AC_type)
-    for x in xrange(len(AC_type)):
+    for x in range(len(AC_type)):
       data["AC_type"][x] = AC_type[x][classID]
       
     data["dispatch_order"] = dispatch_order[classID]
 
     data["SFH"] = [None]*len(SFH)
-    for x in xrange(len(SFH)):
+    for x in range(len(SFH)):
       data["SFH"][x] = SFH[x][classID]
 
 
