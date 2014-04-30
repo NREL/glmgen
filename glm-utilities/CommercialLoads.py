@@ -14,12 +14,12 @@ import math
 # @param spot_check: initialized at line 1110 in Feeder_Generator_updated.m
 def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, wdir, resources_dir, use_config_file=None):
   # real inits
-  solar_office_array = [0,[None],[None]]
-  solar_bigbox_array = [0,[None],[None]]
-  solar_stripmall_array = [0,[None],[None]]
-  ts_office_array = [0,[None]]
-  ts_bigbox_array = [0,[None]]
-  ts_stripmall_array = [0,[None]]
+  solar_office_array = [0,[],[]]
+  solar_bigbox_array = [0,[],[]]
+  solar_stripmall_array = [0,[],[]]
+  ts_office_array = [0,[]]
+  ts_bigbox_array = [0,[]]
+  ts_stripmall_array = [0,[]]
   # Initialize psuedo-random seed
   random.seed(4)
 
@@ -1086,6 +1086,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
 
             # Store solar technology parent information
             if (use_flags["use_solar"] != 0 or use_flags["use_solar_com"] != 0) and meters_stored == 0:
+              solar_bigbox_array[0] += 1
               solar_bigbox_array[1].append(glmCaseDict[last_object_key]["name"])
               solar_bigbox_array[2].append(glmCaseDict[last_object_key]["phases"])
               meters_stored = 1
