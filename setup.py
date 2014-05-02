@@ -1,11 +1,11 @@
 from distutils.core import setup
 
 setup(
-    name='glm-utilities',
+    name='glmgen',
     version='0.1.0',
     author='TBD',
     author_email='TBD',
-    packages=['glm-utilities', 'glm-utilities.test'],
+    packages=['glmgen', 'glmgen.test'],
     scripts=[],
     url='TBD',
     license='LICENSE.txt',
