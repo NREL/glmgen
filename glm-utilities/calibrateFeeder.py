@@ -175,7 +175,7 @@ def writeLIB (id, calib_id, params, dir, load_shape_scalar=None):
 	file.write("# additional set point degrees\naddtl_heat_degrees,"+l)
 	if load_shape_scalar is not None:
 		file.write("\n# normalized load shape scalar\nload_shape_scalar,"+str(m))
-		print "\t\tNormalized Load Shape Scalar: "+str(m)+"."
+		print("\t\tNormalized Load Shape Scalar: {:s}.".format(m))
 	file.close()
 	return filename
 

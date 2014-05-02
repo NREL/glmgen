@@ -1,5 +1,6 @@
-import random
 from __future__ import division
+import random
+
 def add_ts(scalar, ts_array, ts_dict, use_flags, config_data, tech_data, key):
     # if there are no objects to attach thermal storage to, continue
     if ts_array is None or ts_array.empty():
@@ -36,15 +37,16 @@ def add_ts(scalar, ts_array, ts_dict, use_flags, config_data, tech_data, key):
         pass
     pass
 
-def Append_TS(TS_Tech_Dict, use_flags, config_data, tech_data, ts_bigbox_array=None, ts_office_array=None, ts_stripmall_array=None, ts_residential_array=None, last_object_key):
+def Append_TS(TS_Tech_Dict, use_flags, config_data, tech_data, last_object_key, ts_bigbox_array=None, 
+              ts_office_array=None, ts_stripmall_array=None, ts_residential_array=None):
     # PV_Tech_Dict - the dictionary that we add solar objects to
     # use_flags - the output from TechnologyParameters.py
     # config_data - the output from Configuration.py
+    # last_object_key should be a numbered key that is the next key in PV_Tech_Dict
     # solar_bigbox_array - contains a list of commercial houses, corresponding floor areas, parents,and phases that commercial PV can be attached to
     # solar_office_array - contains a list of commercial houses, corresponding floor areas, parents,and phases that commercial PV can be attached to
     # solar_stripmall_array - contains a list of commercial houses, corresponding floor areas, parents,and phases that commercial PV can be attached to
     # solar_residential_array - contains a list of residential houses, corresponding floor areas, parents,and phases that residential PV can be attached to
-    # last_object_key should be a numbered key that is the next key in PV_Tech_Dict
     
     # Initialize psuedo-random seed
     random.seed(4)
