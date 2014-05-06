@@ -36,4 +36,14 @@ glmgen\processSCADA.py
 glmgen\run_gridlabd_batch_file.py
 glmgen\takeAction.py
 glmgen\test_populate_from_CYME.py
+glmgen\schedules\SCADA_weather_NC_gld_shifted.csv
+glmgen\schedules\VA.player
+glmgen\schedules\VB.player
+glmgen\schedules\VC.player
+glmgen\schedules\__init__.py
+glmgen\schedules\appliance_schedules.glm
+glmgen\schedules\commercial_schedules.glm
+glmgen\schedules\load_shape_player.player
+glmgen\schedules\schedules.glm
+glmgen\schedules\water_and_setpoint_schedule_v5.glm
 glmgen\test\__init__.py

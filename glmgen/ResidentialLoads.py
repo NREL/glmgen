@@ -3,7 +3,7 @@
 from __future__ import division
 import math
 import random
-import Configuration
+from glmgen import Configuration
 
 def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last_object_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir,resources_dir,configuration_file=None):
   #ResTechDict is a dictionary containing all the objects in WindMIL model represented as equivalent GridLAB-D objects that this function will append residential load object to.

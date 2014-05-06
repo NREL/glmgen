@@ -8,8 +8,8 @@ import os
 import re
 
 # custom imports
-import GetPeakSolar
-import ExtractWeather
+from glmgen import GetPeakSolar
+from glmgen import ExtractWeather
 
 # [0],    [1],         [2],       [3],     [4],                 [5],          [6],           [7],          [8],          [9],            [10],  [11],      [12],          [13] 
 # TimePST,TemperatureF,Dew PointF,Humidity,Sea Level PressureIn,VisibilityMPH,Wind Direction,Wind SpeedMPH,Gust SpeedMPH,PrecipitationIn,Events,Conditions,WindDirDegrees,DateUTC<br />

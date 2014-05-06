@@ -3,8 +3,8 @@ from __future__ import division
 import datetime 
 import re
 import math
-import feeder
-import Milsoft_GridLAB_D_Feeder_Generation
+from glmgen import feeder
+from glmgen import Milsoft_GridLAB_D_Feeder_Generation
 
 # recording interval (seconds)
 interval = 300  

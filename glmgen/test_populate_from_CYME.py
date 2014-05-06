@@ -1,6 +1,6 @@
-import convert_cyme_model
-import Milsoft_GridLAB_D_Feeder_Generation
-import feeder
+from glmgen import convert_cyme_model
+from glmgen import Milsoft_GridLAB_D_Feeder_Generation
+from glmgen import feeder
 
 def main():
 	

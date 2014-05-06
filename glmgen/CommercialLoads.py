@@ -4,7 +4,7 @@ Created on Apr 9, 2013
 @author: D3P988
 '''
 from __future__ import division
-import Configuration
+from glmgen import Configuration
 import random
 import math
 

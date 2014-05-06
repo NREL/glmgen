@@ -1,5 +1,5 @@
 from __future__ import division
-import Config_Parameter_Limits as limits
+import glmgen.Config_Parameter_Limits as limits
 
 # Main function takeAction(action,vals,diffs) takes action code, list of previously used calibration parameter values, and list of calculated differences for four main metrics. 
 # Returns a list of lists, each is a set of calibration parameter values to try. 

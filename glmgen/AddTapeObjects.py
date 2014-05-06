@@ -4,7 +4,7 @@ Created on Jun 7, 2013
 @author: fish334
 '''
 
-import TechnologyParameters
+from glmgen import TechnologyParameters
 
 def add_recorders(recorder_dict,case_flag,use_mysql,use_tape,FeederID, last_key=0):
     # Check is last_key is already in glm dictionary

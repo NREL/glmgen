@@ -1,15 +1,15 @@
 # About the inputs:
 import sys, re, os
 sys.path.append('..')
-import milToGridlab
-import Milsoft_GridLAB_D_Feeder_Generation
-import calibrateFeeder
-import processSCADA #TODO: write this module
-import feeder
-import AddTapeObjects
+from glmgen import milToGridlab
+from glmgen import Milsoft_GridLAB_D_Feeder_Generation
+from glmgen import calibrateFeeder
+from glmgen import processSCADA #TODO: write this module
+from glmgen import feeder
+from glmgen import AddTapeObjects
 #import writeFeederConfig #TODO: future work (after June 1 deadline)
-import four_node_commercial # feeder dictionary just for testing
-import four_node_residential # feeder dictionary just for testing
+from glmgen import four_node_commercial # feeder dictionary just for testing
+from glmgen import four_node_residential # feeder dictionary just for testing
 
 # MilSoft model ( milsoft = [stdPath, seqPath])
 # Case Flag

@@ -3,19 +3,20 @@
 #Note: All triplex_node dictionaries must contain a load classification key which tells what type of houses are located at this spot load.
 #Note: All swing node objects must have a Dictionary key
 from __future__ import division
-import ResidentialLoads
-import CommercialLoads
+
 import math
 import random
-import Configuration
-import TechnologyParameters
-import Solar_Technology
-import feeder
-import AddTapeObjects
-import AddLoadShapes
 import copy
 import re
 
+from glmgen import Configuration
+from glmgen import TechnologyParameters
+from glmgen import Solar_Technology
+from glmgen import feeder
+from glmgen import AddTapeObjects
+from glmgen import AddLoadShapes
+from glmgen import ResidentialLoads
+from glmgen import CommercialLoads
 
 def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configuration_file=None):
   #glmDict is a dictionary containing all the objects in WindMIL model represented as equivalent GridLAB-D objects
