@@ -16,6 +16,12 @@ To install (change slash direction for Windows, use a different version as appro
 pip install dist/glmgen-0.1.0.zip
 ```
 
+To uninstall before doing development or installing a new version,
+
+```bash
+pip uninstall glmgen
+```
+
 ## Running tests -- Peregrine
 
 Basic setup:
