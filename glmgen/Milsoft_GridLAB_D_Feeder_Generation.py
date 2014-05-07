@@ -802,7 +802,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
       
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
   if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
-    print('calling Solar_Technology.py\n')
+    print('calling Solar_Technology.py with solar_bigbox_array[0] = {:d}, solar_office_array[0] = {:d}, solar_stripmall_array[0] = {:d}, and solar_residential_array[0] = {:d}\n'.format(solar_bigbox_array[0],solar_office_array[0],solar_stripmall_array[0],solar_residential_array[0]))
     glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, tech_data, last_key, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array)
     
   # Append recorders
