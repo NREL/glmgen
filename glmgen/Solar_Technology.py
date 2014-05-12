@@ -23,41 +23,29 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
         # Initialize psuedo-random seed
         random.seed(4)
         
-        # Determine solar penetrations for each of the three types of commercial configurations
-        if solar_stripmall_array == None and solar_bigbox_array == None and solar_office_array != None: # Have offices only
+        # solar_penetration should apply equally to all solar-eligible building types
+        penetration_stripmall = config_data['solar_penetration']
+        penetration_bigbox = config_data['solar_penetration']
+        penetration_office = config_data['solar_penetration']
+        if solar_stripmall_array is None:
             penetration_stripmall = 0
+        if solar_bigbox_array is None:
             penetration_bigbox = 0
-            penetration_office = config_data['solar_penetration']
-        elif solar_stripmall_array == None and solar_bigbox_array != None and solar_office_array == None: # Have bigboxes only
-            penetration_stripmall = 0
-            penetration_bigbox = config_data['solar_penetration']
+        if solar_office_array is None: 
             penetration_office = 0
-        elif solar_stripmall_array != None and solar_bigbox_array == None and solar_office_array == None: # Have stripmalls only
-            penetration_stripmall = config_data['solar_penetration']
-            penetration_bigbox = 0
-            penetration_office = 0
-        elif solar_stripmall_array != None and solar_bigbox_array == None and solar_office_array != None: # Have stripmalls and offices only
-            penetration_stripmall = config_data['solar_penetration'] / 2
-            penetration_bigbox = 0
-            penetration_office = config_data['solar_penetration'] / 2
-        elif solar_stripmall_array != None and solar_bigbox_array != None and solar_office_array == None: # Have stripmalls and bigboxes only
-            penetration_stripmall = config_data['solar_penetration'] / 2
-            penetration_bigbox = config_data['solar_penetration'] / 2
-            penetration_office = 0
-        elif solar_stripmall_array == None and solar_bigbox_array != None and solar_office_array != None: # Have offices and bigboxes only
-            penetration_stripmall = 0
-            penetration_bigbox = config_data['solar_penetration'] / 2
-            penetration_office = config_data['solar_penetration'] / 2
-        else: # Have stripmalls, bigboxes, and offices
-            penetration_stripmall = config_data['solar_penetration'] / 3
-            penetration_bigbox = config_data['solar_penetration'] / 3
-            penetration_office = config_data['solar_penetration'] / 3
+            
+        print('stripmall = {:.0f}, bigbox = {:.0f}, office = {:.0f}\n'.format(penetration_stripmall,penetration_bigbox,penetration_office))
             
         solar_rating = config_data['solar_rating'] * 1000 # Convert kW to W
         #Determine total number of PV we must add to office
         if penetration_office > 0:    # solar_office_array = list(number of office meters attached to com loads,list(office meter names attached to loads),list(phases of office meters attached to loads))
-            total_office_pv_units = math.ceil((config_data['emissions_peak'] * penetration_office) / tech_data['solar_averagepower_office'])
+            # TODO: Better implementation of solar_penetration
+            # 'emissions_peak' is not tied to the actual feeder, and is not an energy-based penetration.
+            # penetration_* is also in % units, so should be divided by 100        
+            # total_office_pv_units = math.ceil((config_data['emissions_peak'] * penetration_office) / tech_data['solar_averagepower_office'])
+            total_office_pv_units = math.ceil(solar_office_array[0] * penetration_office / 100.0)
             total_office_number = int(solar_office_array[0])
+            print('{:d} office pv units, on {:d} offices.\n'.format(total_office_pv_units,total_office_number))
             
             # Create a randomized list of numbers 0 to total_office_number
             random_index = []
@@ -66,6 +54,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
             
             # Determine how many units to attach to each office building
             pv_units_per_office = int(math.ceil(total_office_pv_units / total_office_number))
+            print('{:d} PV units per office.\n'.format(pv_units_per_office))
             
             # Attach PV units to dictionary
             pv_unit = 0
@@ -115,7 +104,11 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
         
         # Determine total number of PV we must add to bigbox commercial
         if penetration_bigbox > 0:    # solar_bigbox_array = list(number of bigbox meters attached to com loads,list(bigbox meter names attached to loads),list(phases of bigbox meters attached to loads))
-            total_bigbox_pv_units = math.ceil((config_data['emissions_peak'] * penetration_bigbox) / tech_data['solar_averagepower_bigbox'])
+            # TODO: Better implementation of solar_penetration
+            # 'emissions_peak' is not tied to the actual feeder, and is not an energy-based penetration.
+            # penetration_* is also in % units, so should be divided by 100
+            # total_bigbox_pv_units = math.ceil((config_data['emissions_peak'] * penetration_bigbox) / tech_data['solar_averagepower_bigbox'])
+            total_bigbox_pv_units = math.ceil(solar_bigbox_array[0] * penetration_bigbox / 100.0)
             total_bigbox_number = int(solar_bigbox_array[0])
             
             # Create a randomized list of numbers 0 to total_bigbox_number
@@ -174,7 +167,11 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   
         # Determine total number of PV we must add to stripmall commercial
         if penetration_stripmall > 0:    # solar_stripmall_array = list(number of stripmall meters attached to com loads,list(stripmall meter names attached to loads),list(phases of stripmall meters attached to loads))
-            total_stripmall_pv_units = math.ceil((config_data['emissions_peak'] * penetration_stripmall) / tech_data['solar_averagepower_stripmall'])
+            # TODO: Better implementation of solar_penetration
+            # 'emissions_peak' is not tied to the actual feeder, and is not an energy-based penetration.
+            # penetration_* is also in % units, so should be divided by 100
+            # total_stripmall_pv_units = math.ceil((config_data['emissions_peak'] * penetration_stripmall) / tech_data['solar_averagepower_stripmall'])
+            total_stripmall_pv_units = math.ceil(solar_stripmall_array[0] * penetration_stripmall / 100.0)
             total_stripmall_number = int(solar_stripmall_array[0])
             
             # Create a randomized list of numbers 0 to total_stripmall_number
@@ -201,20 +198,24 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                         pv_units_per_stripmall = total_stripmall_number - pv_unit - 1
                         
                     for y in range(pv_units_per_stripmall):
+                        # ETH: Two meters is okay, but two triplex_meters is not. Hook the 
+                        # inverter up directly to the parent triplex_meter.
                         # Write the PV meter
-                        last_key += 1
-                        PV_Tech_Dict[last_key] = {'object' : 'triplex_meter',
-                                                  'name' : 'pv_triplex_meter{:d}_{:s}'.format(y,parent),
-                                                  'parent' : '{:s}'.format(parent),
-                                                  'phases' : '{:s}'.format(phases),
-                                                  'nominal_voltage' : '120',
-                                                  'groupid' : 'Commercial_tm_solar_stripmall'}
+                        # last_key += 1
+                        # PV_Tech_Dict[last_key] = {'object' : 'triplex_meter',
+                        #                           'name' : 'pv_triplex_meter{:d}_{:s}'.format(y,parent),
+                        #                           'parent' : '{:s}'.format(parent),
+                        #                           'phases' : '{:s}'.format(phases),
+                        #                           'nominal_voltage' : '120',
+                        #                           'groupid' : 'Commercial_tm_solar_stripmall'}
                         
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',
-                                                  'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                        #                           'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                        #                           'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                                                  'name' : 'pv_inverter{:d}_{:s}'.format(y,parent),
+                                                  'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
                                                   'generator_mode' : 'CONSTANT_PF',
                                                   'generator_status' : 'ONLINE',
@@ -247,7 +248,11 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
             
         # Determine total number of PV we must add to residential houses
         if residential_penetration > 0:    # solar_residential_array = list(number of residential triplex_meters attached to com loads,list(residential triplex_meter names attached to loads),list(phases of residential triplex_meters attached to loads))
-            total_residential_pv_units = math.ceil((config_data['emissions_peak'] * residential_penetration) / tech_data['solar_averagepower_residential'])
+            # TODO: Better implementation of solar_penetration
+            # 'emissions_peak' is not tied to the actual feeder, and is not an energy-based penetration.
+            # penetration_* is also in % units, so should be divided by 100
+            # total_residential_pv_units = math.ceil((config_data['emissions_peak'] * residential_penetration) / tech_data['solar_averagepower_residential'])
+            total_residential_pv_units = math.ceil(solar_residential_array[0] * residential_penetration / 100.0)
             total_residential_number = int(solar_residential_array[0])
             
             # Create a randomized list of numbers 0 to total_residential_number
@@ -272,26 +277,30 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                         pv_units_per_residential = total_residential_number - pv_unit - 1
                         
                     for y in range(pv_units_per_residential):
+                        # ETH: Two meters is okay, but two triplex_meters is not. Hook the 
+                        # inverter up directly to the parent triplex_meter.
                         # Write the PV meter
-                        last_key += 1
-                        PV_Tech_Dict[last_key] = {'object' : 'triplex_meter',
-                                                  'name' : 'pv_triplex_meter{:d}_{:s}'.format(y,parent),
-                                                  'parent' : '{:s}'.format(parent),
-                                                  'phases' : '{:s}'.format(phases),
-                                                  'nominal_voltage' : '120',
-                                                  'groupid' : 'Residential_tm_solar'}
+                        # last_key += 1
+                        # PV_Tech_Dict[last_key] = {'object' : 'triplex_meter',
+                        #                           'name' : 'pv_triplex_meter{:d}_{:s}'.format(y,parent),
+                        #                           'parent' : '{:s}'.format(parent),
+                        #                           'phases' : '{:s}'.format(phases),
+                        #                           'nominal_voltage' : '120',
+                        #                           'groupid' : 'Residential_tm_solar'}
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',
-                                                  'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                        #                           'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                        #                           'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                                                  'name' : 'pv_inverter{:d}_{:s}'.format(y,parent),
+                                                  'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
                                                   'generator_mode' : 'CONSTANT_PF',
                                                   'generator_status' : 'ONLINE',
                                                   'inverter_type' : 'PWM',
                                                   'power_factor' : '1.0',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
-                        # Write the PV inverter
+                        # Write the PV panel
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'solar',
                                                   'name' : 'sol_panel_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
