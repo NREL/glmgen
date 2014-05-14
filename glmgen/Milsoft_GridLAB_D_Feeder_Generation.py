@@ -522,36 +522,36 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
               commercial_dict[commercial_key]['load_classification'] = None
 
         # Replace load with a node remove constant load keys
-        glmCaseDict[x]['object'] = 'node'
-        if 'load_class' in glmCaseDict[x]:
-          del glmCaseDict[x]['load_class'] # Must remove load_class as it isn't a published property
+        # glmCaseDict[x]['object'] = 'node'
+        # if 'load_class' in glmCaseDict[x]:
+        #   del glmCaseDict[x]['load_class'] # Must remove load_class as it isn't a published property
 
-        if 'constant_power_A' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_power_A']
+        # if 'constant_power_A' in glmCaseDict[x]:
+        #   del glmCaseDict[x]['constant_power_A']
 
-        if 'constant_power_B' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_power_B']
+        # if 'constant_power_B' in glmCaseDict[x]:
+        #   del glmCaseDict[x]['constant_power_B']
 
-        if 'constant_power_C' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_power_C']
+        # if 'constant_power_C' in glmCaseDict[x]:
+        #   del glmCaseDict[x]['constant_power_C']
 
-        if 'constant_impedance_A' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_impedance_A']
+        # if 'constant_impedance_A' in glmCaseDict[x]:
+        #   del glmCaseDict[x]['constant_impedance_A']
 
-        if 'constant_impedance_B' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_impedance_B']
+        # if 'constant_impedance_B' in glmCaseDict[x]:
+        #   del glmCaseDict[x]['constant_impedance_B']
 
-        if 'constant_impedance_C' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_impedance_C']
+        # if 'constant_impedance_C' in glmCaseDict[x]:
+        #   del glmCaseDict[x]['constant_impedance_C']
 
-        if 'constant_current_A' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_current_A']
+        # if 'constant_current_A' in glmCaseDict[x]:
+        #   del glmCaseDict[x]['constant_current_A']
 
-        if 'constant_current_B' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_current_B']
+        # if 'constant_current_B' in glmCaseDict[x]:
+        #   del glmCaseDict[x]['constant_current_B']
 
-        if 'constant_current_C' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_current_C']
+        # if 'constant_current_C' in glmCaseDict[x]:
+        #   del glmCaseDict[x]['constant_current_C']
 
         commercial_key += 1
         
@@ -688,18 +688,18 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
               residential_dict[residential_key]['load_classification'] = random.choice([0, 1, 2, 3, 4, 5]) # randomly pick between the 6 residential classifications
 
           # Remove constant load keys
-          if 'load_class' in glmCaseDict[x]:
-            del glmCaseDict[x]['load_class'] # Must remove load_class as it isn't a published property
+          # if 'load_class' in glmCaseDict[x]:
+          #   del glmCaseDict[x]['load_class'] # Must remove load_class as it isn't a published property
 
-          if 'power_12' in glmCaseDict[x]:
-            del glmCaseDict[x]['power_12']
+          # if 'power_12' in glmCaseDict[x]:
+          #   del glmCaseDict[x]['power_12']
 
-          if 'power_1' in glmCaseDict[x]:
-            del glmCaseDict[x]['power_1']
+          # if 'power_1' in glmCaseDict[x]:
+          #   del glmCaseDict[x]['power_1']
 
-          if total_house_number == 0 and load > 0 and use_flags['use_normalized_loadshapes'] == 0: # Residential street light
-            glmCaseDict[x]['power_12_real'] = 'street_lighting*{:.4f}'.format(c_num.real*tech_data['light_scalar_res'])
-            glmCaseDict[x]['power_12_reac'] = 'street_lighting*{:.4f}'.format(c_num.imag*tech_data['light_scalar_res'])
+          # if total_house_number == 0 and load > 0 and use_flags['use_normalized_loadshapes'] == 0: # Residential street light
+          #   glmCaseDict[x]['power_12_real'] = 'street_lighting*{:.4f}'.format(c_num.real*tech_data['light_scalar_res'])
+          #   glmCaseDict[x]['power_12_reac'] = 'street_lighting*{:.4f}'.format(c_num.imag*tech_data['light_scalar_res'])
 
           residential_key += 1
           
@@ -785,25 +785,25 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     elasticity_random = None
 
   # Tack on residential loads
-  if use_flags['use_homes'] != 0:
-    if use_flags['use_normalized_loadshapes'] == 1:
-      glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
-    else:
-      print('calling ResidentialLoads.py with len(residential_dict) = {:d}\n'.format(len(residential_dict)))
-      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir, resources_dir, configuration_file)
+  # if use_flags['use_homes'] != 0:
+    # if use_flags['use_normalized_loadshapes'] == 1:
+      # glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
+    # else:
+      # print('calling ResidentialLoads.py with len(residential_dict) = {:d}\n'.format(len(residential_dict)))
+      # glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir, resources_dir, configuration_file)
   # End addition of residential loads ########################################################################################################################
 
-  if use_flags['use_commercial'] != 0:
-    if use_flags['use_normalized_loadshapes'] == 1:
-      glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
-    else:
-      print('calling CommercialLoads.py with len(commercial_dict) = {:d}\n'.format(len(commercial_dict)))
-      glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, wdir, resources_dir, configuration_file)
+  # if use_flags['use_commercial'] != 0:
+    # if use_flags['use_normalized_loadshapes'] == 1:
+      # glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
+    # else:
+      # print('calling CommercialLoads.py with len(commercial_dict) = {:d}\n'.format(len(commercial_dict)))
+      # glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, wdir, resources_dir, configuration_file)
       
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
-  if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
-    print('calling Solar_Technology.py with solar_bigbox_array[0] = {:d}, solar_office_array[0] = {:d}, solar_stripmall_array[0] = {:d}, and solar_residential_array[0] = {:d}\n'.format(solar_bigbox_array[0],solar_office_array[0],solar_stripmall_array[0],solar_residential_array[0]))
-    glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, tech_data, last_key, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array)
+  # if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
+    # print('calling Solar_Technology.py with solar_bigbox_array[0] = {:d}, solar_office_array[0] = {:d}, solar_stripmall_array[0] = {:d}, and solar_residential_array[0] = {:d}\n'.format(solar_bigbox_array[0],solar_office_array[0],solar_stripmall_array[0],solar_residential_array[0]))
+    # glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, tech_data, last_key, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array)
     
   # Append recorders
   #glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict,case_flag,0,1,'four_node_basecase_test', last_key)
