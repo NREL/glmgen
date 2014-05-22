@@ -619,7 +619,7 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
   if config_file==None:
     # set dictionary values (for default case)
     # Determines how many houses to populate (bigger avg_house = less houses)
-    data["avg_house"] = 15000
+    data["avg_house"] = 15000 
     
     # Determines sizing of commercial loads (bigger avg_commercial = less houses)
     data["avg_commercial"] = 35000

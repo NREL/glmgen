@@ -17,6 +17,9 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
     
     print("Solar penetration = {:.0f}".format(config_data["solar_penetration"]))
     
+    print(solar_stripmall_array)
+    print(list(range(int(solar_stripmall_array[0]))))
+        
     # Populating solar as percentage of feeder peak load
     # Add Commercial PV
     if use_flags['use_solar'] != 0 or use_flags['use_solar_com'] != 0:
@@ -117,7 +120,9 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                          total_bigbox_number);
             
             # Determine how many units to attach to each bigbox building
-            pv_units_per_bigbox = int(math.ceil(total_bigbox_pv_units / total_bigbox_number))
+            pv_units_per_bigbox = 0
+            if total_bigbox_number > 0:
+                pv_units_per_bigbox = int(math.ceil(total_bigbox_pv_units / total_bigbox_number))
             
             # Attach PV units to dictionary
             pv_unit = 0
