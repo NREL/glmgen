@@ -143,7 +143,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
 
     #print('iterating over commercial_dict')
     for iii in commercial_dict:
-      total_comm_houses = commercial_dict[iii]['number_of_houses'][0] + commercial_dict[iii]['number_of_houses'][0] + commercial_dict[iii]['number_of_houses'][0]
+      total_comm_houses = commercial_dict[iii]['number_of_houses'][0] + commercial_dict[iii]['number_of_houses'][1] + commercial_dict[iii]['number_of_houses'][2]
       
       my_phases = 'ABC'
       
@@ -948,7 +948,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
                           "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
                           "install_type" : "POLETOP",
                           "impedance" : "0.00033+0.0022j",
-                          "shunt_impedance" : "100000+100000j",
+                          "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
                           "powerA_rating" : "{:.0f} kVA".format(50*strip_per_phase)}
@@ -961,7 +961,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
                           "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
                           "install_type" : "POLETOP",
                           "impedance" : "0.00033+0.0022j",
-                          "shunt_impedance" : "100000+100000j",
+                          "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
                           "powerB_rating" : "{:.0f} kVA".format(50*strip_per_phase)}
@@ -974,7 +974,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
                           "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
                           "install_type" : "POLETOP",
                           "impedance" : "0.00033+0.0022j",
-                          "shunt_impedance" : "100000+100000j",
+                          "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
                           "powerC_rating" : "{:.0f} kVA".format(50*strip_per_phase)}

@@ -433,7 +433,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
         commercial_dict[commercial_key]['load'][1] = load_B
         commercial_dict[commercial_key]['load'][2] = load_C
 
-        # TODO: Bypass this is load rating is known
+        # TODO: Bypass this if load rating is known
         # Determine load_rating
         standard_transformer_rating = [10,15,25,37.5,50,75,100,150,167,250,333.3,500,666.7]
         total_load = (load_A + load_B + load_C)/1000

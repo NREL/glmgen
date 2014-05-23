@@ -16,9 +16,6 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
     random.seed(4)
     
     print("Solar penetration = {:.0f}".format(config_data["solar_penetration"]))
-    
-    print(solar_stripmall_array)
-    print(list(range(int(solar_stripmall_array[0]))))
         
     # Populating solar as percentage of feeder peak load
     # Add Commercial PV
