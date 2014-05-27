@@ -1,10 +1,6 @@
 argparse
-Jinja2
-lambdaJSON
 matplotlib
 nose
 numpy
-pandas
-pyDOE
 pyparsing
 six
