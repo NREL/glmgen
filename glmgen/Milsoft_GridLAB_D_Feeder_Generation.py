@@ -433,7 +433,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
         commercial_dict[commercial_key]['load'][1] = load_B
         commercial_dict[commercial_key]['load'][2] = load_C
 
-        # TODO: Bypass this is load rating is known
+        # TODO: Bypass this if load rating is known
         # Determine load_rating
         standard_transformer_rating = [10,15,25,37.5,50,75,100,150,167,250,333.3,500,666.7]
         total_load = (load_A + load_B + load_C)/1000
@@ -441,8 +441,10 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
         for y in standard_transformer_rating:
           if y >= total_load:
             load_rating = y
+            break
           elif y == 666.7:
             load_rating = y
+            break
 
         # Deterimine load classification
         if commercial_dict[commercial_key]['load_classification'].isdigit():
@@ -555,13 +557,14 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
 
         commercial_key += 1
         
-  #print('finished collecting commercial load objects\n')
+  print('finished collecting commercial load objects\n')
 
   # Create dictionary that houses the number of residential 'load' objects where residential house objects will be tacked on.
   total_house_number = 0
   residential_dict = {}
   if use_flags['use_homes'] == 1:
     residential_key = 0
+    print("\n\nCreating residential_dict:\n\n")
     for x in glmCaseDict:
       if 'object' in glmCaseDict[x] and re.match("triplex_node.*",glmCaseDict[x]['object']):
         if 'power_1' in glmCaseDict[x] or 'power_12' in glmCaseDict[x]:
@@ -585,31 +588,36 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
           if 'power_1' in glmCaseDict[x]:
             c_num = complex(glmCaseDict[x]['power_1'])
             load += abs(c_num)
+            # print("Original_1 : {:s}\nComplex Number: {:s}\nMagnitude: {:s}\n".format(glmCaseDict[x]['power_1'],str(c_num),str(load)))
 
           if 'power_12' in glmCaseDict[x]:
             c_num = complex(glmCaseDict[x]['power_12'])
             load += abs(c_num)
+            # print("Original_12: {:s}\nComplex Number: {:s}\nMagnitude: {:s}\n".format(glmCaseDict[x]['power_12'],str(c_num),str(load)))
           
           residential_dict[residential_key]['load'] = load  
           residential_dict[residential_key]['number_of_houses'] = int(round(load/config_data['avg_house']))
           total_house_number += residential_dict[residential_key]['number_of_houses']
+          # print("Load: {:s} W\nAvg. House: {:s} W\nNum. Houses: {:d}\n".format(str(load),str(config_data['avg_house']),residential_dict[residential_key]['number_of_houses']))
           # Determine whether we rounded down of up to help determine the square footage (neg. number => small homes)
           residential_dict[residential_key]['large_vs_small'] = load/config_data['avg_house'] - residential_dict[residential_key]['number_of_houses']
 
           # Determine load_rating
-          standard_transformer_rating = [10,15,25,37.5,50,75,100,150,167,250,333.3,500,666.7]
-          total_load = load/1000
+          standard_transformer_rating = [10,15,25,37.5,50,75,100,150,167,250,333.3,500,666.7] # kW
+          total_load = load/1000 # kW
           load_rating = 0
           for y in standard_transformer_rating:
             if y >= total_load:
               load_rating = y
+              break
             elif y == 666.7:
               load_rating = y
+              break
 
           # Deterimine load classification
           if residential_dict[residential_key]['load_classification'].isdigit():
             residential_dict[residential_key]['load_classification'] = int(residential_dict[residential_key]['load_classification'])
-          else: # load_classification is unknown determine from no_houses and transformer size
+          else: # load_classification is unknown. determine from no_houses and transformer size
             #TODO: Determine what classID should be from no_houses and transformer size
             residential_dict[residential_key]['load_classification'] = None
             random_class_number = random.random()*100
@@ -703,7 +711,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
 
           residential_key += 1
           
-  #print('finished collecting residential load objects\n')
+  print('finished collecting residential load objects\n')
 
   # Calculate some random numbers needed for TOU/CPP and DLC technologies
   if use_flags['use_market'] != 0:
@@ -789,7 +797,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
     else:
-      print('calling ResidentialLoads.py with len(residential_dict) = {:d}\n'.format(len(residential_dict)))
+      print('calling ResidentialLoads.py with len(residential_dict) = {:d}, and {:d} houses.\n'.format(len(residential_dict),total_house_number))
       glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir, resources_dir, configuration_file)
   # End addition of residential loads ########################################################################################################################
 
@@ -797,7 +805,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
     else:
-      print('calling CommercialLoads.py with len(commercial_dict) = {:d}\n'.format(len(commercial_dict)))
+      print('calling CommercialLoads.py with len(commercial_dict) = {:d}, and {:d} buildings.\n'.format(len(commercial_dict), total_commercial_number))
       glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, wdir, resources_dir, configuration_file)
       
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
@@ -806,7 +814,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, tech_data, last_key, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array)
     
   # Append recorders
-  #glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict,case_flag,0,1,'four_node_basecase_test', last_key)
+  glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict,case_flag,0,1,'four_node_basecase_test', last_key)
 
 
   return (glmCaseDict, last_key)

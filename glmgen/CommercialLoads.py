@@ -143,7 +143,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
 
     #print('iterating over commercial_dict')
     for iii in commercial_dict:
-      total_comm_houses = commercial_dict[iii]['number_of_houses'][0] + commercial_dict[iii]['number_of_houses'][0] + commercial_dict[iii]['number_of_houses'][0]
+      total_comm_houses = commercial_dict[iii]['number_of_houses'][0] + commercial_dict[iii]['number_of_houses'][1] + commercial_dict[iii]['number_of_houses'][2]
       
       my_phases = 'ABC'
       
@@ -175,7 +175,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
         my_name = commercial_dict[iii]['name']
         my_parent = commercial_dict[iii]['name']
 
-      nom_volt = int(float(commercial_dict[iii]['nom_volt']))
+      nom_volt = float(commercial_dict[iii]['nom_volt'])
 
       # Grab the load classification
       classID = commercial_dict[iii]['load_classification'] # Get load classification
@@ -948,7 +948,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
                           "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
                           "install_type" : "POLETOP",
                           "impedance" : "0.00033+0.0022j",
-                          "shunt_impedance" : "100000+100000j",
+                          "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
                           "powerA_rating" : "{:.0f} kVA".format(50*strip_per_phase)}
@@ -961,7 +961,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
                           "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
                           "install_type" : "POLETOP",
                           "impedance" : "0.00033+0.0022j",
-                          "shunt_impedance" : "100000+100000j",
+                          "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
                           "powerB_rating" : "{:.0f} kVA".format(50*strip_per_phase)}
@@ -974,7 +974,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
                           "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
                           "install_type" : "POLETOP",
                           "impedance" : "0.00033+0.0022j",
-                          "shunt_impedance" : "100000+100000j",
+                          "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
                           "powerC_rating" : "{:.0f} kVA".format(50*strip_per_phase)}
@@ -993,16 +993,18 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
                         "phases" : "{:s}".format(commercial_dict[iii]["phases"]),
                         "name" : "{:s}_strip_node".format(my_name),
                         "nominal_voltage" : "{:f}".format(nom_volt)}
+                        
         last_object_key += 1;
-
-        # Store solar technology parent information
+        
         if use_flags["use_solar"] != 0 or use_flags["use_solar_com"] != 0:
-          solar_stripmall_array[0] += 1
-          meters_stored = 0
+              solar_stripmall_array[0] += 1
+              meters_stored = 0
+          
         # Store thermal storage technology parent information
         if use_flags["use_ts"] != 0:
           ts_bigbox_array[0] += 1
           homes_stored = 0
+          
         #print('iterating over number of stripmalls')    
         for phind in range(no_of_phases):
           floor_area_choose = 2400 * (0.7 + 0.6 * random.random()); #+/- 30#
@@ -1086,9 +1088,8 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
 
             # Store solar technology parent information
             if (use_flags["use_solar"] != 0 or use_flags["use_solar_com"] != 0) and meters_stored == 0:
-              solar_bigbox_array[0] += 1
-              solar_bigbox_array[1].append(glmCaseDict[last_object_key]["name"])
-              solar_bigbox_array[2].append(glmCaseDict[last_object_key]["phases"])
+              solar_stripmall_array[1].append(glmCaseDict[last_object_key]["name"])
+              solar_stripmall_array[2].append(glmCaseDict[last_object_key]["phases"])
               meters_stored = 1
                             
             if (use_flags["use_billing"] == 1):
