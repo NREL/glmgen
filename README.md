@@ -4,7 +4,7 @@ Private version of public fork https://github.com/elainethale/omf. Forking to us
 
 #### Install
 
-[pip install git+https://github.nrel.gov/ESI/omf-glm-generator.git#egg=glmgen](pip install git+https://github.nrel.gov/ESI/omf-glm-generator.git#egg=glmgen)
+pip install git+git@github.nrel.gov:ESI/omf-glm-generator.git#egg=glmgen
 
 #### Uninstall
 
