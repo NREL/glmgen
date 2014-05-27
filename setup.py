@@ -8,9 +8,7 @@ setup(
     packages=['glmgen', 'glmgen.test', 'glmgen.schedules'],
     package_data={'': ['*.glm', '*.player', '*.csv']},
     scripts=[],
-    url='TBD',
-    license='LICENSE.txt',
+    url='https://github.nrel.gov/ESI/omf-glm-generator',
     description='Utilities for manipulating GridLAB-D model (glm) files in Python.',
-    long_description=open('README.txt').read(),
     install_requires=open('requirements.txt').read(),
 )
