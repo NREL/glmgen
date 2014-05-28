@@ -43,7 +43,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
             # 'emissions_peak' is not tied to the actual feeder, and is not an energy-based penetration.
             # penetration_* is also in % units, so should be divided by 100        
             # total_office_pv_units = math.ceil((config_data['emissions_peak'] * penetration_office) / tech_data['solar_averagepower_office'])
-            total_office_pv_units = math.ceil(solar_office_array[0] * penetration_office / 100.0)
+            total_office_pv_units = int(math.ceil(solar_office_array[0] * penetration_office / 100.0))
             total_office_number = int(solar_office_array[0])
             print('{:d} office pv units, on {:d} offices.\n'.format(total_office_pv_units,total_office_number))
             

@@ -1154,7 +1154,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
 
             if ( (use_flags["use_market"] == 1 or use_flags["use_market"] == 2) and tech_data["use_tech"] == 1):
               # pull in the slider response level
-              slider = comm_slider_random(jjj);
+              slider = comm_slider_random[jjj];
 
               s_tstat = 2;
               hrh = -5+5*(1-slider);
