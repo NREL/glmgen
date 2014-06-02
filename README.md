@@ -18,3 +18,4 @@ Private version of public fork https://github.com/elainethale/omf. Forking to us
 4. Add the top-level directory of the cloned repository to your PYTHONPATH
 5. Follow a basic git workflow (branch on GitHub, checkout the branch locally, do your work, *commit, push, repeat from *, pull request)
 
+#### TODO: High-level use notes
