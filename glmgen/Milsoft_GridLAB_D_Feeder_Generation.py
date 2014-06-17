@@ -54,9 +54,11 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   # Get information about each feeder from Configuration() and  TechnologyParameters()
   config_data = Configuration.ConfigurationFunc(wdir,resources_dir,configuration_file,None,None)
   
-  if options is not None:
-    if 'solar_penetration' in options:
-        config_data['solar_penetration'] = options['solar_penetration'] # %
+  # Overwrite config_data with options
+  if (options is not None) and ('solar_penetration' in options):
+    config_data['solar_penetration'] = options['solar_penetration']
+  if (options is not None) and ('voltage_players' in options):
+    config_data['voltage_players'] = options['voltage_players']
 
   #set up default flags
   use_flags = {}
