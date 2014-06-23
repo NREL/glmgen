@@ -54,14 +54,29 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   # Get information about each feeder from Configuration() and  TechnologyParameters()
   config_data = Configuration.ConfigurationFunc(wdir,resources_dir,configuration_file,None,None)
   
-  if options is not None:
-    if 'solar_penetration' in options:
-        config_data['solar_penetration'] = options['solar_penetration'] # %
+  # Overwrite config_data with options
+  if (options is not None) and ('solar_penetration' in options):
+    config_data['solar_penetration'] = options['solar_penetration']
+  if (options is not None) and ('voltage_players' in options):
+    config_data['voltage_players'] = options['voltage_players']
 
   #set up default flags
   use_flags = {}
   #print("Calling TechnologyParameters.py\n")
   tech_data,use_flags = TechnologyParameters.TechnologyParametersFunc(use_flags,case_flag)
+  
+  # Overwrite use_flags with options
+  if (options is not None) and ('use_homes' in options):
+      # TODO: Have use_flags use True/False, not 0, 1
+      if options['use_homes']:
+          use_flags['use_homes'] = 1
+      else:
+          use_flags['use_homes'] = 0
+  if (options is not None) and ('use_commercial' in options):
+      if options['use_commercial']:
+          use_flags['use_commercial'] = 1
+      else:
+          use_flags['use_commercial'] = 0
 
   #tmy = 'schedules\\\\SCADA_weather_ISW_gld.csv'
   tmy = config_data['weather']
