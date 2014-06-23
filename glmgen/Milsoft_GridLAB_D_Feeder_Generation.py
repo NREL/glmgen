@@ -64,6 +64,19 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   use_flags = {}
   #print("Calling TechnologyParameters.py\n")
   tech_data,use_flags = TechnologyParameters.TechnologyParametersFunc(use_flags,case_flag)
+  
+  # Overwrite use_flags with options
+  if (options is not None) and ('use_homes' in options):
+      # TODO: Have use_flags use True/False, not 0, 1
+      if options['use_homes']:
+          use_flags['use_homes'] = 1
+      else:
+          use_flags['use_homes'] = 0
+  if (options is not None) and ('use_commercial' in options):
+      if options['use_commercial']:
+          use_flags['use_commercial'] = 1
+      else:
+          use_flags['use_commercial'] = 0
 
   #tmy = 'schedules\\\\SCADA_weather_ISW_gld.csv'
   tmy = config_data['weather']
