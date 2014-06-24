@@ -4,6 +4,47 @@ import datetime, copy, os, re, warnings
 # import networkx as nx
 from matplotlib import pyplot as plt
 
+class GlmFile(dict):
+    def __init__(self, *arg, **kw):
+        super(GlmFile, self).__init__(*arg,**kw)
+
+    def object_is_type(self, obj, glm_type):
+      result = True
+      if glm_type is not None:
+        if 'object' not in obj:
+          result = False
+        elif not re.match("{:s}.*".format(glm_type),obj['object']):
+          result = False
+      return result
+        
+    def get_parent_key(self,key,parent_type=None):
+      result = None
+      if key in self and 'parent' in self[key]:
+        parent_name = self[key]['parent']
+      else:
+        return result
+      for obj_key, obj in self.items():
+          if 'name' in obj and obj['name'] == parent_name:
+            if not self.object_is_type(obj,parent_type):
+              continue
+            result = obj_key
+            break
+      return result
+      
+    def get_connector_by_to_node(self,to_node_key,connector_type=None):
+      result = None
+      if to_node_key in self and 'name' in self[to_node_key]:
+        to_node_name = self[to_node_key]['name']
+      else:
+        return result
+      for obj_key, obj in self.items():
+        if 'to' in obj and obj['to'] == to_node_name:
+          if not self.object_is_type(obj,connector_type):
+            continue
+          result = obj_key
+          break
+      return result  
+
 def tokenizeGlm(glmFileName):
   with open(glmFileName,'r') as glmFile:
     data = glmFile.read()
@@ -22,7 +63,7 @@ def tokenizeGlm(glmFileName):
 
 def parseTokenList(tokenList):
   # Tree variables.
-  tree = {}
+  tree = GlmFile()
   guid = 0
   guidStack = []
   # Helper function to add to the current leaf we're visiting.
