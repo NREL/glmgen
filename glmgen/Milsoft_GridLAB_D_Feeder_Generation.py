@@ -94,7 +94,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   assert(nom_volt is not None)
 
   # Create new case dictionary
-  glmCaseDict = {}
+  glmCaseDict = feeder.GlmFile()
   last_key = len(glmCaseDict)
 
   # Create clock dictionary
@@ -374,6 +374,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   if use_flags['use_commercial'] == 1:
     commercial_key = 0
 
+    to_remove = []
     for x in glmCaseDict:
       if 'object' in glmCaseDict[x] and re.match("load.*",glmCaseDict[x]['object']):
         commercial_dict[commercial_key] = {'name' : glmCaseDict[x]['name'],
@@ -538,39 +539,28 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
             else:
               commercial_dict[commercial_key]['load_classification'] = None
 
-        # Replace load with a node remove constant load keys
-        glmCaseDict[x]['object'] = 'node'
-        if 'load_class' in glmCaseDict[x]:
-          del glmCaseDict[x]['load_class'] # Must remove load_class as it isn't a published property
-
-        if 'constant_power_A' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_power_A']
-
-        if 'constant_power_B' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_power_B']
-
-        if 'constant_power_C' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_power_C']
-
-        if 'constant_impedance_A' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_impedance_A']
-
-        if 'constant_impedance_B' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_impedance_B']
-
-        if 'constant_impedance_C' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_impedance_C']
-
-        if 'constant_current_A' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_current_A']
-
-        if 'constant_current_B' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_current_B']
-
-        if 'constant_current_C' in glmCaseDict[x]:
-          del glmCaseDict[x]['constant_current_C']
+        # Remove load (used to be changed into a node, but then the node was dangling)
+        to_remove.append(x)
+          
+        # if load parented by meter ...
+        meter_key = glmCaseDict.get_parent_key(x,'meter')
+        if meter_key is not None:
+          transformer_key = glmCaseDict.get_connector_by_to_node(meter_key,'transformer')
+          if transformer_key is not None and 'phases' in glmCaseDict[transformer_key]:
+            phases = glmCaseDict[transformer_key]['phases']
+            m = re.match("(A|B|C|ABC)N",phases)
+            if m is not None:
+              phase = m.group(1)
+              # ... and the structure is what we expect, swap out the transformer for an overhead_line
+              glmCaseDict[transformer_key]['object'] = 'overhead_line'
+              glmCaseDict[transformer_key]['length'] = '50ft'
+              glmCaseDict[transformer_key]['configuration'] = 'line_configuration_comm{:s}'.format(phase)
+              glmCaseDict[transformer_key]['groupid'] = 'Distribution_Line'
 
         commercial_key += 1
+        
+    for x in to_remove:
+      del glmCaseDict[x]
         
   print('finished collecting commercial load objects\n')
 
@@ -580,6 +570,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   if use_flags['use_homes'] == 1:
     residential_key = 0
     print("\n\nCreating residential_dict:\n\n")
+    to_remove = []
     for x in glmCaseDict:
       if 'object' in glmCaseDict[x] and re.match("triplex_node.*",glmCaseDict[x]['object']):
         if 'power_1' in glmCaseDict[x] or 'power_12' in glmCaseDict[x]:
@@ -723,9 +714,15 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
           if total_house_number == 0 and load > 0 and use_flags['use_normalized_loadshapes'] == 0: # Residential street light
             glmCaseDict[x]['power_12_real'] = 'street_lighting*{:.4f}'.format(c_num.real*tech_data['light_scalar_res'])
             glmCaseDict[x]['power_12_reac'] = 'street_lighting*{:.4f}'.format(c_num.imag*tech_data['light_scalar_res'])
+          else:
+            # Remove the soon-to-be-dangling node
+            to_remove.append(x)
 
           residential_key += 1
-          
+    
+    for x in to_remove:
+      del glmCaseDict[x]
+    
   print('finished collecting residential load objects\n')
 
   # Calculate some random numbers needed for TOU/CPP and DLC technologies
