@@ -11,6 +11,27 @@ class GlmFile(dict):
     """
     def __init__(self, *arg, **kw):
         super(GlmFile, self).__init__(*arg,**kw)
+        
+    def get_clocks(self):
+        """
+        Returns a list of deep copies of all clock objects in this GlmFile.
+        """
+        result = []
+        for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+            if 'clock' in value:
+                result.append(copy.deepcopy(value))
+        return result
+    
+    def get_objects_by_type(self, glm_type=None):
+        """
+        Returns a list of deep copies of all objects ('object') of glm_type 
+        in this GlmFile.
+        """
+        result = []
+        for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+            if self.object_is_type(value,glm_type):
+                result.append(copy.deepcopy(value))
+        return result
 
     def object_is_type(self, obj, glm_type):
         """
@@ -95,24 +116,23 @@ class GlmFile(dict):
         
     @staticmethod
     def load(glm_file_name):
-        tokens = __tokenizeGlm(glm_file_name)
-        return __parseTokenList(tokens)
+        tokens = GlmFile.__tokenizeGlm(glm_file_name)
+        return GlmFile.__parseTokenList(tokens)
         
     def __str__(self):
         """
         Write this GlmFile to string, with objects ordered by their key.
         """
-        sortedKeys = sorted(self.keys(), key=int)
         output = ''
         try:
-            for key in sortedKeys:
-                output += dictToString(self[key]) + '\n'
+            for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+                output += dictToString(value) + '\n'
         except ValueError:
             raise Exception
         return output
         
     def save(self,glm_file_name):
-        glm_string = str(populated_dict)
+        glm_string = str(self)
         file = open(glm_file_name, 'w')
         file.write(glm_string)
         file.close()    
@@ -267,9 +287,7 @@ def dictToString(inDict):
     else:
       return '\n'
 
-def sortedWrite(inTree):
-  
-
+      
 def adjustTime(tree, simLength, simLengthUnits, simStartDate):
   # translate LengthUnits to minutes.
   if simLengthUnits == 'minutes':

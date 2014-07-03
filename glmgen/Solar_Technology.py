@@ -14,9 +14,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
     
     # Initialize psuedo-random seed
     random.seed(4)
-    
-    print("Solar penetration = {:.0f}".format(config_data["solar_penetration"]))
-        
+            
     # Populating solar as percentage of feeder peak load
     # Add Commercial PV
     if use_flags['use_solar'] != 0 or use_flags['use_solar_com'] != 0:

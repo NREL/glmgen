@@ -50,7 +50,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
 
   if case_flag > 13:
     case_flag = 13
-  #print("Calling configuration.py\n")
+  
   # Get information about each feeder from Configuration() and  TechnologyParameters()
   config_data = Configuration.ConfigurationFunc(wdir,resources_dir,configuration_file,None,None)
   
@@ -69,7 +69,6 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   
   #set up default flags
   use_flags = {}
-  #print("Calling TechnologyParameters.py\n")
   tech_data,use_flags = TechnologyParameters.TechnologyParametersFunc(use_flags,case_flag)
   
   # Overwrite use_flags with options
@@ -95,7 +94,6 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     if ('bustype' in glmDict[x]) and (glmDict[x]['bustype'] == 'SWING'):
       swing_bus_name = glmDict[x]['name']
       nom_volt = glmDict[x]['nominal_voltage'] # Nominal voltage in V
-      print("Found swing bus '{:s}' with nominal voltage {:s} V".format(swing_bus_name,nom_volt))
       break
   assert(swing_bus_name is not None)
   assert(nom_volt is not None)
@@ -373,8 +371,6 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
       elif re.match("overhead_line.*",glmCaseDict[x]['object']) or re.match("underground_line.*",glmCaseDict[x]['object']):
         glmCaseDict[x]['groupid'] = 'Distribution_Line'
   
-  #print('finished copying base glm\n')
-
   # Create dictionary that houses the number of commercial 'load' objects where commercial house objects will be tacked on.
   total_commercial_number = 0 # Variable that stores the total amount of houses that need to be added.
   commercial_dict = {}
@@ -569,14 +565,11 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     for x in to_remove:
       del glmCaseDict[x]
         
-  print('finished collecting commercial load objects\n')
-
   # Create dictionary that houses the number of residential 'load' objects where residential house objects will be tacked on.
   total_house_number = 0
   residential_dict = {}
   if use_flags['use_homes'] == 1:
     residential_key = 0
-    print("\n\nCreating residential_dict:\n\n")
     to_remove = []
     for x in glmCaseDict:
       if 'object' in glmCaseDict[x] and re.match("triplex_node.*",glmCaseDict[x]['object']):
@@ -601,17 +594,14 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
           if 'power_1' in glmCaseDict[x]:
             c_num = complex(glmCaseDict[x]['power_1'])
             load += abs(c_num)
-            # print("Original_1 : {:s}\nComplex Number: {:s}\nMagnitude: {:s}\n".format(glmCaseDict[x]['power_1'],str(c_num),str(load)))
 
           if 'power_12' in glmCaseDict[x]:
             c_num = complex(glmCaseDict[x]['power_12'])
             load += abs(c_num)
-            # print("Original_12: {:s}\nComplex Number: {:s}\nMagnitude: {:s}\n".format(glmCaseDict[x]['power_12'],str(c_num),str(load)))
           
           residential_dict[residential_key]['load'] = load  
           residential_dict[residential_key]['number_of_houses'] = int(round(load/config_data['avg_house']))
           total_house_number += residential_dict[residential_key]['number_of_houses']
-          # print("Load: {:s} W\nAvg. House: {:s} W\nNum. Houses: {:d}\n".format(str(load),str(config_data['avg_house']),residential_dict[residential_key]['number_of_houses']))
           # Determine whether we rounded down of up to help determine the square footage (neg. number => small homes)
           residential_dict[residential_key]['large_vs_small'] = load/config_data['avg_house'] - residential_dict[residential_key]['number_of_houses']
 
@@ -730,8 +720,6 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     for x in to_remove:
       del glmCaseDict[x]
     
-  print('finished collecting residential load objects\n')
-
   # Calculate some random numbers needed for TOU/CPP and DLC technologies
   if use_flags['use_market'] != 0:
     # Initialize psuedo-random seed
@@ -816,7 +804,6 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
     else:
-      print('calling ResidentialLoads.py with len(residential_dict) = {:d}, and {:d} houses.\n'.format(len(residential_dict),total_house_number))
       glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir, resources_dir, configuration_file)
   # End addition of residential loads ########################################################################################################################
 
@@ -824,12 +811,10 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
     else:
-      print('calling CommercialLoads.py with len(commercial_dict) = {:d}, and {:d} buildings.\n'.format(len(commercial_dict), total_commercial_number))
       glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, wdir, resources_dir, configuration_file)
       
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
   if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
-    print('calling Solar_Technology.py with solar_bigbox_array[0] = {:d}, solar_office_array[0] = {:d}, solar_stripmall_array[0] = {:d}, and solar_residential_array[0] = {:d}\n'.format(solar_bigbox_array[0],solar_office_array[0],solar_stripmall_array[0],solar_residential_array[0]))
     glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, tech_data, last_key, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array)
     
   # Append recorders
