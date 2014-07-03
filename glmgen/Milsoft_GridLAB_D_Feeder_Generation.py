@@ -55,11 +55,18 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   config_data = Configuration.ConfigurationFunc(wdir,resources_dir,configuration_file,None,None)
   
   # Overwrite config_data with options
-  if (options is not None) and ('solar_penetration' in options):
-    config_data['solar_penetration'] = options['solar_penetration']
-  if (options is not None) and ('voltage_players' in options):
-    config_data['voltage_players'] = options['voltage_players']
-
+  # helper function to avoid repetitive code
+  def overwrite_config_data_entry(config_data,options,config_name,option_name=None):
+      option_name = config_name if option_name is None else option_name
+      if (options is not None) and (option_name in options):
+          config_data[config_name] = options[option_name]
+  
+  # actual overwrites
+  overwrite_config_data_entry(config_data,options,'solar_penetration')
+  overwrite_config_data_entry(config_data,options,'voltage_players')
+  overwrite_config_data_entry(config_data,options,'avg_house','avg_residential_load')
+  overwrite_config_data_entry(config_data,options,'avg_commercial','avg_commercial_load')
+  
   #set up default flags
   use_flags = {}
   #print("Calling TechnologyParameters.py\n")
@@ -828,138 +835,5 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   # Append recorders
   glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict,case_flag,0,1,'four_node_basecase_test', last_key)
 
-
   return (glmCaseDict, last_key)
 
-def main():
-  #tests here
-  glm_object_dict = {}
-  glm_object_dict[0] = {'object' : 'overhead_line_conductor',
-              'name' : 'ohlc_100',
-              'geometric_mean_radius' : '0.0244',
-              'resistance' : '0.306'}
-
-  glm_object_dict[1] = {'object' : 'overhead_line_conductor',
-              'name' : 'ohlc_101',
-              'geometric_mean_radius' : '0.00814',
-              'resistance' : '0.592'}
-
-  glm_object_dict[2] = {'object' : 'line_spacing',
-              'name' : 'ls_200',
-              'distance_AB' : '2.5',
-              'distance_BC' : '4.5',
-              'distance_AC' : '7.0',
-              'distance_AN' : '5.656854',
-              'distance_BN' : '4.272002',
-              'distance_CN' : '5.0'}
-
-  glm_object_dict[3] = {'object' : 'line_configuration',
-              'name' : 'lc_300',
-              'conductor_A' : 'ohlc_100',
-              'conductor_B' : 'ohlc_100',
-              'conductor_C' : 'ohlc_100',
-              'conductor_N' : 'ohlc_101',
-              'spacing' : 'ls_200'}
-
-  glm_object_dict[4] = {'object' : 'transformer_configuration',
-              'name' : 'tc_400',
-              'connect_type' : '1',
-              'power_rating' : '7000',
-              'powerA_rating' : '875',
-              'powerB_rating' : '1750',
-              'powerC_rating' : '4375',
-              'primary_voltage' : '7200',
-              'secondary_voltage' : '2400',
-              'resistance' : '0.01',
-              'reactance' : '0.06'}
-
-  glm_object_dict[5] = {'object' : 'node',
-              'name' : 'node1',
-              'phases' : 'ABCN',
-                          'bustype' : 'SWING',
-              'voltage_A' : '+7199.558+0.000j',
-              'voltage_B' : '-3599.779-6235.000j',
-              'voltage_C' : '-3599.779+6235.000j',
-              'nominal_voltage' : '7200'}
-
-  glm_object_dict[6] = {'object' : 'overhead_line',
-              'name' : 'oh_12',
-              'phases' : 'ABCN',
-              'from' : 'node1',
-              'to' : 'node2',
-              'length' : '2000',
-              'configuration' : 'lc_300'}
-
-  glm_object_dict[7] = {'object' : 'node',
-              'name' : 'node2',
-              'phases' : 'ABCN',
-              'voltage_A' : '+7199.558+0.000j',
-              'voltage_B' : '-3599.779-6235.000j',
-              'voltage_C' : '-3599.779+6235.000j',
-              'nominal_voltage' : '7200'}
-
-  glm_object_dict[8] = {'object' : 'transformer',
-              'name' : 't_23',
-              'phases' : 'ABCN',
-              'from' : 'node2',
-              'to' : 'node3',
-              'configuration' : 'tc_400'}
-
-  glm_object_dict[9] = {'object' : 'node',
-              'name' : 'node3',
-              'phases' : 'ABCN',
-              'voltage_A' : '+2401.777+0.000j',
-              'voltage_B' : '-1200.889-2080.000j',
-              'voltage_C' : '-1200.889+2080.000j',
-              'nominal_voltage' : '2400'}
-
-  glm_object_dict[10] = {'object' : 'overhead_line',
-              'name' : 'oh_34',
-              'phases' : 'ABCN',
-              'from' : 'node3',
-              'to' : 'node4',
-              'length' : '2500',
-              'configuration' : 'lc_300'}
-
-  glm_object_dict[11] = {'object' : 'node',
-              'name' : 'node4',
-              'phases' : 'ABCN',
-              'voltage_A' : '+2401.777+0.000j',
-              'voltage_B' : '-1200.889-2080.000j',
-              'voltage_C' : '-1200.889+2080.000j',
-              'nominal_voltage' : '2400'}
-
-  glm_object_dict[12] = {'object' : 'load',
-              'parent' : 'node4',
-              'name' : 'l4A',
-              'phases' : 'AN',
-              'constant_power_A' : '785369.750+258138.553j',
-              'load_class' : 'C',
-              'nominal_voltage' : '2400'}
-
-  glm_object_dict[13] = {'object' : 'load',
-              'parent' : 'node4',
-              'name' : 'l4B',
-              'phases' : 'BN',
-              'constant_power_B' : '1570739.500+516277.107j',
-              'load_class' : 'C',
-              'nominal_voltage' : '2400'}
-
-  glm_object_dict[14] = {'object' : 'load',
-              'parent' : 'node4',
-              'name' : 'l4C',
-              'phases' : 'CN',
-              'constant_power_C' : '3926848.750+1290692.768j',
-              'load_class' : 'C',
-              'nominal_voltage' : '2400'}
-
-
-  baseGLM, last_key = GLD_Feeder(glm_object_dict,-1,'C:\\Projects\\NRECEA\\OMF\\omf_calibration_27\\src\\feeder_calibration_scripts\\omf\\calibration')
-  glm_string = feeder.sortedWrite(baseGLM)
-  file = open('C:\\Projects\\NRECEA\\OMF\\omf_calibration_27\\src\\feeder_calibration_scripts\\omf\\calibration\\four_node_loadshapes_test1.glm','w')
-  file.write(glm_string)
-  file.close()
-  print('success!')
-
-if __name__ ==  '__main__':
-  main()
