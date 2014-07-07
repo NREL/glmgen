@@ -50,19 +50,25 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
 
   if case_flag > 13:
     case_flag = 13
-  #print("Calling configuration.py\n")
+  
   # Get information about each feeder from Configuration() and  TechnologyParameters()
   config_data = Configuration.ConfigurationFunc(wdir,resources_dir,configuration_file,None,None)
   
   # Overwrite config_data with options
-  if (options is not None) and ('solar_penetration' in options):
-    config_data['solar_penetration'] = options['solar_penetration']
-  if (options is not None) and ('voltage_players' in options):
-    config_data['voltage_players'] = options['voltage_players']
-
+  # helper function to avoid repetitive code
+  def overwrite_config_data_entry(config_data,options,config_name,option_name=None):
+      option_name = config_name if option_name is None else option_name
+      if (options is not None) and (option_name in options):
+          config_data[config_name] = options[option_name]
+  
+  # actual overwrites
+  overwrite_config_data_entry(config_data,options,'solar_penetration')
+  overwrite_config_data_entry(config_data,options,'voltage_players')
+  overwrite_config_data_entry(config_data,options,'avg_house','avg_residential_load')
+  overwrite_config_data_entry(config_data,options,'avg_commercial','avg_commercial_load')
+  
   #set up default flags
   use_flags = {}
-  #print("Calling TechnologyParameters.py\n")
   tech_data,use_flags = TechnologyParameters.TechnologyParametersFunc(use_flags,case_flag)
   
   # Overwrite use_flags with options
@@ -88,7 +94,6 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     if ('bustype' in glmDict[x]) and (glmDict[x]['bustype'] == 'SWING'):
       swing_bus_name = glmDict[x]['name']
       nom_volt = glmDict[x]['nominal_voltage'] # Nominal voltage in V
-      print("Found swing bus '{:s}' with nominal voltage {:s} V".format(swing_bus_name,nom_volt))
       break
   assert(swing_bus_name is not None)
   assert(nom_volt is not None)
@@ -346,14 +351,18 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
 
   # Copy static powerflow model glm dictionary into case dictionary
   for x in glmDict:
-    glmCaseDict[last_key] = copy.deepcopy(glmDict[x])
+      # skip clocks, since already added one
+      if 'clock' in glmDict[x]:
+          continue
+  
+      glmCaseDict[last_key] = copy.deepcopy(glmDict[x])
 
-    # Remove original swing bus from static model
-    if 'bustype' in glmCaseDict[last_key] and glmCaseDict[last_key]['bustype'] == 'SWING':
-      swing_node = glmCaseDict[last_key]['name']
-      del glmCaseDict[last_key]['bustype']
-      glmCaseDict[last_key]['object'] = 'meter'
-    last_key += 1
+      # Remove original swing bus from static model
+      if 'bustype' in glmCaseDict[last_key] and glmCaseDict[last_key]['bustype'] == 'SWING':
+          swing_node = glmCaseDict[last_key]['name']
+          del glmCaseDict[last_key]['bustype']
+          glmCaseDict[last_key]['object'] = 'meter'
+      last_key += 1
 
 
   # Add groupid's to lines and transformers
@@ -366,8 +375,6 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
       elif re.match("overhead_line.*",glmCaseDict[x]['object']) or re.match("underground_line.*",glmCaseDict[x]['object']):
         glmCaseDict[x]['groupid'] = 'Distribution_Line'
   
-  #print('finished copying base glm\n')
-
   # Create dictionary that houses the number of commercial 'load' objects where commercial house objects will be tacked on.
   total_commercial_number = 0 # Variable that stores the total amount of houses that need to be added.
   commercial_dict = {}
@@ -562,14 +569,11 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     for x in to_remove:
       del glmCaseDict[x]
         
-  print('finished collecting commercial load objects\n')
-
   # Create dictionary that houses the number of residential 'load' objects where residential house objects will be tacked on.
   total_house_number = 0
   residential_dict = {}
   if use_flags['use_homes'] == 1:
     residential_key = 0
-    print("\n\nCreating residential_dict:\n\n")
     to_remove = []
     for x in glmCaseDict:
       if 'object' in glmCaseDict[x] and re.match("triplex_node.*",glmCaseDict[x]['object']):
@@ -594,17 +598,14 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
           if 'power_1' in glmCaseDict[x]:
             c_num = complex(glmCaseDict[x]['power_1'])
             load += abs(c_num)
-            # print("Original_1 : {:s}\nComplex Number: {:s}\nMagnitude: {:s}\n".format(glmCaseDict[x]['power_1'],str(c_num),str(load)))
 
           if 'power_12' in glmCaseDict[x]:
             c_num = complex(glmCaseDict[x]['power_12'])
             load += abs(c_num)
-            # print("Original_12: {:s}\nComplex Number: {:s}\nMagnitude: {:s}\n".format(glmCaseDict[x]['power_12'],str(c_num),str(load)))
           
           residential_dict[residential_key]['load'] = load  
           residential_dict[residential_key]['number_of_houses'] = int(round(load/config_data['avg_house']))
           total_house_number += residential_dict[residential_key]['number_of_houses']
-          # print("Load: {:s} W\nAvg. House: {:s} W\nNum. Houses: {:d}\n".format(str(load),str(config_data['avg_house']),residential_dict[residential_key]['number_of_houses']))
           # Determine whether we rounded down of up to help determine the square footage (neg. number => small homes)
           residential_dict[residential_key]['large_vs_small'] = load/config_data['avg_house'] - residential_dict[residential_key]['number_of_houses']
 
@@ -723,8 +724,6 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     for x in to_remove:
       del glmCaseDict[x]
     
-  print('finished collecting residential load objects\n')
-
   # Calculate some random numbers needed for TOU/CPP and DLC technologies
   if use_flags['use_market'] != 0:
     # Initialize psuedo-random seed
@@ -809,7 +808,6 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
     else:
-      print('calling ResidentialLoads.py with len(residential_dict) = {:d}, and {:d} houses.\n'.format(len(residential_dict),total_house_number))
       glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir, resources_dir, configuration_file)
   # End addition of residential loads ########################################################################################################################
 
@@ -817,149 +815,14 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
     else:
-      print('calling CommercialLoads.py with len(commercial_dict) = {:d}, and {:d} buildings.\n'.format(len(commercial_dict), total_commercial_number))
       glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, wdir, resources_dir, configuration_file)
       
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
   if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
-    print('calling Solar_Technology.py with solar_bigbox_array[0] = {:d}, solar_office_array[0] = {:d}, solar_stripmall_array[0] = {:d}, and solar_residential_array[0] = {:d}\n'.format(solar_bigbox_array[0],solar_office_array[0],solar_stripmall_array[0],solar_residential_array[0]))
     glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, tech_data, last_key, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array)
     
   # Append recorders
   glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict,case_flag,0,1,'four_node_basecase_test', last_key)
 
-
   return (glmCaseDict, last_key)
 
-def main():
-  #tests here
-  glm_object_dict = {}
-  glm_object_dict[0] = {'object' : 'overhead_line_conductor',
-              'name' : 'ohlc_100',
-              'geometric_mean_radius' : '0.0244',
-              'resistance' : '0.306'}
-
-  glm_object_dict[1] = {'object' : 'overhead_line_conductor',
-              'name' : 'ohlc_101',
-              'geometric_mean_radius' : '0.00814',
-              'resistance' : '0.592'}
-
-  glm_object_dict[2] = {'object' : 'line_spacing',
-              'name' : 'ls_200',
-              'distance_AB' : '2.5',
-              'distance_BC' : '4.5',
-              'distance_AC' : '7.0',
-              'distance_AN' : '5.656854',
-              'distance_BN' : '4.272002',
-              'distance_CN' : '5.0'}
-
-  glm_object_dict[3] = {'object' : 'line_configuration',
-              'name' : 'lc_300',
-              'conductor_A' : 'ohlc_100',
-              'conductor_B' : 'ohlc_100',
-              'conductor_C' : 'ohlc_100',
-              'conductor_N' : 'ohlc_101',
-              'spacing' : 'ls_200'}
-
-  glm_object_dict[4] = {'object' : 'transformer_configuration',
-              'name' : 'tc_400',
-              'connect_type' : '1',
-              'power_rating' : '7000',
-              'powerA_rating' : '875',
-              'powerB_rating' : '1750',
-              'powerC_rating' : '4375',
-              'primary_voltage' : '7200',
-              'secondary_voltage' : '2400',
-              'resistance' : '0.01',
-              'reactance' : '0.06'}
-
-  glm_object_dict[5] = {'object' : 'node',
-              'name' : 'node1',
-              'phases' : 'ABCN',
-                          'bustype' : 'SWING',
-              'voltage_A' : '+7199.558+0.000j',
-              'voltage_B' : '-3599.779-6235.000j',
-              'voltage_C' : '-3599.779+6235.000j',
-              'nominal_voltage' : '7200'}
-
-  glm_object_dict[6] = {'object' : 'overhead_line',
-              'name' : 'oh_12',
-              'phases' : 'ABCN',
-              'from' : 'node1',
-              'to' : 'node2',
-              'length' : '2000',
-              'configuration' : 'lc_300'}
-
-  glm_object_dict[7] = {'object' : 'node',
-              'name' : 'node2',
-              'phases' : 'ABCN',
-              'voltage_A' : '+7199.558+0.000j',
-              'voltage_B' : '-3599.779-6235.000j',
-              'voltage_C' : '-3599.779+6235.000j',
-              'nominal_voltage' : '7200'}
-
-  glm_object_dict[8] = {'object' : 'transformer',
-              'name' : 't_23',
-              'phases' : 'ABCN',
-              'from' : 'node2',
-              'to' : 'node3',
-              'configuration' : 'tc_400'}
-
-  glm_object_dict[9] = {'object' : 'node',
-              'name' : 'node3',
-              'phases' : 'ABCN',
-              'voltage_A' : '+2401.777+0.000j',
-              'voltage_B' : '-1200.889-2080.000j',
-              'voltage_C' : '-1200.889+2080.000j',
-              'nominal_voltage' : '2400'}
-
-  glm_object_dict[10] = {'object' : 'overhead_line',
-              'name' : 'oh_34',
-              'phases' : 'ABCN',
-              'from' : 'node3',
-              'to' : 'node4',
-              'length' : '2500',
-              'configuration' : 'lc_300'}
-
-  glm_object_dict[11] = {'object' : 'node',
-              'name' : 'node4',
-              'phases' : 'ABCN',
-              'voltage_A' : '+2401.777+0.000j',
-              'voltage_B' : '-1200.889-2080.000j',
-              'voltage_C' : '-1200.889+2080.000j',
-              'nominal_voltage' : '2400'}
-
-  glm_object_dict[12] = {'object' : 'load',
-              'parent' : 'node4',
-              'name' : 'l4A',
-              'phases' : 'AN',
-              'constant_power_A' : '785369.750+258138.553j',
-              'load_class' : 'C',
-              'nominal_voltage' : '2400'}
-
-  glm_object_dict[13] = {'object' : 'load',
-              'parent' : 'node4',
-              'name' : 'l4B',
-              'phases' : 'BN',
-              'constant_power_B' : '1570739.500+516277.107j',
-              'load_class' : 'C',
-              'nominal_voltage' : '2400'}
-
-  glm_object_dict[14] = {'object' : 'load',
-              'parent' : 'node4',
-              'name' : 'l4C',
-              'phases' : 'CN',
-              'constant_power_C' : '3926848.750+1290692.768j',
-              'load_class' : 'C',
-              'nominal_voltage' : '2400'}
-
-
-  baseGLM, last_key = GLD_Feeder(glm_object_dict,-1,'C:\\Projects\\NRECEA\\OMF\\omf_calibration_27\\src\\feeder_calibration_scripts\\omf\\calibration')
-  glm_string = feeder.sortedWrite(baseGLM)
-  file = open('C:\\Projects\\NRECEA\\OMF\\omf_calibration_27\\src\\feeder_calibration_scripts\\omf\\calibration\\four_node_loadshapes_test1.glm','w')
-  file.write(glm_string)
-  file.close()
-  print('success!')
-
-if __name__ ==  '__main__':
-  main()

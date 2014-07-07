@@ -14,9 +14,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
     
     # Initialize psuedo-random seed
     random.seed(4)
-    
-    print("Solar penetration = {:.0f}".format(config_data["solar_penetration"]))
-        
+            
     # Populating solar as percentage of feeder peak load
     # Add Commercial PV
     if use_flags['use_solar'] != 0 or use_flags['use_solar_com'] != 0:
@@ -34,8 +32,6 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
         if solar_office_array is None: 
             penetration_office = 0
             
-        print('stripmall = {:.0f}, bigbox = {:.0f}, office = {:.0f}\n'.format(penetration_stripmall,penetration_bigbox,penetration_office))
-            
         solar_rating = config_data['solar_rating'] * 1000 # Convert kW to W
         #Determine total number of PV we must add to office
         if penetration_office > 0:    # solar_office_array = list(number of office meters attached to com loads,list(office meter names attached to loads),list(phases of office meters attached to loads))
@@ -45,7 +41,6 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
             # total_office_pv_units = math.ceil((config_data['emissions_peak'] * penetration_office) / tech_data['solar_averagepower_office'])
             total_office_pv_units = int(math.ceil(solar_office_array[0] * penetration_office / 100.0))
             total_office_number = int(solar_office_array[0])
-            print('{:d} office pv units, on {:d} offices.\n'.format(total_office_pv_units,total_office_number))
             
             # Create a randomized list of numbers 0 to total_office_number
             random_index = []
@@ -53,8 +48,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                          total_office_number);
             
             # Determine how many units to attach to each office building
-            pv_units_per_office = int(math.ceil(total_office_pv_units / total_office_number))
-            print('{:d} PV units per office.\n'.format(pv_units_per_office))
+            pv_units_per_office = int(math.ceil(total_office_pv_units / total_office_number)) if total_office_number > 0 else 0
             
             # Attach PV units to dictionary
             pv_unit = 0
@@ -117,9 +111,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                          total_bigbox_number);
             
             # Determine how many units to attach to each bigbox building
-            pv_units_per_bigbox = 0
-            if total_bigbox_number > 0:
-                pv_units_per_bigbox = int(math.ceil(total_bigbox_pv_units / total_bigbox_number))
+            pv_units_per_bigbox = int(math.ceil(total_bigbox_pv_units / total_bigbox_number)) if total_bigbox_number > 0 else 0
             
             # Attach PV units to dictionary
             pv_unit = 0
@@ -182,9 +174,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                          total_stripmall_number);
             
             # Determine how many units to attach to each stripmall building
-            pv_units_per_stripmall = 0
-            if total_stripmall_number > 0:
-                pv_units_per_stripmall = int(math.ceil(total_stripmall_pv_units / total_stripmall_number))
+            pv_units_per_stripmall = int(math.ceil(total_stripmall_pv_units / total_stripmall_number)) if total_stripmall_number > 0 else 0
             
             # Attach PV units to dictionary
             pv_unit = 0
@@ -263,7 +253,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                          total_residential_number);
             
             # Determine how many units to attach to each residential house
-            pv_units_per_residential = int(math.ceil(total_residential_pv_units / total_residential_number))
+            pv_units_per_residential = int(math.ceil(total_residential_pv_units / total_residential_number)) if total_residential_number > 0 else 0
             
             # Attach PV units to dictionary
             pv_unit = 0

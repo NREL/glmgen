@@ -5,126 +5,227 @@ import datetime, copy, os, re, warnings
 from matplotlib import pyplot as plt
 
 class GlmFile(dict):
+    """
+    GlmFile is a dict with integer keys (for ordering the file) and dict
+    values, each of which is an item in a glm file.
+    """
     def __init__(self, *arg, **kw):
         super(GlmFile, self).__init__(*arg,**kw)
+        
+    def get_clocks(self):
+        """
+        Returns a list of deep copies of all clock objects in this GlmFile.
+        """
+        result = []
+        for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+            if 'clock' in value:
+                result.append(copy.deepcopy(value))
+        return result
+    
+    def get_objects_by_type(self, glm_type=None):
+        """
+        Returns a list of deep copies of all objects ('object') of glm_type 
+        in this GlmFile.
+        """
+        result = []
+        for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+            if self.object_is_type(value,glm_type):
+                result.append(copy.deepcopy(value))
+        return result
 
     def object_is_type(self, obj, glm_type):
-      result = True
-      if glm_type is not None:
-        if 'object' not in obj:
-          result = False
-        elif not re.match("{:s}.*".format(glm_type),obj['object']):
-          result = False
-      return result
+        """
+        Inspects obj, a dict representing an item in a glm file, determining
+        whether it is an 'object', and if so, if it is of glm_type.
+        
+        Parameters:
+            obj (dict): item in a glm file
+            glm_type (string): type of 'object' (e.g., 'house', 'load')
+            
+        Returns True if glm_type is None or obj is of glm_type, False otherwise.
+        """
+        result = True
+        if glm_type is not None:
+            if 'object' not in obj:
+                result = False
+            elif not re.match("{:s}.*".format(glm_type),obj['object']):
+                result = False
+        return result
         
     def get_parent_key(self,key,parent_type=None):
-      result = None
-      if key in self and 'parent' in self[key]:
-        parent_name = self[key]['parent']
-      else:
+        """
+        Looks for the key of the parent of self[key].
+        
+        Parameters:
+            key (int): self[key] is the glm object whose parent we seek
+            parent_type (string): None, or the type of object we require the 
+                                  parent to be in order to return it
+                                  
+        Returns None if self[key] has no parent, or the parent is not of 
+        parent_type. 
+        
+        Returns the key to the parent object, let's call it parent_key, such 
+        that the parent of self[key] is self[parent_key], if self[key] has a 
+        parent, and object_is_type(self[parent_key],parent_type) (which always 
+        returns True if parent_type is None).
+        """
+        result = None
+        if key in self and 'parent' in self[key]:
+          parent_name = self[key]['parent']
+        else:
+          return result
+        for obj_key, obj in self.items():
+            if 'name' in obj and obj['name'] == parent_name:
+                if not self.object_is_type(obj,parent_type):
+                    continue
+                result = obj_key
+                break
         return result
-      for obj_key, obj in self.items():
-          if 'name' in obj and obj['name'] == parent_name:
-            if not self.object_is_type(obj,parent_type):
-              continue
-            result = obj_key
-            break
-      return result
       
     def get_connector_by_to_node(self,to_node_key,connector_type=None):
-      result = None
-      if to_node_key in self and 'name' in self[to_node_key]:
-        to_node_name = self[to_node_key]['name']
-      else:
-        return result
-      for obj_key, obj in self.items():
-        if 'to' in obj and obj['to'] == to_node_name:
-          if not self.object_is_type(obj,connector_type):
-            continue
-          result = obj_key
-          break
-      return result  
-
-def tokenizeGlm(glmFileName):
-  with open(glmFileName,'r') as glmFile:
-    data = glmFile.read()
-  # Get rid of http for stylesheets because we don't need it and it conflicts with comment syntax.
-  data = re.sub(r'http:\/\/', '', data)  
-  # Strip comments.
-  data = re.sub(r'\/\/.*\n', '', data)
-  # TODO: If the .glm creator has been lax with semicolons, add them back.
-  # Also strip non-single whitespace because it's only for humans:
-  data = data.replace('\n','').replace('\r','').replace('\t',' ')
-  # Tokenize around semicolons, braces and whitespace.
-  tokenized = re.split(r'(;|\}|\{|\s)',data)
-  # Get rid of whitespace strings.
-  basicList = [x for x in tokenized if (x != '') and (x != ' ')]
-  return basicList
-
-def parseTokenList(tokenList):
-  # Tree variables.
-  tree = GlmFile()
-  guid = 0
-  guidStack = []
-  # Helper function to add to the current leaf we're visiting.
-  def currentLeafAdd(key, value):
-    current = tree
-    for x in guidStack:
-      current = current[x]
-    current[key] = value
-  # Helper function to turn a list of strings into one string with some decent formatting.
-  # TODO: formatting could be nicer, i.e. remove the extra spaces this function puts in.
-  def listToString(listIn):
-    result = ''
-    if len(listIn) > 0: 
-      result = listIn[1]
-      for x in listIn[2:-1]:
-        result = result + ' ' + x
-    return result
-  # Pop off a full token, put it on the tree, rinse, repeat.
-  while tokenList != []:
-    # Pop, then keep going until we have a full token (i.e. 'object house', not just 'object')
-    fullToken = []
-    while fullToken == [] or fullToken[-1] not in ['{',';','}']:
-      fullToken.append(tokenList.pop(0))
-    # Work with what we've collected.
-    if fullToken[-1] == ';':
-      # Special case when we have zero-attribute items (like #include, #set, module).
-      if guidStack == [] and fullToken != [';']:
-        tree[guid] = {'omftype':fullToken[0],'argument':listToString(fullToken)}
-        guid += 1
-      # We process if it isn't the empty token (';')
-      elif len(fullToken) > 1:
-        currentLeafAdd(fullToken[0],listToString(fullToken))
-    elif fullToken[-1] == '}':
-      if len(fullToken) > 1:
-        currentLeafAdd(fullToken[0],listToString(fullToken))
-      guidStack.pop()
-    elif fullToken[0] == 'schedule':
-      # Special code for those ugly schedule objects:
-      if fullToken[0] == 'schedule':
-        while fullToken[-1] not in ['}']:
-          fullToken.append(tokenList.pop(0))
-        tree[guid] = {'object':'schedule','name':fullToken[1], 'cron':' '.join(fullToken[3:-2])}
-        guid += 1
-    elif fullToken[-1] == '{':
-      currentLeafAdd(guid,{})
-      guidStack.append(guid)
-      guid += 1
-      # Wrapping this currentLeafAdd is defensive coding so we don't crash on malformed glms.
-      if len(fullToken) > 1:
-        # Do we have a clock/object or else an embedded configuration object?
-        if len(fullToken) < 4:
-          currentLeafAdd(fullToken[0],fullToken[-2])
+        """
+        Looks for the first connecting object that refers to self[to_node_key] 
+        in a 'to' field. Optionally restricts the returned object to be of a 
+        certain connector_type.
+        
+        Parameters:
+            to_node_key (int): self[to_node_key] is the object we expect to 
+                               be in a 'to' field of another object
+            connector_type (string): 
+            
+        Returns None if self[to_node_key] is not connected 'to', or there is
+        no such connector of connector type.
+        
+        Returns the key to the connecting object, let's call it connector_key,
+        such that self[connector_key] lists the name of self[to_node_key] in 
+        its 'to' field, and object_is_type(self[connector_key],connector_type)
+        (which always returns True if parent_type is None).
+        """
+        result = None
+        if to_node_key in self and 'name' in self[to_node_key]:
+            to_node_name = self[to_node_key]['name']
         else:
-          currentLeafAdd('omfEmbeddedConfigObject', fullToken[0] + ' ' + listToString(fullToken))
-  return tree
+            return result
+        for obj_key, obj in self.items():
+            if 'to' in obj and obj['to'] == to_node_name:
+                if not self.object_is_type(obj,connector_type):
+                    continue
+                result = obj_key
+                break
+        return result  
+        
+    @staticmethod
+    def load(glm_file_name):
+        tokens = GlmFile.__tokenizeGlm(glm_file_name)
+        return GlmFile.__parseTokenList(tokens)
+        
+    def __str__(self):
+        """
+        Write this GlmFile to string, with objects ordered by their key.
+        """
+        output = ''
+        try:
+            for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+                output += dictToString(value) + '\n'
+        except ValueError:
+            raise Exception
+        return output
+        
+    def save(self,glm_file_name):
+        glm_string = str(self)
+        file = open(glm_file_name, 'w')
+        file.write(glm_string)
+        file.close()    
+    
+    @staticmethod
+    def __tokenizeGlm(glmFileName):
+        with open(glmFileName,'r') as glmFile:
+            data = glmFile.read()
+        # Get rid of http for stylesheets because we don't need it and it conflicts with comment syntax.
+        data = re.sub(r'http:\/\/', '', data)  
+        # Strip comments.
+        data = re.sub(r'\/\/.*\n', '', data)
+        # TODO: If the .glm creator has been lax with semicolons, add them back.
+        # Also strip non-single whitespace because it's only for humans:
+        data = data.replace('\n','').replace('\r','').replace('\t',' ')
+        # Tokenize around semicolons, braces and whitespace.
+        tokenized = re.split(r'(;|\}|\{|\s)',data)
+        # Get rid of whitespace strings.
+        basicList = [x for x in tokenized if (x != '') and (x != ' ')]
+        return basicList
+
+    @staticmethod
+    def __parseTokenList(tokenList):
+        
+        # Tree variables.
+        tree = GlmFile()
+        guid = 0
+        guidStack = []
+        
+        # Helper function to add to the current leaf we're visiting.
+        def currentLeafAdd(key, value):
+            current = tree
+            for x in guidStack:
+                current = current[x]
+            current[key] = value
+          
+        # Helper function to turn a list of strings into one string with some decent formatting.
+        # TODO: formatting could be nicer, i.e. remove the extra spaces this function puts in.
+        def listToString(listIn):
+            result = ''
+            if len(listIn) > 0: 
+                result = listIn[1]
+                for x in listIn[2:-1]:
+                    result = result + ' ' + x
+            return result
+            
+        # Pop off a full token, put it on the tree, rinse, repeat.
+        while tokenList != []:
+            # Pop, then keep going until we have a full token (i.e. 'object house', not just 'object')
+            fullToken = []
+            while fullToken == [] or fullToken[-1] not in ['{',';','}']:
+                fullToken.append(tokenList.pop(0))
+            # Work with what we've collected.
+            if fullToken[-1] == ';':
+                # Special case when we have zero-attribute items (like #include, #set, module).
+                if guidStack == [] and fullToken != [';']:
+                    tree[guid] = {'omftype':fullToken[0],'argument':listToString(fullToken)}
+                    guid += 1
+                # We process if it isn't the empty token (';')
+                elif len(fullToken) > 1:
+                    currentLeafAdd(fullToken[0],listToString(fullToken))
+            elif fullToken[-1] == '}':
+                if len(fullToken) > 1:
+                    currentLeafAdd(fullToken[0],listToString(fullToken))
+                guidStack.pop()
+            elif fullToken[0] == 'schedule':
+                # Special code for those ugly schedule objects:
+                if fullToken[0] == 'schedule':
+                    while fullToken[-1] not in ['}']:
+                        fullToken.append(tokenList.pop(0))
+                    tree[guid] = {'object':'schedule','name':fullToken[1], 'cron':' '.join(fullToken[3:-2])}
+                    guid += 1
+            elif fullToken[-1] == '{':
+                currentLeafAdd(guid,{})
+                guidStack.append(guid)
+                guid += 1
+                # Wrapping this currentLeafAdd is defensive coding so we don't crash on malformed glms.
+                if len(fullToken) > 1:
+                    # Do we have a clock/object or else an embedded configuration object?
+                    if len(fullToken) < 4:
+                        currentLeafAdd(fullToken[0],fullToken[-2])
+                    else:
+                        currentLeafAdd('omfEmbeddedConfigObject', fullToken[0] + ' ' + listToString(fullToken))
+        return tree
 
 def parse(glmFileName):
-  tokens = tokenizeGlm(glmFileName)
-  return parseTokenList(tokens)
+    """
+    Deprecated -- use GlmFile.load(glmFileName).
+    """
+    return GlmFile.load(glmFileName)
 
 def dictToString(inDict):
+  
   # Helper function: given a single dict, concatenate it into a string.
   def gatherKeyValues(inDict, keyToAvoid):
     otherKeyValues = ''
@@ -145,28 +246,38 @@ def dictToString(inDict):
         else:
           otherKeyValues += ('\t' + key + ' ' + str(inDict[key]) + ';\n')
     return otherKeyValues
+    
   # Handle the different types of dictionaries that are leafs of the tree root:
   if 'omftype' in inDict:
     return inDict['omftype'] + ' ' + inDict['argument'] + ';'
+    
   elif 'module' in inDict:
     return 'module ' + inDict['module'] + ' {\n' + gatherKeyValues(inDict, 'module') + '};\n'
+    
   elif 'clock' in inDict:
     #return 'clock {\n' + gatherKeyValues(inDict, 'clock') + '};\n'
     # THis object has known property order issues writing it out explicitly
     clock_string = 'clock {\n' + '\ttimezone ' + inDict['timezone'] + ';\n' + '\tstarttime ' + inDict['starttime'] + ';\n' + '\tstoptime ' + inDict['stoptime'] + ';\n};\n'
     return clock_string
+    
   elif 'object' in inDict and inDict['object'] == 'schedule':
     return 'schedule ' + inDict['name'] + ' {\n' + inDict['cron'] + '\n};\n'
+    
   elif 'object' in inDict:
     return 'object ' + inDict['object'] + ' {\n' + gatherKeyValues(inDict, 'object') + '};\n'
+    
   elif 'omfEmbeddedConfigObject' in inDict:
     return inDict['omfEmbeddedConfigObject'] + ' {\n' + gatherKeyValues(inDict, 'omfEmbeddedConfigObject') + '};\n'
+    
   elif '#include' in inDict:
     return '#include ' + '"' + inDict['#include'] + '"' + '\n'
+    
   elif '#define' in inDict:
     return '#define ' + inDict['#define'] + '\n'
+    
   elif '#set' in inDict:
     return '#set ' + inDict['#set'] + '\n'
+    
   elif 'class' in inDict:
     prop = ''
     if 'variable_types' in inDict.keys() and 'variable_names' in inDict.keys() and len(inDict['variable_types'])==len(inDict['variable_names']):
@@ -176,24 +287,7 @@ def dictToString(inDict):
     else:
       return '\n'
 
-def write(inTree):
-  '''write(inTreeDict)->stringGlm'''
-  output = ''
-  for key in inTree:
-    output += dictToString(inTree[key]) + '\n'
-  return output
-
-def sortedWrite(inTree):
-  '''write(inTreeDict)->stringGlm, with all tree objects ordered by their key. '''
-  sortedKeys = sorted(inTree.keys(), key=int)
-  output = ''
-  try:
-    for key in sortedKeys:
-      output += dictToString(inTree[key]) + '\n'
-  except ValueError:
-    raise Exception
-  return output
-
+      
 def adjustTime(tree, simLength, simLengthUnits, simStartDate):
   # translate LengthUnits to minutes.
   if simLengthUnits == 'minutes':
@@ -437,46 +531,3 @@ def _obToCol(obStr):
                 # font_color='black',
                 # font_weight='bold',
                 # font_size=0.25)
-
-if __name__ == '__main__':
-  ''' Here we do the tests. '''
-
-  # # Graph Test
-  # import json
-  # with open('data/Feeder/public_Olin Barre Geo.json','r') as inJ:
-  # tree = json.load(inJ)['tree']
-  # nxG = treeToNxGraph(tree)
-  # x = latLonNxGraph(nxG)
-  # plt.show()
-
-  # # Parser Test
-  # tokens = ['clock','{','clockey','valley','}','object','house','{','name','myhouse',';','object','ZIPload','{','inductance','bigind',';','power','newpower','}','size','234sqft','}']
-  # simpleTokens = tokenizeGlm('./feeders/13 Node Ref Feeder Flat/main.glm')
-  # print parseTokenList(simpleTokens)
-
-  # # Recorder Attachment Test
-  # with open('data/Feeder/public_Olin Barre Geo.json','r') as inJ:
-  # tree = json.load(inJ)['tree']
-  # attachRecorders(tree, 'Regulator', 'object', 'regulator')
-  # attachRecorders(tree, 'Voltage', 'object', 'node')
-  # print 'All the objects: ' + str([tree[x]['object'] for x in tree.keys() if 'object' in tree[x]])
-
-  # # Testing The De-Embedding
-  # from pprint import pprint
-  # tree = parse('./feeders/13 Node Reference Feeder/main.glm')
-  # fullyDeEmbed(tree)
-  # #pprint(tree)
-  # print sortedWrite(tree)
-
-  # # groupSwingKids test
-  # from pprint import pprint
-  # tree = parse('./feeders/13 Node Ref Feeder Flat/main.glm')
-  # groupSwingKids(tree)
-  # pprint(tree)
-
-  # # Time Adjustment Test
-  # tree = parse('./feeders/Simple Market System/main.glm')
-  # adjustTime(tree, 100, 'hours', '2000-09-01')
-  # from pprint import pprint
-  # pprint(tree)
-  pass

@@ -1993,7 +1993,7 @@ def print_base_GLM(baseDict,f_out):
 			else:
 				del baseDict[x]['load_class']
 
-	glm_string = feeder.sortedWrite(baseDict)
+	glm_string = str(baseDict)
 	file = open(f_out, 'w')
 	file.write('#set iteration_limit=50\n')
 	file.write('#set profiler=1\n')

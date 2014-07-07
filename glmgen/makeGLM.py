@@ -1,10 +1,13 @@
 '''Writes the necessary .glm files for a calibration round. Define recording interval and MySQL schema name here.'''
 from __future__ import division
-import datetime 
-import re
-import math
+
 from glmgen import feeder
 from glmgen import Milsoft_GridLAB_D_Feeder_Generation
+
+import datetime 
+import os
+import re
+import math
 
 # recording interval (seconds)
 interval = 300  
@@ -29,10 +32,8 @@ def makeGLM(clock, calib_file, baseGLM, case_flag, options, dir, resources_dir='
   '''
   # Create populated dictionary.
   if calib_file is not None:
-    print ('Populating feeder using calibration file '+calib_file+'.')
     calib_fullpath = dir+'/'+calib_file
   else:
-    print ('Populating feeder using default calibrations.')
     calib_fullpath = None
   glmDict, last_key = Milsoft_GridLAB_D_Feeder_Generation.GLD_Feeder(
       baseGLM,
@@ -106,11 +107,7 @@ def makeGLM(clock, calib_file, baseGLM, case_flag, options, dir, resources_dir='
                     'in': "'{:s}'".format(rec_starttime) }
                     
     # Turn dictionary into a *.glm string and print it to a file in the given directory.
-    glmstring = feeder.sortedWrite(populated_dict)
-    file = open(dir+'/'+filename, 'w')
-    file.write(glmstring)
-    file.close()
-    print ("\t"+filename+ " is ready.")
+    populated_dict.save(os.path.realpath(dir + '/' + filename))
     
     fnames.append(filename)
   return fnames
