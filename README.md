@@ -18,4 +18,13 @@ Private version of public fork https://github.com/elainethale/omf. Forking to us
 4. Add the top-level directory of the cloned repository to your PYTHONPATH
 5. Follow a basic git workflow (branch on GitHub, checkout the branch locally, do your work, *commit, push, repeat from *, pull request)
 
+#### Release
+
+1. Make sure that all the changes to be put into the release have made their way into the develop branch.
+2. Revisit the current version numbers in glmgen/__init__.py, on master and on develop. Update the version number on develop according to what changes were made during the last release cycle and the guidelines at [Semantic Versioning 2.0.0](http://semver.org/).
+3. Update CHANGES.txt.
+4. Optionally update setup.py and MANIFEST.in.
+5. Merge develop into master. 
+6. Create a tag on master following the format 'v{}.{}.{}'.format(major,minor,patch).
+
 #### TODO: High-level use notes
