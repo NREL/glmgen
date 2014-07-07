@@ -1,1 +1,2 @@
-v0.1.0, TBD -- Initial release.
+v0.1.0, 5-6/XX/2014 -- Initial (informal) release.
+v1.0.0, 7/7/2014 -- Started refactoring feeder.py to be more object-oriented. Broke the old write API (use GlmFile.__str__ and GlmFile.save instead). Continued to fix bugs and add externally-specified options. 

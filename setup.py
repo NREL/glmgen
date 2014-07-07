@@ -1,8 +1,9 @@
 from distutils.core import setup
+import glmgen
 
 setup(
     name='glmgen',
-    version='0.1.0',
+    version=glmgen.__version__,
     author='Elaine Hale, forked from https://github.com/elainethale/omf',
     author_email='elaine.hale@nrel.gov',
     packages=['glmgen', 'glmgen.test', 'glmgen.schedules'],
