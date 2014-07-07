@@ -4,7 +4,9 @@ Private version of public fork https://github.com/elainethale/omf. Forking to us
 
 #### Install
 
-`pip install git+ssh://git@github.nrel.gov/ESI/omf-glm-generator.git`
+`pip install git+ssh://git@github.nrel.gov/ESI/omf-glm-generator.git@v1.0.0`
+
+Previous versions are listed at https://github.nrel.gov/ESI/omf-glm-generator/releases.
 
 #### Uninstall
 
@@ -24,7 +26,7 @@ Private version of public fork https://github.com/elainethale/omf. Forking to us
 2. Revisit the current version numbers in glmgen/__init__.py, on master and on develop. Update the version number on develop according to what changes were made during the last release cycle and the guidelines at [Semantic Versioning 2.0.0](http://semver.org/).
 3. Update CHANGES.txt.
 4. Optionally update setup.py and MANIFEST.in.
-5. Merge develop into master. 
-6. Create a tag on master following the format 'v{}.{}.{}'.format(major,minor,patch).
+5. Update the install line in this file to point to the new (soon-to-be) version.
+6. Merge develop into master. 
+7. Create a tag on master following the format 'v{}.{}.{}'.format(major,minor,patch).
 
-#### TODO: High-level use notes
