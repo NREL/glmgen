@@ -351,14 +351,18 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
 
   # Copy static powerflow model glm dictionary into case dictionary
   for x in glmDict:
-    glmCaseDict[last_key] = copy.deepcopy(glmDict[x])
+      # skip clocks, since already added one
+      if 'clock' in glmDict[x]:
+          continue
+  
+      glmCaseDict[last_key] = copy.deepcopy(glmDict[x])
 
-    # Remove original swing bus from static model
-    if 'bustype' in glmCaseDict[last_key] and glmCaseDict[last_key]['bustype'] == 'SWING':
-      swing_node = glmCaseDict[last_key]['name']
-      del glmCaseDict[last_key]['bustype']
-      glmCaseDict[last_key]['object'] = 'meter'
-    last_key += 1
+      # Remove original swing bus from static model
+      if 'bustype' in glmCaseDict[last_key] and glmCaseDict[last_key]['bustype'] == 'SWING':
+          swing_node = glmCaseDict[last_key]['name']
+          del glmCaseDict[last_key]['bustype']
+          glmCaseDict[last_key]['object'] = 'meter'
+      last_key += 1
 
 
   # Add groupid's to lines and transformers
