@@ -4,9 +4,15 @@ Private version of public fork https://github.com/elainethale/omf. Forking to us
 
 #### Install
 
+`pip install git+ssh://git@github.nrel.gov/ESI/omf-glm-generator.git@master`
+
+or 
+
 `pip install git+ssh://git@github.nrel.gov/ESI/omf-glm-generator.git@v1.0.0`
 
 Previous versions are listed at https://github.nrel.gov/ESI/omf-glm-generator/releases.
+
+Unfortunately on Windows, while this command nominally works (after running it, `pip list` will show glmgen as installed), it [exits with errors](http://stackoverflow.com/q/23938896/1470262).
 
 #### Uninstall
 
