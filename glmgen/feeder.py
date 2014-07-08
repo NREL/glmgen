@@ -4,6 +4,8 @@ import datetime, copy, os, re, warnings
 # import networkx as nx
 from matplotlib import pyplot as plt
 
+from collections import deque
+
 class GlmFile(dict):
     """
     GlmFile is a dict with integer keys (for ordering the file) and dict
@@ -151,7 +153,7 @@ class GlmFile(dict):
         # Tokenize around semicolons, braces and whitespace.
         tokenized = re.split(r'(;|\}|\{|\s)',data)
         # Get rid of whitespace strings.
-        basicList = [x for x in tokenized if (x != '') and (x != ' ')]
+        basicList = deque([x for x in tokenized if (x != '') and (x != ' ')])
         return basicList
 
     @staticmethod
@@ -180,11 +182,11 @@ class GlmFile(dict):
             return result
             
         # Pop off a full token, put it on the tree, rinse, repeat.
-        while tokenList != []:
+        while len(tokenList) > 0:
             # Pop, then keep going until we have a full token (i.e. 'object house', not just 'object')
             fullToken = []
             while fullToken == [] or fullToken[-1] not in ['{',';','}']:
-                fullToken.append(tokenList.pop(0))
+                fullToken.append(tokenList.popleft())
             # Work with what we've collected.
             if fullToken[-1] == ';':
                 # Special case when we have zero-attribute items (like #include, #set, module).
@@ -202,7 +204,7 @@ class GlmFile(dict):
                 # Special code for those ugly schedule objects:
                 if fullToken[0] == 'schedule':
                     while fullToken[-1] not in ['}']:
-                        fullToken.append(tokenList.pop(0))
+                        fullToken.append(tokenList.popleft())
                     tree[guid] = {'object':'schedule','name':fullToken[1], 'cron':' '.join(fullToken[3:-2])}
                     guid += 1
             elif fullToken[-1] == '{':
