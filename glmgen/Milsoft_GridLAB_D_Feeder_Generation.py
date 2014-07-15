@@ -311,11 +311,16 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     last_key += 1
 
   # Add substation swing bus and substation transformer dictionaries
+  #TMH - any values that we want to bus.py to measure from the swing bus need to be added here (e.g., 'measured_power' : '0',
   glmCaseDict[last_key] = {'object' : 'meter',
                'name' : 'network_node',
                'bustype' : 'SWING',
                'nominal_voltage' : '{:d}'.format(config_data['nom_volt']),
-               'phases' : 'ABCN'}
+               'phases' : 'ABCN',
+			   'measured_power' : '0',
+			   'measured_current_A' : '0',
+			   'measured_current_B' : '0',
+			   'measured_current_C' : '0'}
   # Add transmission voltage players
   parent_key = last_key
   last_key += 1

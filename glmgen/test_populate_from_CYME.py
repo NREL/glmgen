@@ -23,7 +23,7 @@ def main():
 	final_dict, last_key = Milsoft_GridLAB_D_Feeder_Generation.GLD_Feeder(gldDict,case_flag,directory,calibration_config,feeder_config)
 	print('population complete')
 	# Write .glm file
-  final_dict.save('output_populated.glm')
+	final_dict.save('output_populated.glm')
 	
 if __name__ == '__main__':
 	main()
