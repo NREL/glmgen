@@ -66,6 +66,8 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   overwrite_config_data_entry(config_data,options,'voltage_players')
   overwrite_config_data_entry(config_data,options,'avg_house','avg_residential_load')
   overwrite_config_data_entry(config_data,options,'avg_commercial','avg_commercial_load')
+  # HERE -- nom_volt should be (138 / sqrt(3)) kV = 79,674.3 V
+  # HERE -- feeder_rating to 20 MVA since there is a 17 MVA (bigger than the current default of 16 MVA) feeder
   
   #set up default flags
   use_flags = {}
