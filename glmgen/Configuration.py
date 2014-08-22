@@ -27,12 +27,12 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
   dir = working_directory+'\\\\schedules\\\\'
   data["directory"] = dir
   
-  default_weather_by_region = {   1:  ['CA-San_francisco.tmy2',   'PST+8PDT'],
-                  2:  ['IL-Chicago.tmy2',     'CST+6CDT'],
-                  3:  ['AZ-Phoenix.tmy2',     'MST+7MDT'],
-                  4:  ['TN-Nashville.tmy2',     'CST+6CDT'],
-                  5:  ['FL-Miami.tmy2',       'EST+5EDT'],
-                  6:  ['HI-Honolulu.tmy2',     'HST10'] }
+  default_weather_by_region = { 1:  ['CA-San_francisco.tmy2',   'PST+8PDT'],
+                                2:  ['IL-Chicago.tmy2',     'CST+6CDT'],
+                                3:  ['AZ-Phoenix.tmy2',     'MST+7MDT'],
+                                4:  ['TN-Nashville.tmy2',     'CST+6CDT'],
+                                5:  ['FL-Miami.tmy2',       'EST+5EDT'],
+                                6:  ['HI-Honolulu.tmy2',     'HST10'] }
     
   if file_to_extract == None:
     # Use default values.

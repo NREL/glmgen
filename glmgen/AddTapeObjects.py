@@ -6,7 +6,7 @@ Created on Jun 7, 2013
 
 from glmgen import TechnologyParameters
 
-def add_recorders(recorder_dict,case_flag,use_mysql,use_tape,FeederID, last_key=0):
+def add_recorders(recorder_dict, case_flag, use_mysql, use_tape, FeederID, last_key=0):
     # Check is last_key is already in glm dictionary
     def unused_key(last_key):
         if last_key in recorder_dict.keys():
@@ -165,6 +165,35 @@ def add_recorders(recorder_dict,case_flag,use_mysql,use_tape,FeederID, last_key=
                                        'limit' : '{:d}'.format(tech_data['meas_limit']),
                                        'property' : 'sum(base_power)'}
             last_key = unused_key(last_key)
+            
+  # lkey = last_key
+    
+  # if use_mysql == 1:
+    # # Add GridLAB-D objects for recording into MySQL database.
+    # populated_dict[lkey] = { 'module' : 'mysql' }
+    # lkey += 1
+    # populated_dict[lkey] = {'object' : 'database',
+                  # 'name' : '{:s}'.format(schema),
+                  # 'schema' : '{:s}'.format(schema) }
+    # lkey += 1
+    # populated_dict[lkey] = {'object' : 'mysql.recorder',
+                  # 'table' : 'network_node_recorder',
+                  # 'parent' : 'network_node',
+                  # 'property' : 'measured_real_power,measured_real_energy',
+                  # 'interval' : '{:d}'.format(interval),
+                  # 'limit' : '{:d}'.format(limit),
+                  # 'start': "'{:s}'".format(rec_starttime),
+                  # 'connection': schema,
+                  # 'mode': 'a'}
+  # else:
+    # # Add GridLAB-D object for recording into *.csv files.
+    # populated_dict[lkey] = {'object' : 'tape.recorder',
+                  # 'file' : 'csv_output/{:s}_{:s}_network_node_recorder.csv'.format(id,date),
+                  # 'parent' : 'network_node',
+                  # 'property' : 'measured_real_power,measured_real_energy',
+                  # 'interval' : '{:d}'.format(interval),
+                  # 'limit' : '{:d}'.format(limit),
+                  # 'in': "'{:s}'".format(rec_starttime) }
             
         return (recorder_dict, last_key)
             

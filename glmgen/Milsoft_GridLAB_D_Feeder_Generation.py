@@ -18,74 +18,64 @@ from glmgen import AddLoadShapes
 from glmgen import ResidentialLoads
 from glmgen import CommercialLoads
 
-def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configuration_file=None):
-  #glmDict is a dictionary containing all the objects in WindMIL model represented as equivalent GridLAB-D objects
+def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
+  """
+  glmDict is a dictionary containing all the objects in WindMIL model represented as equivalent GridLAB-D objects
 
-  #case_flag is an integer indicating which technology case to tack on to the GridLAB-D model
-  #  case_flag : technology
-  #  -1 : Loadshape Case
-  #  0 : Base Case
-  #  1 : CVR
-  #  2 : Automation
-  #  3 : FDIR
-  #  4 : TOU/CPP w/ tech
-  #  5 : TOU/CPP w/o tech
-  #  6 : TOU w/ tech
-  #  7 : TOU w/o tech
-  #  8 : DLC
-  #  9 : Thermal Storage
-  #  10 : PHEV
-  #  11 : Solar Residential
-  #  12 : Solar Commercial
-  #  13 : Solar Combined
+  model_opts['tech_flag'] is an integer indicating which technology case to tack on to the GridLAB-D model
+    -1 : Loadshape Case
+     0 : Base Case
+     1 : CVR
+     2 : Automation
+     3 : FDIR
+     4 : TOU/CPP w/ tech
+     5 : TOU/CPP w/o tech
+     6 : TOU w/ tech
+     7 : TOU w/o tech
+     8 : DLC
+     9 : Thermal Storage
+    10 : PHEV
+    11 : Solar Residential
+    12 : Solar Commercial
+    13 : Solar Combined
 
-  #configuration_file is the name of the file to use for getting feeder information
+  io_opts['config_file'] is the name of the file to use for getting feeder information
 
-  #GLD_Feeder returns a dictionary, glmCaseDict, similar to glmDict with additional object dictionaries added according to the case_flag selected.
+  GLD_Feeder returns a dictionary, glmCaseDict, similar to glmDict with additional object dictionaries added according to the model_opts['tech_flag'] selected.
+  """
 
   random.seed(1)
+  
   # Check to make sure we have a valid case flag
-  if case_flag < -1:
-    case_flag = 0
+  if model_opts['tech_flag'] < -1:
+    model_opts['tech_flag'] = 0
 
-  if case_flag > 13:
-    case_flag = 13
+  if model_opts['tech_flag'] > 13:
+    model_opts['tech_flag'] = 13
   
   # Get information about each feeder from Configuration() and  TechnologyParameters()
-  config_data = Configuration.ConfigurationFunc(wdir,resources_dir,configuration_file,None,None)
+  config_data = Configuration.ConfigurationFunc(io_opts['dir'], 
+                                                io_opts['resources_dir'], 
+                                                io_opts['config_file'],
+                                                None,
+                                                None)
+                                                
+  for key, value in model_opts['config_data'].items():
+      config_data[key] = value
   
-  # Overwrite config_data with options
-  # helper function to avoid repetitive code
-  def overwrite_config_data_entry(config_data,options,config_name,option_name=None):
-      option_name = config_name if option_name is None else option_name
-      if (options is not None) and (option_name in options):
-          config_data[config_name] = options[option_name]
-  
-  # actual overwrites
-  overwrite_config_data_entry(config_data,options,'solar_penetration')
-  overwrite_config_data_entry(config_data,options,'voltage_players')
-  overwrite_config_data_entry(config_data,options,'avg_house','avg_residential_load')
-  overwrite_config_data_entry(config_data,options,'avg_commercial','avg_commercial_load')
   # HERE -- nom_volt should be (138 / sqrt(3)) kV = 79,674.3 V
   # HERE -- feeder_rating to 20 MVA since there is a 17 MVA (bigger than the current default of 16 MVA) feeder
   
   #set up default flags
   use_flags = {}
-  tech_data,use_flags = TechnologyParameters.TechnologyParametersFunc(use_flags,case_flag)
+  tech_data, use_flags = TechnologyParameters.TechnologyParametersFunc(use_flags,model_opts['tech_flag'])
   
-  # Overwrite use_flags with options
-  if (options is not None) and ('use_homes' in options):
-      # TODO: Have use_flags use True/False, not 0, 1
-      if options['use_homes']:
-          use_flags['use_homes'] = 1
-      else:
-          use_flags['use_homes'] = 0
-  if (options is not None) and ('use_commercial' in options):
-      if options['use_commercial']:
-          use_flags['use_commercial'] = 1
-      else:
-          use_flags['use_commercial'] = 0
-
+  for key, value in model_opts['tech_data'].items():
+      tech_data[key] = value
+      
+  for key, value in model_opts['use_flags'].items():
+      use_flags[key] = value
+  
   #tmy = 'schedules\\\\SCADA_weather_ISW_gld.csv'
   tmy = config_data['weather']
 
@@ -113,34 +103,31 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
 
   # Create dictionaries of preprocessor directives
   if use_flags['use_homes'] != 0:
-    glmCaseDict[last_key] = {'#include' : '{:s}/appliance_schedules.glm'.format(resources_dir)}
+    glmCaseDict[last_key] = {'#include' : '{:s}/appliance_schedules.glm'.format(io_opts['resources_dir'])}
     last_key += 1
-    glmCaseDict[last_key] = {'#include' : '{:s}/water_and_setpoint_schedule_v5.glm'.format(resources_dir)}
+    glmCaseDict[last_key] = {'#include' : '{:s}/water_and_setpoint_schedule_v5.glm'.format(io_opts['resources_dir'])}
     last_key += 1
 
   if use_flags['use_battery'] == 1 or use_flags['use_battery'] == 2:
-    glmCaseDict[last_key] = {'#include' : '{:s}/battery_schedule.glm'.format(resources_dir)}
+    glmCaseDict[last_key] = {'#include' : '{:s}/battery_schedule.glm'.format(io_opts['resources_dir'])}
     last_key += 1
 
   if use_flags['use_commercial'] == 1:
-    glmCaseDict[last_key] = {'#include' : '{:s}/commercial_schedules.glm'.format(resources_dir)}
+    glmCaseDict[last_key] = {'#include' : '{:s}/commercial_schedules.glm'.format(io_opts['resources_dir'])}
     last_key += 1
 
   if use_flags['use_market'] == 1 or use_flags['use_market'] == 2:
-    glmCaseDict[last_key] = {'#include' : '{:s}/daily_elasticity_schedules.glm'.format(resources_dir)}
+    glmCaseDict[last_key] = {'#include' : '{:s}/daily_elasticity_schedules.glm'.format(io_opts['resources_dir'])}
     last_key += 1
 
   if use_flags['use_ts'] == 2 or use_flags['use_ts'] == 4:
-    glmCaseDict[last_key] = {'#include' : '{:s}/thermal_storage_schedule_R{:d}.glm'.format(resources_dir,config_data['region'])}
+    glmCaseDict[last_key] = {'#include' : '{:s}/thermal_storage_schedule_R{:d}.glm'.format(io_opts['resources_dir'],config_data['region'])}
     last_key += 1
 
   glmCaseDict[last_key] = {'#define' : 'stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0'}
   last_key += 1
 
-  if (options is not None) and ('minimum_timestep' in options):
-    glmCaseDict[last_key] = {'#set' : 'minimum_timestep={:.0f}'.format(options['minimum_timestep'])}
-  else:
-    glmCaseDict[last_key] = {'#set' : 'minimum_timestep=300'}
+  glmCaseDict[last_key] = { '#set' : 'minimum_timestep={}'.time_opts['sim_interval'].total_seconds() }
   last_key += 1
 
   glmCaseDict[last_key] = {'#set' : 'profiler=1'}
@@ -149,7 +136,7 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
   glmCaseDict[last_key] = {'#set' : 'relax_naming_rules=1'}
   last_key += 1
 
-  # Create dictionaries of modules to be used from the case_flag
+  # Create dictionaries of modules to be used from the model_opts['tech_flag']
   glmCaseDict[last_key] = {'module' : 'tape'}
   last_key += 1
 
@@ -815,21 +802,26 @@ def GLD_Feeder(glmDict, case_flag, wdir, resources_dir, options=None, configurat
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
     else:
-      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir, resources_dir, configuration_file)
+      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'])
   # End addition of residential loads ########################################################################################################################
 
   if use_flags['use_commercial'] != 0:
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
     else:
-      glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, wdir, resources_dir, configuration_file)
+      glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'])
       
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
   if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
     glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, tech_data, last_key, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array)
     
   # Append recorders
-  glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict,case_flag,0,1,'four_node_basecase_test', last_key)
+  glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict,
+                                                       model_opts['tech_flag'],
+                                                       0,
+                                                       1,
+                                                       'four_node_basecase_test', 
+                                                       last_key)
 
   return (glmCaseDict, last_key)
 
