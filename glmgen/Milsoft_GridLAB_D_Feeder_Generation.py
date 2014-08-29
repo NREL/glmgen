@@ -144,12 +144,12 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   last_key += 1
 
   glmCaseDict[last_key] = {'module' : 'residential',
-               'implicit_enduses' : 'NONE'}
+                           'implicit_enduses' : 'NONE'}
   last_key += 1
 
   glmCaseDict[last_key] = {'module' : 'powerflow',
-               'solver_method' : 'NR',
-               'NR_iteration_limit' : '50'}
+                           'solver_method' : 'NR',
+                           'NR_iteration_limit' : '50'}
   last_key += 1
 
   if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0 or use_flags['use_battery'] == 1 or use_flags['use_battery'] == 2:
@@ -817,10 +817,9 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     
   # Append recorders
   glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict,
-                                                       model_opts['tech_flag'],
-                                                       0,
-                                                       1,
-                                                       'four_node_basecase_test', 
+                                                       io_opts,
+                                                       tech_data, 
+                                                       use_flags
                                                        last_key)
 
   return (glmCaseDict, last_key)

@@ -9,17 +9,6 @@ import os
 import re
 import math
 
-# recording interval (seconds)
-interval = 300  
-
-# flag whether we're using mysql for recorder output or not ( implies using .csv files instead )
-# Make sure this flag is the same in gleanMetrics.py or there'll be problems. 
-use_mysql = 0 # 0 => .csv files; 1 => mysql database
-
-# MySQL schema name
-schema = 'CalibrationDB'
-
-
 def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
   '''
   Create populated feeder.GlmFile and write it to disk.
@@ -37,6 +26,7 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
             Defaulted:
                 - 'output_type':  'csv' or 'mysql', default is 'csv'
                 - 'resources_dir': path to resources directory, default is 'schedules'
+                - 'schema_name':   schema name for mysql, default is 'GridlabDB'
             Optional:
                 - 'config_file':  Path to model configuration file, perhaps from 
                                   calibration process.
@@ -120,6 +110,7 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
   set_default(io_opts, 'output_type', 'csv')
   assert_choice(io_opts, 'io_opts', 'output_type', ['csv', 'mysql'])
   set_default(io_opts, 'resources_dir', 'schedules')
+  set_default(io_opts, 'schema_name', 'GridlabDB')
   
   # time_opts
   assert_required(time_opts, 'time_opts', 'start_time')
