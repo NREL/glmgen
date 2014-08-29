@@ -63,7 +63,6 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   for key, value in model_opts['config_data'].items():
       config_data[key] = value
   
-  # HERE -- nom_volt should be (138 / sqrt(3)) kV = 79,674.3 V
   # HERE -- feeder_rating to 20 MVA since there is a 17 MVA (bigger than the current default of 16 MVA) feeder
   
   #set up default flags
@@ -251,7 +250,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
                'name' : 'trans_config_to_feeder',
                'connect_type' : 'WYE_WYE',
                'install_type' : 'PADMOUNT',
-               'primary_voltage' : '{:d}'.format(config_data['nom_volt']),
+               'primary_voltage' : '{}'.format(config_data['nom_volt']),
                'secondary_voltage' : '{:s}'.format(nom_volt),
                'power_rating' : '{:.1f} MVA'.format(config_data['feeder_rating']),
                'impedance' : '0.00033+0.0022j'}
@@ -304,7 +303,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   glmCaseDict[last_key] = {'object' : 'meter',
                'name' : 'network_node',
                'bustype' : 'SWING',
-               'nominal_voltage' : '{:d}'.format(config_data['nom_volt']),
+               'nominal_voltage' : '{}'.format(config_data['nom_volt']),
                'phases' : 'ABCN',
 			   'measured_power' : '0',
 			   'measured_current_A' : '0',
