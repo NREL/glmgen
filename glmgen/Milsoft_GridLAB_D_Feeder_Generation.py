@@ -56,10 +56,10 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   # Get information about each feeder from Configuration() and  TechnologyParameters()
   config_data = Configuration.ConfigurationFunc(io_opts['dir'], 
                                                 io_opts['resources_dir'], 
-                                                io_opts['config_file'],
+                                                io_opts['config_file'] if 'config_file' in io_opts else None,
                                                 None,
-                                                None)
-                                                
+                                                None)                                              
+                              
   for key, value in model_opts['config_data'].items():
       config_data[key] = value
   
@@ -127,7 +127,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   glmCaseDict[last_key] = {'#define' : 'stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0'}
   last_key += 1
 
-  glmCaseDict[last_key] = { '#set' : 'minimum_timestep={}'.time_opts['sim_interval'].total_seconds() }
+  glmCaseDict[last_key] = { '#set' : 'minimum_timestep={}'.format(time_opts['sim_interval'].total_seconds()) }
   last_key += 1
 
   glmCaseDict[last_key] = {'#set' : 'profiler=1'}
@@ -174,7 +174,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
                  'loop' : '14600',
                  'comment' : '// Will loop file for 40 years assuming the file has data for a 24 hour period'}
     last_key += 1
-
+    
   # Include the objects for the TOU case flags
   if use_flags['use_market'] != 0:
     # Add class auction dictionary to glmCaseDict
@@ -802,25 +802,21 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
     else:
-      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'])
+      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'] if 'config_file' in io_opts else None)
   # End addition of residential loads ########################################################################################################################
 
   if use_flags['use_commercial'] != 0:
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
     else:
-      glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'])
+      glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'] if 'config_file' in io_opts else None)
       
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
   if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
     glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, tech_data, last_key, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array)
     
   # Append recorders
-  glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict,
-                                                       io_opts,
-                                                       tech_data, 
-                                                       use_flags
-                                                       last_key)
+  glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict, io_opts, time_opts, last_key)
 
   return (glmCaseDict, last_key)
 

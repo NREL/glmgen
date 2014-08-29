@@ -85,7 +85,8 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
   def assert_compound_required(d, d_name, key_list, num_found_test):
       num_found = 0
       for key in key_list:
-          num_found += 1 if key in d
+          if key in d:
+               num_found += 1 
       assert num_found_test(num_found), \
              "Expected {} arguments from {} in {}, but found {}.".format(
                  num_found_test.expected_num, 
@@ -98,7 +99,9 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
       return num == expected
       
   def set_default(d, key, default):
-      d[key] = default if key not in d
+      if not key in d:
+          d[key] = default 
+      assert key in d
           
   def assert_choice(d, d_name, key, choices):
       if key in d:
@@ -117,8 +120,8 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
   test_num_is_one = lambda num: test_num_equals(num, 1) 
   assert_compound_required(time_opts, 'time_opts', ['warmup_duration', 'rec_start_time'], test_num_is_one)
   assert_compound_required(time_opts, 'time_opts', ['stop_time', 'sim_duration'], test_num_is_one)
-  set_default(time_opts, 'sim_interval', delta.timedelta(seconds=60))
-  set_default(time_opts, 'rec_interval', delta.timedelta(seconds=300))
+  set_default(time_opts, 'sim_interval', datetime.timedelta(seconds=60))
+  set_default(time_opts, 'rec_interval', datetime.timedelta(seconds=300))
   
   if 'warmup_duration' not in time_opts:
       assert 'rec_start_time' in time_opts
@@ -136,13 +139,13 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
       
   time_opts['rec_limit'] = int(math.ceil( time_opts['sim_duration'].total_seconds() / 
                                           time_opts['rec_interval'].total_seconds() ))
-
+                                          
   # model_opts
   set_default(model_opts, 'tech_flag', 0)
   set_default(model_opts, 'config_data', {})
   set_default(model_opts, 'tech_data', {})
   set_default(model_opts, 'use_flags', {})
-  
+ 
   # Create populated dictionary.
   glm_file, last_key = Milsoft_GridLAB_D_Feeder_Generation.GLD_Feeder(
       baseGLM,
@@ -159,6 +162,8 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
 
   # Turn dictionary into a *.glm string and print it to a file in the given directory.
   glm_file.save(os.path.realpath(io_opts['dir'] + '/' + io_opts['filename']))
+  if io_opts['output_type'] == 'csv':
+    os.mkdir(os.path.realpath(io_opts['dir'] + '/csv_output'))
     
   return io_opts['filename']
 

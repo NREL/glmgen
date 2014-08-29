@@ -4,7 +4,7 @@ Created on Jun 7, 2013
 @author: fish334
 '''
 
-def add_recorders(recorder_dict, io_opts, tech_data, use_flags, last_key=0):
+def add_recorders(recorder_dict, io_opts, time_opts, last_key=0):
 
     # check if last_key is already in glm dictionary
     def unused_key(last_key):
@@ -48,18 +48,17 @@ def add_recorders(recorder_dict, io_opts, tech_data, use_flags, last_key=0):
             if recorder_dict[x]['object'] == 'waterheater':
                 have_waterheaters = 1
                         
-    def add_recorder(name,common_data,last_key):
-        common_data.update( { 'interval' : io_opts['rec_interval'].total_seconds(),
-                              'limit' :    io_opts['rec_limit'],
-                              'start' :    "'{:s}'".format(io_opts['rec_start_time']) } )
+    def add_recorder(name,rec_type,common_data,last_key):
+        common_data.update( { 'interval' : time_opts['rec_interval'].total_seconds(),
+                              'limit' :    time_opts['rec_limit'] } )
         if io_opts['output_type'] == 'csv':
-            recorder_dict[last_key] = { 'object': 'tape.recorder',
+            recorder_dict[last_key] = { 'object': 'tape.{}'.format(rec_type),
                                         'file': 'csv_output/{}.csv'.format(name) }
-            recorder_dict.update(common_data)
+            recorder_dict[last_key].update(common_data)
         else:
-            assert io_opts['output_type'] == 'mysql', "Unexpected output_type {}".format(io_opts['output_type'])
-        
-            recorder_dict[last_key] = { 'object': 'mysql.recorder',
+            assert io_opts['output_type'] == 'mysql', \
+                   "Unexpected output_type {}".format(io_opts['output_type'])
+            recorder_dict[last_key] = { 'object': 'mysql.{}'.format(rec_type),
                                         'table': name }
             recorder_dict[last_key].update(common_data)
             recorder_dict[last_key]['connection'] = io_opts['schema_name']
@@ -79,17 +78,20 @@ def add_recorders(recorder_dict, io_opts, tech_data, use_flags, last_key=0):
         
     # Add recorder to swing bus for calibration
     last_key = add_recorder('network_node',
+                            'recorder',
                             { 'parent' :   'network_node',
                               'property' : 'measured_real_power, measured_real_energy' },
                             last_key)
                  
     last_key = add_recorder('substation_transformer_power',
+                            'recorder',
                             { 'parent' :   'substation_transformer',
                               'property' :  'power_out_A.real, power_out_A.imag, power_out_B.real, power_out_B.imag, power_out_C.real, power_out_C.imag, power_out.real, power_out.imag, power_losses_A.real, power_losses_A.imag, power_losses_B.real, power_losses_B.imag, power_losses_C.real, power_losses_C.imag' },
                             last_key)
         
     if swing_node != None:
         last_key = add_recorder('swing_bus',
+                                'recorder',
                                 {'parent' : '{:s}'.format(swing_node),
                                  'property' : 'measured_current_A.real, measured_current_A.imag, measured_current_B.real, measured_current_B.imag, measured_current_C.real, measured_current_C.imag, measured_voltage_A.real, measured_voltage_A.imag, measured_voltage_B.real, measured_voltage_B.imag, measured_voltage_C.real, measured_voltage_C.imag, measured_real_power, measured_reactive_power' },
                                 last_key)
@@ -97,6 +99,7 @@ def add_recorders(recorder_dict, io_opts, tech_data, use_flags, last_key=0):
     # Measure outside temperature
     if climate_name != None:
         last_key = add_recorder('outside_temp',
+                                'recorder',
                                 { 'parent' : '{:s}'.format(climate_name),
                                   'property' : 'temperature' },
                                 last_key)
@@ -104,48 +107,94 @@ def add_recorders(recorder_dict, io_opts, tech_data, use_flags, last_key=0):
     # Measure residential data
     if have_resp_zips == 1:
         last_key = add_recorder('res_responsive_load',
+                                'collector',
                                 { 'group' : '"class=ZIPload AND groupid=Responsive_load"',
                                   'property' : 'sum(base_power)' },
                                 last_key)
         
     if have_unresp_zips == 1:
         last_key = add_recorder('res_unresponsive_load',
+                                'collector',
                                 { 'group' : '"class=ZIPload AND groupid=Unresponsive_load"',
                                   'property' : 'sum(base_power)' },
                                 last_key)
         
     if have_waterheaters == 1:
         last_key = add_recorder('waterheater',
+                                'collector',
                                 { 'group' : '"class=waterheater"',
                                   'property' : 'sum(actual_load)' },
                                 last_key)
         
     if have_lights == 1:
         last_key = add_recorder('lights',
+                                'collector',
                                 { 'group' : '"class=ZIPload AND groupid=Lights"',
                                   'property' : 'sum(base_power)' },
                                 last_key)
         
     if have_plugs == 1:
         last_key = add_recorder('plugs',
+                                'collector',
                                 { 'group' : '"class=ZIPload AND groupid=Plugs"',
                                   'property' : 'sum(base_power)' },
                                 last_key)
         
     if have_gas_waterheaters == 1:
         last_key = add_recorder('gas_waterheater',
+                                'collector',
                                 { 'group' : '"class=ZIPload AND groupid=Gas_waterheater"',
                                   'property' : 'sum(base_power)' },
                                 last_key)
         
     if have_occupancy == 1:
         last_key = add_recorder('occupancy',
+                                'collector',
                                 { 'group' : '"class=ZIPload AND groupid=Occupancy"',
                                   'property' : 'sum(base_power)' },
                                 last_key)
     
-    # add Roisin's recorders here
+    last_key = add_recorder('all_meters_real_power',
+                            'group_recorder',
+                            { 'group' : '"class=meter"',
+                              'property': 'measured_real_power' },
+                            last_key)
+                            
+    last_key = add_recorder('voltA',
+                            'group_recorder',
+                            { 'group': '"class=node"',
+                              'property': 'voltage_A',
+                              'complex_part': 'MAG' },
+                            last_key)
+                            
+    last_key = add_recorder('voltB',
+                            'group_recorder',
+                            { 'group': '"class=node"',
+                              'property': 'voltage_B',
+                              'complex_part': 'MAG' },
+                            last_key)
             
-
+    last_key = add_recorder('voltC',
+                            'group_recorder',
+                            { 'group': '"class=node"',
+                              'property': 'voltage_C',
+                              'complex_part': 'MAG' },
+                            last_key)
+                            
+    last_key = add_recorder('all_triplex_nodes_voltage',
+                            'group_recorder',
+                            { 'group': '"class=triplex_node"',
+                              'property': 'voltage_12',
+                              'complex_part': 'MAG' },
+                            last_key)                            
+                            
+    last_key = add_recorder('all_triplex_meters_real_power',
+                            'group_recorder',
+                            { 'group': '"class=triplex_meter"',
+                              'property': 'measured_real_power' },
+                            last_key)
+                            
+    return (recorder_dict, last_key)
+                            
 if __name__ == '__main__':
     pass
