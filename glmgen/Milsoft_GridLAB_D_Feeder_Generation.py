@@ -313,26 +313,29 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   parent_key = last_key
   last_key += 1
 
-  glmCaseDict[last_key] = {'object' : 'player',
-               'property' : 'voltage_A',
-               'parent' : '{:s}'.format(glmCaseDict[parent_key]['name']),
-               'loop' : '10',
-               'file' : '{:s}'.format(config_data["voltage_players"][0])}
-  last_key += 1
+  if config_data["voltage_players"][0] is not None:
+    glmCaseDict[last_key] = {'object' : 'player',
+                             'property' : 'voltage_A',
+                             'parent' : '{:s}'.format(glmCaseDict[parent_key]['name']),
+                             'loop' : '10',
+                             'file' : '{:s}'.format(config_data["voltage_players"][0])}
+    last_key += 1
 
-  glmCaseDict[last_key] = {'object' : 'player',
-               'property' : 'voltage_B',
-               'parent' : '{:s}'.format(glmCaseDict[parent_key]['name']),
-               'loop' : '10',
-               'file' : '{:s}'.format(config_data["voltage_players"][1])}
-  last_key += 1
+  if config_data["voltage_players"][1] is not None:
+    glmCaseDict[last_key] = {'object' : 'player',
+                             'property' : 'voltage_B',
+                             'parent' : '{:s}'.format(glmCaseDict[parent_key]['name']),
+                             'loop' : '10',
+                             'file' : '{:s}'.format(config_data["voltage_players"][1])}
+    last_key += 1
 
-  glmCaseDict[last_key] = {'object' : 'player',
-               'property' : 'voltage_C',
-               'parent' : '{:s}'.format(glmCaseDict[parent_key]['name']),
-               'loop' : '10',
-               'file' : '{:s}'.format(config_data["voltage_players"][2])}
-  last_key += 1
+  if config_data["voltage_players"][2] is not None:
+    glmCaseDict[last_key] = {'object' : 'player',
+                             'property' : 'voltage_C',
+                             'parent' : '{:s}'.format(glmCaseDict[parent_key]['name']),
+                             'loop' : '10',
+                             'file' : '{:s}'.format(config_data["voltage_players"][2])}
+    last_key += 1
 
   glmCaseDict[last_key] = {'object' : 'transformer',
                'name' : 'substation_transformer',
