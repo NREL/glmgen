@@ -229,16 +229,16 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   if '.csv' in tmy:
     # Climate file is a cvs file. Need to add csv_reader object
     glmCaseDict[last_key] = {'object' : 'csv_reader',
-                 'name' : 'CsvReader',
-                 'filename' : '"{:s}"'.format(tmy)}
+                             'name' : 'CsvReader',
+                             'filename' : '"{:s}"'.format(tmy)}
     last_key += 1
     climate_name = tmy.replace('.csv','')
   elif '.tmy2' in tmy:
     climate_name = tmy.replace('.tmy2','')
 
   glmCaseDict[last_key] = {'object' : 'climate',
-               'name' : '"{:s}"'.format(climate_name),
-               'tmyfile' : '"{:s}"'.format(tmy)}
+                           'name' : '"{:s}"'.format(climate_name),
+                           'tmyfile' : '"{:s}"'.format(tmy)}
   if '.tmy2' in tmy:
     glmCaseDict[last_key]['interpolate'] = 'QUADRATIC'
   elif '.csv' in tmy:

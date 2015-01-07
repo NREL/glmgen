@@ -25,6 +25,7 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
                                   optional extension)
             Defaulted:
                 - 'output_type':  'csv' or 'mysql', default is 'csv'
+                - 'git_csv_dir':   if true, adds a .keep file to csv_output, default is False
                 - 'resources_dir': path to resources directory, default is 'schedules'
                 - 'schema_name':   schema name for mysql, default is 'GridlabDB'
             Optional:
@@ -111,6 +112,7 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
   assert_required(io_opts, 'io_opts', 'dir')
   assert_required(io_opts, 'io_opts', 'filename')
   set_default(io_opts, 'output_type', 'csv')
+  set_default(io_opts, 'git_csv_dir', False)
   assert_choice(io_opts, 'io_opts', 'output_type', ['csv', 'mysql'])
   set_default(io_opts, 'resources_dir', 'schedules')
   set_default(io_opts, 'schema_name', 'GridlabDB')
@@ -161,9 +163,12 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
       glm_file[i]['stoptime'] = "'{}'".format(time_opts['stop_time'])
 
   # Turn dictionary into a *.glm string and print it to a file in the given directory.
-  glm_file.save(os.path.realpath(io_opts['dir'] + '/' + io_opts['filename']))
+  glm_file.save(os.path.join(io_opts['dir'],io_opts['filename']))
   if io_opts['output_type'] == 'csv':
-    os.mkdir(os.path.realpath(io_opts['dir'] + '/csv_output'))
+    os.mkdir(os.path.join(io_opts['dir'],'csv_output'))
+    if io_opts['git_csv_dir']:
+        f = open(os.path.join(io_opts['dir'],'csv_output','.keep'),'w')
+        f.close()
     
   return io_opts['filename']
 
