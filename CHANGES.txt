@@ -1,3 +1,4 @@
+v2.2.0, In development -- Added option to put .keep file in csv_output folder
 v2.1.0, 12/31/2014 -- Added 'no voltage players' feature. Rescaled voltage player files.
 v2.0.0, 12/1/2014  -- Final changes from FY14. Includes API changes in makeGLM
                       and Milsoft_GridLAB_D_Feeder_Generation.
