@@ -80,7 +80,7 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0):
     last_key = add_recorder('network_node',
                             'recorder',
                             { 'parent' :   'network_node',
-                              'property' : 'measured_real_power, measured_real_energy' },
+                              'property' : 'measured_real_power, measured_real_energy, voltage_A, voltage_B, voltage_C' },
                             last_key)
                  
     last_key = add_recorder('substation_transformer_power',
