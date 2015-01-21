@@ -551,7 +551,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           transformer_key = glmCaseDict.get_connector_by_to_node(meter_key,'transformer')
           if transformer_key is not None and 'phases' in glmCaseDict[transformer_key]:
             phases = glmCaseDict[transformer_key]['phases']
-            m = re.match("(A|B|C|ABC)N",phases)
+            m = re.match("(A|B|C|AB|AC|BC|ABC)N",phases)
             if m is not None:
               phase = m.group(1)
               # ... and the structure is what we expect, swap out the transformer for an overhead_line
