@@ -458,7 +458,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
         total_load = (load_A + load_B + load_C)/1000
         load_rating = 0
         for y in standard_transformer_rating:
-          if y >= total_load:
+          if y >= total_load * 1.5:
             load_rating = y
             break
           elif y == 666.7:
@@ -610,7 +610,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           total_load = load/1000 # kW
           load_rating = 0
           for y in standard_transformer_rating:
-            if y >= total_load:
+            if y >= total_load * 1.5:
               load_rating = y
               break
             elif y == 666.7:

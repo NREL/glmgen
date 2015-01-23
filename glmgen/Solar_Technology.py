@@ -83,6 +83,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'generator_status' : 'ONLINE',
                                                   'inverter_type' : 'PWM',
                                                   'power_factor' : '1.0',
+                                                  'inverter_efficiency' : '0.9',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
                                                   
                         # Write the PV inverter
@@ -146,6 +147,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'generator_status' : 'ONLINE',
                                                   'inverter_type' : 'PWM',
                                                   'power_factor' : '1.0',
+                                                  'inverter_efficiency' : '0.9',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
                                                   
                         # Write the PV inverter
@@ -213,6 +215,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'generator_status' : 'ONLINE',
                                                   'inverter_type' : 'PWM',
                                                   'power_factor' : '1.0',
+                                                  'inverter_efficiency' : '0.9',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
                                                   
                         # Write the PV inverter
@@ -291,6 +294,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'generator_status' : 'ONLINE',
                                                   'inverter_type' : 'PWM',
                                                   'power_factor' : '1.0',
+                                                  'inverter_efficiency' : '0.9',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
                         # Write the PV panel
                         last_key += 1
