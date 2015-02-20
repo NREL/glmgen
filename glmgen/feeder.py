@@ -170,7 +170,7 @@ class GlmFile(dict):
             if 'clock' in value:
                 if not set_time:
                     # first instance - set the time
-                    value['startime'] = "'{}'".format(starttime)
+                    value['starttime'] = "'{}'".format(starttime)
                     value['stoptime'] = "'{}'".format(stoptime)
                     if timezone is not None:
                         value['timezone'] = '{}'.format(timezone)
@@ -181,7 +181,7 @@ class GlmFile(dict):
         if not set_time:
             # make clock from scratch
             self[0] = { 'clock': '',
-                        'startime': "'{}'".format(starttime),
+                        'starttime': "'{}'".format(starttime),
                         'stoptime': "'{}'".format(stoptime) }
             if timezone is not None:
                 self[0]['timezone'] = '{}'.format(timezone)
