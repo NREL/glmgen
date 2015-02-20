@@ -14,6 +14,13 @@ class GlmFile(dict):
     """
     def __init__(self, *arg, **kw):
         super(GlmFile, self).__init__(*arg,**kw)
+        self.__reindex = True
+        
+    def set_no_reindexing(self):
+        self.__reindex = False
+        
+    def last_key(self):
+        return sorted(self.keys())[-1] + 1
         
     def get_clocks(self):
         """
@@ -131,10 +138,13 @@ class GlmFile(dict):
     def __setitem__(self, key, item):
         if not isinstance(key, int):
             raise KeyError("GlmFile keys must be integers.")
-        if not (key >= 0 and key <= len(self)):
-            raise KeyError("""GlmFile keys must be a sequential list of integers 
-                starting from 0's. Yes, GlmFile should be a list. Sorry.""")
+        if key < 0:
+            raise KeyError("GlmFile keys must be non-negative integers. " + 
+                           "Yes, GlmFile should be a list. Sorry.")
         if key in self.keys():
+            if not self.__reindex:
+                raise KeyError("GlmFile operating in no-reindexing mode, " + 
+                               "and {} is already a key.".format(key))
             # shift everyone else down
             keys_to_shift = [k for k in sorted(self.keys()) if k >= key]
             for k in reversed(keys_to_shift):
@@ -143,12 +153,15 @@ class GlmFile(dict):
         super(GlmFile, self).__setitem__(key, item)
         
     def __delitem__(self, key):
-        keys_to_shift = [k for k in sorted(self.keys()) if k >= key]
-        assert keys_to_shift[0] == key
-        for i, cur_key in enumerate(keys_to_shift):
-            if i > 0:
-                self[cur_key - 1] = self[cur_key]
-            super(GlmFile, self).__delitem__(key)        
+        if self.__reindex:
+            keys_to_shift = [k for k in sorted(self.keys()) if k >= key]
+            assert keys_to_shift[0] == key
+            for i, cur_key in enumerate(keys_to_shift):
+                if i > 0:
+                    self[cur_key - 1] = self[cur_key]
+                super(GlmFile, self).__delitem__(cur_key)        
+        else:
+            super(GlmFile, self).__delitem__(key)
         
     def set_clock(self, starttime, stoptime, timezone = None):    
         set_time = False
@@ -186,6 +199,7 @@ class GlmFile(dict):
                   phases A, B, and C, respectively
         """
         if not len(playerfiles) == 3:
+            print("incorrect length")
             raise RuntimeError("""The playerfiles argument must be an 
                 iterable of length 3. It is assumed that the contents are 
                 paths to player files for phases A, B, and C, respectively.""")
@@ -193,6 +207,7 @@ class GlmFile(dict):
         # get SWING bus name
         swing_bus = self.get_name_of_swing_bus()
         if swing_bus is None:
+            print("no swing")
             raise RuntimeError("Cannot set the transmission voltage without a swing bus.")
         
         # replace data if possible, otherwise, make new players
@@ -237,6 +252,7 @@ class GlmFile(dict):
             for key, value in sorted(self.items(), key=lambda pair: pair[0]):
                 output += dictToString(value) + '\n'
         except ValueError:
+            print("unable to print glm file")
             raise Exception
         return output
         
