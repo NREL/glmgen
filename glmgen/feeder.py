@@ -3,6 +3,7 @@
 import datetime, copy, os, re, warnings
 # import networkx as nx
 from matplotlib import pyplot as plt
+import re
 
 from collections import deque
 
@@ -125,7 +126,7 @@ class GlmFile(dict):
                 if 'bustype' in value and value['bustype'] == 'SWING':
                     if 'name' in value:
                         return value['name']
-            return None
+        return None
         
     def __setitem__(self, key, item):
         if not isinstance(key, int):
@@ -149,7 +150,7 @@ class GlmFile(dict):
                 self[cur_key - 1] = self[cur_key]
             super(GlmFile, self).__delitem__(key)        
         
-    def set_clock(self, starttime, stoptime, timezone = None):
+    def set_clock(self, starttime, stoptime, timezone = None):    
         set_time = False
         to_remove = []
         for key, value in sorted(self.items(), key=lambda pair: pair[0]):
@@ -175,7 +176,7 @@ class GlmFile(dict):
         # remove in reverse order, because del changes keys
         for key in reversed(to_remove):
             del self[key]
-    
+               
     def set_transmission_voltage(self, playerfiles):
         """
         Sets the voltage on the SWING bus to the values in the playerfiles.
@@ -188,7 +189,7 @@ class GlmFile(dict):
             raise RuntimeError("""The playerfiles argument must be an 
                 iterable of length 3. It is assumed that the contents are 
                 paths to player files for phases A, B, and C, respectively.""")
-            
+
         # get SWING bus name
         swing_bus = self.get_name_of_swing_bus()
         if swing_bus is None:
@@ -222,7 +223,6 @@ class GlmFile(dict):
         for key in reversed(to_remove):
             del self[key]
         
-        
     @staticmethod
     def load(glm_file_name):
         tokens = GlmFile.__tokenizeGlm(glm_file_name)
@@ -254,8 +254,9 @@ class GlmFile(dict):
         data = re.sub(r'http:\/\/', '', data)  
         # Strip comments.
         data = re.sub(r'\/\/.*\n', '', data)
-        # TODO: If the .glm creator has been lax with semicolons, add them back.
-        # Also strip non-single whitespace because it's only for humans:
+        # Add semicolons to # lines
+        data = re.sub(re.compile(r'^#(.*)$',re.MULTILINE),r'#\1;',data)
+        # Strip non-single whitespace because it's only for humans:
         data = data.replace('\n','').replace('\r','').replace('\t',' ')
         # Tokenize around semicolons, braces and whitespace.
         tokenized = re.split(r'(;|\}|\{|\s)',data)
