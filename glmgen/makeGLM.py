@@ -157,10 +157,7 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
       model_opts) 
     
   # Get into clock object and set start and stop timestamp.
-  for i in glm_file.keys():
-    if 'clock' in glm_file[i].keys():
-      glm_file[i]['starttime'] = "'{}'".format(time_opts['start_time'])
-      glm_file[i]['stoptime'] = "'{}'".format(time_opts['stop_time'])
+  glm_file.set_clock(time_opts['start_time'],time_opts['stop_time'])
 
   # Turn dictionary into a *.glm string and print it to a file in the given directory.
   glm_file.save(os.path.join(io_opts['dir'],io_opts['filename']))

@@ -91,6 +91,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
   # Create new case dictionary
   glmCaseDict = feeder.GlmFile()
+  glmCaseDict.set_no_reindexing()
   last_key = len(glmCaseDict)
 
   # Create clock dictionary
