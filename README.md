@@ -8,7 +8,7 @@ Private version of public fork https://github.com/elainethale/omf. Forking to us
 
 or 
 
-`pip install git+ssh://git@github.nrel.gov/ESI/omf-glm-generator.git@v2.2.0`
+`pip install git+ssh://git@github.nrel.gov/ESI/omf-glm-generator.git@v2.3.0`
 
 Previous versions are listed at https://github.nrel.gov/ESI/omf-glm-generator/releases.
 

@@ -3,6 +3,7 @@
 import datetime, copy, os, re, warnings
 # import networkx as nx
 from matplotlib import pyplot as plt
+import re
 
 from collections import deque
 
@@ -13,6 +14,13 @@ class GlmFile(dict):
     """
     def __init__(self, *arg, **kw):
         super(GlmFile, self).__init__(*arg,**kw)
+        self.__reindex = True
+        
+    def set_no_reindexing(self):
+        self.__reindex = False
+        
+    def last_key(self):
+        return sorted(self.keys())[-1] + 1
         
     def get_clocks(self):
         """
@@ -116,6 +124,120 @@ class GlmFile(dict):
                 break
         return result  
         
+    def get_name_of_swing_bus(self):
+        """
+        Returns the name of the first meter with bustype SWING
+        """
+        for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+            if 'object' in value and value['object'] == 'meter':
+                if 'bustype' in value and value['bustype'] == 'SWING':
+                    if 'name' in value:
+                        return value['name']
+        return None
+        
+    def __setitem__(self, key, item):
+        if not isinstance(key, int):
+            raise KeyError("GlmFile keys must be integers.")
+        if key < 0:
+            raise KeyError("GlmFile keys must be non-negative integers. " + 
+                           "Yes, GlmFile should be a list. Sorry.")
+        if key in self.keys():
+            if not self.__reindex:
+                raise KeyError("GlmFile operating in no-reindexing mode, " + 
+                               "and {} is already a key.".format(key))
+            # shift everyone else down
+            keys_to_shift = [k for k in sorted(self.keys()) if k >= key]
+            for k in reversed(keys_to_shift):
+                super(GlmFile, self).__setitem__(k+1, self[k])
+                super(GlmFile, self).__delitem__(k)
+        super(GlmFile, self).__setitem__(key, item)
+        
+    def __delitem__(self, key):
+        if self.__reindex:
+            keys_to_shift = [k for k in sorted(self.keys()) if k >= key]
+            assert keys_to_shift[0] == key
+            for i, cur_key in enumerate(keys_to_shift):
+                if i > 0:
+                    self[cur_key - 1] = self[cur_key]
+                super(GlmFile, self).__delitem__(cur_key)        
+        else:
+            super(GlmFile, self).__delitem__(key)
+        
+    def set_clock(self, starttime, stoptime, timezone = None):    
+        set_time = False
+        to_remove = []
+        for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+            if 'clock' in value:
+                if not set_time:
+                    # first instance - set the time
+                    value['starttime'] = "'{}'".format(starttime)
+                    value['stoptime'] = "'{}'".format(stoptime)
+                    if timezone is not None:
+                        value['timezone'] = '{}'.format(timezone)
+                    set_time = True
+                else:
+                    to_remove.append(key)
+                    
+        if not set_time:
+            # make clock from scratch
+            self[0] = { 'clock': '',
+                        'starttime': "'{}'".format(starttime),
+                        'stoptime': "'{}'".format(stoptime) }
+            if timezone is not None:
+                self[0]['timezone'] = '{}'.format(timezone)
+            
+        # remove in reverse order, because del changes keys
+        for key in reversed(to_remove):
+            del self[key]
+               
+    def set_transmission_voltage(self, playerfiles):
+        """
+        Sets the voltage on the SWING bus to the values in the playerfiles.
+        
+        Parameters
+            - playerfiles (length 3 list of paths): Paths to player files for
+                  phases A, B, and C, respectively
+        """
+        if not len(playerfiles) == 3:
+            print("incorrect length")
+            raise RuntimeError("""The playerfiles argument must be an 
+                iterable of length 3. It is assumed that the contents are 
+                paths to player files for phases A, B, and C, respectively.""")
+
+        # get SWING bus name
+        swing_bus = self.get_name_of_swing_bus()
+        if swing_bus is None:
+            print("no swing")
+            raise RuntimeError("Cannot set the transmission voltage without a swing bus.")
+        
+        # replace data if possible, otherwise, make new players
+        property_dict = { 'voltage_A': (playerfiles[0], False),
+                          'voltage_B': (playerfiles[1], False),
+                          'voltage_C': (playerfiles[2], False) }
+        to_remove = []
+        for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+            if 'object' in value and value['object'] == 'player':
+                if 'property' in value and value['property'] in property_dict:
+                    if 'parent' in value and value['parent'] == swing_bus:
+                        if not property_dict[value['property']][1]:
+                            value['file'] = property_dict[value['property']][0]
+                        else:
+                            # already found -- remove
+                            to_remove.append(key)
+                            
+        for key, item in property_dict.items():
+            if not item[1]:
+                # make from scratch
+                # TODO: Find a good insertion point higher up in the file
+                self[len(self)] = {'object' : 'player',
+                                   'property' : key,
+                                   'parent' : swing_bus,
+                                   'loop' : '10',
+                                   'file' : item[0]}
+                            
+        for key in reversed(to_remove):
+            del self[key]
+        
     @staticmethod
     def load(glm_file_name):
         tokens = GlmFile.__tokenizeGlm(glm_file_name)
@@ -130,6 +252,7 @@ class GlmFile(dict):
             for key, value in sorted(self.items(), key=lambda pair: pair[0]):
                 output += dictToString(value) + '\n'
         except ValueError:
+            print("unable to print glm file")
             raise Exception
         return output
         
@@ -147,8 +270,9 @@ class GlmFile(dict):
         data = re.sub(r'http:\/\/', '', data)  
         # Strip comments.
         data = re.sub(r'\/\/.*\n', '', data)
-        # TODO: If the .glm creator has been lax with semicolons, add them back.
-        # Also strip non-single whitespace because it's only for humans:
+        # Add semicolons to # lines
+        data = re.sub(re.compile(r'^#(.*)$',re.MULTILINE),r'#\1;',data)
+        # Strip non-single whitespace because it's only for humans:
         data = data.replace('\n','').replace('\r','').replace('\t',' ')
         # Tokenize around semicolons, braces and whitespace.
         tokenized = re.split(r'(;|\}|\{|\s)',data)

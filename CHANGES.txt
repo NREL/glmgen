@@ -1,3 +1,8 @@
+v2.3.0, 2/20/2014  -- GlmFile methods for setting the clock and voltage player files.
+                      (Optional) overload of __setitem__ and __delitem__ to support 
+                      inserts and dense keying.
+                      Bug fix for not using homes while specifying one of the solar 
+                      technologies.
 v2.2.0, 1/16/2015  -- Added option to put .keep file in csv_output folder
 v2.1.0, 12/31/2014 -- Added 'no voltage players' feature. Rescaled voltage player files.
 v2.0.0, 12/1/2014  -- Final changes from FY14. Includes API changes in makeGLM

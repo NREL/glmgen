@@ -91,6 +91,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
   # Create new case dictionary
   glmCaseDict = feeder.GlmFile()
+  glmCaseDict.set_no_reindexing()
   last_key = len(glmCaseDict)
 
   # Create clock dictionary
@@ -458,7 +459,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
         total_load = (load_A + load_B + load_C)/1000
         load_rating = 0
         for y in standard_transformer_rating:
-          if y >= total_load:
+          if y >= total_load * 1.5:
             load_rating = y
             break
           elif y == 666.7:
@@ -551,7 +552,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           transformer_key = glmCaseDict.get_connector_by_to_node(meter_key,'transformer')
           if transformer_key is not None and 'phases' in glmCaseDict[transformer_key]:
             phases = glmCaseDict[transformer_key]['phases']
-            m = re.match("(A|B|C|ABC)N",phases)
+            m = re.match("(A|B|C|AB|AC|BC|ABC)N",phases)
             if m is not None:
               phase = m.group(1)
               # ... and the structure is what we expect, swap out the transformer for an overhead_line
@@ -610,7 +611,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           total_load = load/1000 # kW
           load_rating = 0
           for y in standard_transformer_rating:
-            if y >= total_load:
+            if y >= total_load * 1.5:
               load_rating = y
               break
             elif y == 666.7:
@@ -800,13 +801,18 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     elasticity_random = None
 
   # Tack on residential loads
+  solar_residential_array = [0,[],[]]
   if use_flags['use_homes'] != 0:
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
     else:
-      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'] if 'config_file' in io_opts else None)
+      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'] if 'config_file' in io_opts else None)    
+    
   # End addition of residential loads ########################################################################################################################
 
+  solar_office_array = [0,[],[]]
+  solar_bigbox_array = [0,[],[]]
+  solar_stripmall_array = [0,[],[]]
   if use_flags['use_commercial'] != 0:
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
