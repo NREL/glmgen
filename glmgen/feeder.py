@@ -39,11 +39,12 @@ class GlmFile(dict):
         """
         result = []
         for key, value in sorted(self.items(), key=lambda pair: pair[0]):
-            if self.object_is_type(value,glm_type):
+            if GlmFile.object_is_type(value,glm_type):
                 result.append(copy.deepcopy(value))
         return result
 
-    def object_is_type(self, obj, glm_type):
+    @staticmethod
+    def object_is_type(obj, glm_type):
         """
         Inspects obj, a dict representing an item in a glm file, determining
         whether it is an 'object', and if so, if it is of glm_type.
@@ -86,7 +87,7 @@ class GlmFile(dict):
           return result
         for obj_key, obj in self.items():
             if 'name' in obj and obj['name'] == parent_name:
-                if not self.object_is_type(obj,parent_type):
+                if not GlmFile.object_is_type(obj,parent_type):
                     continue
                 result = obj_key
                 break
@@ -118,7 +119,7 @@ class GlmFile(dict):
             return result
         for obj_key, obj in self.items():
             if 'to' in obj and obj['to'] == to_node_name:
-                if not self.object_is_type(obj,connector_type):
+                if not GlmFile.object_is_type(obj,connector_type):
                     continue
                 result = obj_key
                 break

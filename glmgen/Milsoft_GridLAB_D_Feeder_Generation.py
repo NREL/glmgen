@@ -13,6 +13,7 @@ from glmgen import Configuration
 from glmgen import TechnologyParameters
 from glmgen import Solar_Technology
 from glmgen import feeder
+from glmgen import helpers
 from glmgen import AddTapeObjects
 from glmgen import AddLoadShapes
 from glmgen import ResidentialLoads
@@ -396,47 +397,9 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           commercial_dict[commercial_key]['load_classification'] = glmCaseDict[x]['load_class']
 
         # Figure out how many houses should be attached to this load object
-        load_A = 0
-        load_B = 0
-        load_C = 0
-
-        # determine the total ZIP load for each phase
-        if 'constant_power_A' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_power_A'])
-          load_A += abs(c_num)
-
-        if 'constant_power_B' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_power_B'])
-          load_B += abs(c_num)
-
-        if 'constant_power_C' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_power_C'])
-          load_C += abs(c_num)
-
-        if 'constant_impedance_A' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_impedance_A'])
-          load_A += pow(commercial_dict[commercial_key]['nom_volt'],2)/(3*abs(c_num))
-
-        if 'constant_impedance_B' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_impedance_B'])
-          load_B += pow(commercial_dict[commercial_key]['nom_volt'],2)/(3*abs(c_num))
-
-        if 'constant_impedance_C' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_impedance_C'])
-          load_C += pow(commercial_dict[commercial_key]['nom_volt'],2)/(3*abs(c_num))
-
-        if 'constant_current_A' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_current_A'])
-          load_A += commercial_dict[commercial_key]['nom_volt']*(abs(c_num))
-
-        if 'constant_current_B' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_current_B'])
-          load_B += commercial_dict[commercial_key]['nom_volt']*(abs(c_num))
-
-        if 'constant_current_C' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_current_C'])
-          load_C += commercial_dict[commercial_key]['nom_volt']*(abs(c_num))
-
+        # First determine the total ZIP load for each phase
+        load_A, load_B, load_C = calculate_load_by_phase(glmCaseDict[x])
+        
         if load_A >= tech_data['load_cutoff']:
           commercial_dict[commercial_key]['number_of_houses'][0] = int(math.ceil(load_A/config_data['avg_commercial']))
           total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][0]
@@ -447,7 +410,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
         if load_C >= tech_data['load_cutoff']:
           commercial_dict[commercial_key]['number_of_houses'][2] = int(math.ceil(load_C/config_data['avg_commercial']))
-          total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][2]
+          total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][2]        
 
         commercial_dict[commercial_key]['load'][0] = load_A
         commercial_dict[commercial_key]['load'][1] = load_B
@@ -589,16 +552,9 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           if 'load_class' in glmCaseDict[x]:
             residential_dict[residential_key]['load_classification'] = glmCaseDict[x]['load_class']
 
-          # Figure out how many houses should be attached to this load object
-          load = 0
-          # determine the total ZIP load for each phase
-          if 'power_1' in glmCaseDict[x]:
-            c_num = complex(glmCaseDict[x]['power_1'])
-            load += abs(c_num)
-
-          if 'power_12' in glmCaseDict[x]:
-            c_num = complex(glmCaseDict[x]['power_12'])
-            load += abs(c_num)
+          # Figure out how many houses should be attached to this load object          
+          # First determine the total ZIP load
+          load = helpers.calculate_load(glmCaseDict[x])
           
           residential_dict[residential_key]['load'] = load  
           residential_dict[residential_key]['number_of_houses'] = int(round(load/config_data['avg_house']))
