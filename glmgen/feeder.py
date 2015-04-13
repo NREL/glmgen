@@ -687,15 +687,3 @@ def _obToCol(obStr):
                 # font_color='black',
                 # font_weight='bold',
                 # font_size=0.25)
-                
-                
-                
-if __name__ == '__main__':
-    glm = GlmFile.load('test.glm')
-    
-    print glm.get_min_timestep()
-    
-    glm.set_min_timestep(1.0)
-    
-    glm.save('new_test.glm')
-    
