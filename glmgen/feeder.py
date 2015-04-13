@@ -32,6 +32,14 @@ class GlmFile(dict):
                 result.append(copy.deepcopy(value))
         return result
     
+    def get_min_timestep(self):
+        result = []
+        for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+            if 'omftype' in value and value['omftype'] == '#set':
+                if 'minimum_timestep' in value['argument']:
+                    result.append(copy.deepcopy(value))
+        return result
+    
     def get_objects_by_type(self, glm_type=None):
         """
         Returns a list of deep copies of all objects ('object') of glm_type 
@@ -185,6 +193,28 @@ class GlmFile(dict):
                         'stoptime': "'{}'".format(stoptime) }
             if timezone is not None:
                 self[0]['timezone'] = '{}'.format(timezone)
+            
+        # remove in reverse order, because del changes keys
+        for key in reversed(to_remove):
+            del self[key]
+            
+    def set_min_timestep(self, min_ts):    
+        set_ts = False
+        to_remove = []
+        for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+            if 'omftype' in value and value['omftype'] == '#set':
+                if 'minimum_timestep' in value['argument']:
+                    if not set_ts:
+                        # first instance - set the time
+                        value['argument'] = "minimum_timestep={}".format(min_ts)
+                        set_ts = True
+                    else:
+                        to_remove.append(key)
+                    
+        if not set_ts:
+            # make clock from scratch
+            self[0] = { 'omftype': '#set',
+                        'argument': "'minimum_timestep={}'".format(min_ts) }
             
         # remove in reverse order, because del changes keys
         for key in reversed(to_remove):
@@ -657,3 +687,15 @@ def _obToCol(obStr):
                 # font_color='black',
                 # font_weight='bold',
                 # font_size=0.25)
+                
+                
+                
+if __name__ == '__main__':
+    glm = GlmFile.load('test.glm')
+    
+    print glm.get_min_timestep()
+    
+    glm.set_min_timestep(1.0)
+    
+    glm.save('new_test.glm')
+    
