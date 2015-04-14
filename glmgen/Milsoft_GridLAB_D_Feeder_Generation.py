@@ -398,7 +398,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
         # Figure out how many houses should be attached to this load object
         # First determine the total ZIP load for each phase
-        load_A, load_B, load_C = calculate_load_by_phase(glmCaseDict[x])
+        load_A, load_B, load_C = calculate_load_by_phase(glmCaseDict[x], 'real')
         
         if load_A >= tech_data['load_cutoff']:
           commercial_dict[commercial_key]['number_of_houses'][0] = int(math.ceil(load_A/config_data['avg_commercial']))
@@ -554,7 +554,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
           # Figure out how many houses should be attached to this load object          
           # First determine the total ZIP load
-          load = helpers.calculate_load(glmCaseDict[x])
+          load = helpers.calculate_load(glmCaseDict[x], 'real')
           
           residential_dict[residential_key]['load'] = load  
           residential_dict[residential_key]['number_of_houses'] = int(round(load/config_data['avg_house']))
