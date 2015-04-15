@@ -31,14 +31,11 @@ def calculate_load_by_phase(load_object, power_type = 'apparent'):
             m = re.match(r'^constant_impedance_(.)$', key)
             if m is not None:
                 phase = get_phase(m)
-                voltage_to_use = None
+                voltage_this = complex(load_object['voltage_' + phase])
+                voltage_next = voltage_this
                 if is_delta_connected:
-                    voltage_this = complex(load_object['voltage_' + phase])
                     voltage_next = complex(load_object['voltage_' + next_phase[phase]])
-                    voltage_to_use = voltage_this - voltage_next
-                else:
-                    voltage_to_use = complex(load_object['voltage_' + phase])
-                phase_load[phase] = phase_load[phase] + voltage_to_use * voltage_to_use.conjugate() / complex(load_object[key])
+                phase_load[phase] = phase_load[phase] + voltage_this * voltage_next.conjugate() / complex(load_object[key]).conjugate()
                
             m = re.match(r'^constant_current_(.)$', key)
             if m is not None:
