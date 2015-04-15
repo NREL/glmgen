@@ -84,7 +84,7 @@ def complex_power_to_power_type(complex_power, power_type):
         result = complex_power.real
     elif power_type.lower() == 'reactive':
         result = complex_power.imag
-    else:
+    elif not power_type.lower() == 'complex':
         print("Unexpected power_type '{}'. Was expecting 'real', 'reactive', or 'apparent'. Returning full complex power.".format(power_type))
     return result
     

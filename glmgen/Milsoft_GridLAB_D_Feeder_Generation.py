@@ -398,7 +398,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
         # Figure out how many houses should be attached to this load object
         # First determine the total ZIP load for each phase
-        load_A, load_B, load_C = calculate_load_by_phase(glmCaseDict[x], 'real')
+        load_A, load_B, load_C = helpers.calculate_load_by_phase(glmCaseDict[x], 'real')
         
         if load_A >= tech_data['load_cutoff']:
           commercial_dict[commercial_key]['number_of_houses'][0] = int(math.ceil(load_A/config_data['avg_commercial']))
@@ -555,6 +555,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           # Figure out how many houses should be attached to this load object          
           # First determine the total ZIP load
           load = helpers.calculate_load(glmCaseDict[x], 'real')
+          c_load = helpers.calculate_load(glmCaseDict[x], 'complex')
           
           residential_dict[residential_key]['load'] = load  
           residential_dict[residential_key]['number_of_houses'] = int(round(load/config_data['avg_house']))
@@ -666,8 +667,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
             del glmCaseDict[x]['power_1']
 
           if total_house_number == 0 and load > 0 and use_flags['use_normalized_loadshapes'] == 0: # Residential street light
-            glmCaseDict[x]['power_12_real'] = 'street_lighting*{:.4f}'.format(c_num.real*tech_data['light_scalar_res'])
-            glmCaseDict[x]['power_12_reac'] = 'street_lighting*{:.4f}'.format(c_num.imag*tech_data['light_scalar_res'])
+            glmCaseDict[x]['power_12_real'] = 'street_lighting*{:.4f}'.format(c_load.real*tech_data['light_scalar_res'])
+            glmCaseDict[x]['power_12_reac'] = 'street_lighting*{:.4f}'.format(c_load.imag*tech_data['light_scalar_res'])
           else:
             # Remove the soon-to-be-dangling node
             to_remove.append(x)
