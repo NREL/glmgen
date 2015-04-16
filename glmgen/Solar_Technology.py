@@ -71,7 +71,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
                                                   'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
-                                                  'groupid' : 'Commercial_m_solar_office'}
+                                                  'groupid' : 'PV_Meter'}
                         
                         # Write the PV inverter
                         last_key += 1
@@ -135,7 +135,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
                                                   'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
-                                                  'groupid' : 'Commercial_m_solar_bigbox'}
+                                                  'groupid' : 'PV_Meter'}
                         
                         # Write the PV inverter
                         last_key += 1
@@ -218,6 +218,10 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'inverter_efficiency' : '0.9',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
                                                   
+                        # Add parent triplex_meter to groupid = 'PV_House_Triplex_Meter'
+                        parent_key = PV_Tech_Dict.get_parent_key(last_key)
+                        PV_Tech_Dict[parent_key]['groupid'] = 'PV_House_Triplex_Meter'
+                                                  
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'solar',
@@ -282,6 +286,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                         #                           'phases' : '{:s}'.format(phases),
                         #                           'nominal_voltage' : '120',
                         #                           'groupid' : 'Residential_tm_solar'}
+                        
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',
@@ -296,6 +301,11 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'power_factor' : '1.0',
                                                   'inverter_efficiency' : '0.9',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
+                                                  
+                        # Add parent triplex_meter to groupid = 'PV_House_Triplex_Meter'
+                        parent_key = PV_Tech_Dict.get_parent_key(last_key)
+                        PV_Tech_Dict[parent_key]['groupid'] = 'PV_House_Triplex_Meter'
+                                                  
                         # Write the PV panel
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'solar',
