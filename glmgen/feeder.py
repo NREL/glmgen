@@ -214,7 +214,7 @@ class GlmFile(dict):
         if not set_ts:
             # make clock from scratch
             self[0] = { 'omftype': '#set',
-                        'argument': "'minimum_timestep={}'".format(min_ts) }
+                        'argument': "minimum_timestep={}".format(min_ts) }
             
         # remove in reverse order, because del changes keys
         for key in reversed(to_remove):
