@@ -21,7 +21,8 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0):
     have_plugs = 0
     have_gas_waterheaters = 0
     have_occupancy = 0
-    have_solar = 0
+    have_solar_meter = 0
+    have_solar_triplex_meter = 0
     swing_node = None
     climate_name = None
     for x in recorder_dict.keys():
@@ -49,8 +50,15 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0):
             if recorder_dict[x]['object'] == 'waterheater':
                 have_waterheaters = 1
                 
-            if recorder_dict[x]['object'] == 'inverter':
-                have_solar = 1
+            if recorder_dict[x]['object'] == 'meter':
+                if 'groupid' in recorder_dict[x]:
+                    if recorder_dict[x]['groupid'] == 'PV_Meter':
+                        have_solar_meter = 1
+                        
+            if recorder_dict[x]['object'] == 'triplex_meter':
+                if 'groupid' in recorder_dict[x]:
+                    if recorder_dict[x]['groupid'] == 'PV_Meter':
+                        have_solar_triplex_meter = 1
                         
     def add_recorder(name,rec_type,common_data,last_key):
         common_data.update( { 'interval' : time_opts['rec_interval'].total_seconds(),
@@ -158,16 +166,28 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0):
                                   'property' : 'sum(base_power)' },
                                 last_key)
                                 
-    if have_solar == 1:
-        last_key = add_recorder('accum_inverter_P',
+    if have_solar_meter == 1:
+        last_key = add_recorder('pv_meter_summed_real_power',
                                 'collector',
-                                { 'group': '"class=inverter"',
-                                  'property': 'sum(P_Out)' },
+                                { 'group': '"class=meter AND groupid=PV_Meter"',
+                                  'property': 'sum(measured_real_power)' },
                                 last_key)
-        last_key = add_recorder('all_inverters_P',
+        last_key = add_recorder('pv_meter_real_power',
                                 'group_recorder',
-                                { 'group': '"class=inverter"',
-                                  'property': 'P_Out' },
+                                { 'group': '"class=meter AND groupid=PV_Meter"',
+                                  'property': 'measured_real_power' },
+                                last_key)
+                                
+    if have_solar_triplex_meter == 1:
+        last_key = add_recorder('pv_triplex_meter_summed_real_power',
+                                'collector',
+                                { 'group': '"class=triplex_meter AND groupid=PV_Meter"',
+                                  'property': 'sum(measured_real_power)' },
+                                last_key)
+        last_key = add_recorder('pv_triplex_meter_real_power',
+                                'group_recorder',
+                                { 'group': '"class=triplex_meter AND groupid=PV_Meter"',
+                                  'property': 'measured_real_power' },
                                 last_key)
     
     last_key = add_recorder('all_meters_real_power',

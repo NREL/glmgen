@@ -63,6 +63,13 @@ class GlmFile(dict):
                 result = False
         return result
         
+    def get_object_key_by_name(self, object_name, glm_type=None):
+        for key, value in sorted(self.items(), key = lambda pair: pair[0]):
+            if not GlmFile.object_is_type(value, glm_type):
+                continue
+            if ('name' in value) and (value['name'] == object_name):
+                return key
+        
     def get_parent_key(self,key,parent_type=None):
         """
         Looks for the key of the parent of self[key].
