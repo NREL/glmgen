@@ -277,13 +277,14 @@ class GlmFile(dict):
         # Get rid of http for stylesheets because we don't need it and it conflicts with comment syntax.
         data = re.sub(r'http:\/\/', '', data)  
         # Strip comments.
-        data = re.sub(r'\/\/.*\n', '', data)
+        # ETH: Actually, I would like to keep comments ... use double semicolon to mark end
+        data = re.sub(re.compile(r'//(.*)$',re.MULTILINE), r'//\1;;', data)
         # Add semicolons to # lines
         data = re.sub(re.compile(r'^#(.*)$',re.MULTILINE),r'#\1;',data)
         # Strip non-single whitespace because it's only for humans:
         data = data.replace('\n','').replace('\r','').replace('\t',' ')
-        # Tokenize around semicolons, braces and whitespace.
-        tokenized = re.split(r'(;|\}|\{|\s)',data)
+        # Tokenize around semicolons, comments, braces and whitespace.
+        tokenized = re.split(r'(;|//|\}|\{|\s)',data)
         # Get rid of whitespace strings.
         basicList = deque([x for x in tokenized if (x != '') and (x != ' ')])
         return basicList
@@ -313,14 +314,32 @@ class GlmFile(dict):
                     result = result + ' ' + x
             return result
             
+        def is_full_token(token):
+            if token == []:
+                return False
+            if token[0] == '//':
+                if len(token) < 3:
+                    return False
+                if (token[-1] == ';') and (token[-2] == ';'):
+                    return True
+                else:
+                    return False
+            elif token [-1] in ['{', ';', '}']:
+                return True
+            return False
+            
         # Pop off a full token, put it on the tree, rinse, repeat.
         while len(tokenList) > 0:
             # Pop, then keep going until we have a full token (i.e. 'object house', not just 'object')
             fullToken = []
-            while fullToken == [] or fullToken[-1] not in ['{',';','}']:
+            while not is_full_token(fullToken):
                 fullToken.append(tokenList.popleft())
             # Work with what we've collected.
             if fullToken[-1] == ';':
+                # Process comments.
+                if fullToken[0] == '//':
+                    fullToken.insert(0, 'comment')
+                    fullToken = fullToken[0:-1]
                 # Special case when we have zero-attribute items (like #include, #set, module).
                 if guidStack == [] and fullToken != [';']:
                     tree[guid] = {'omftype':fullToken[0],'argument':listToString(fullToken)}
