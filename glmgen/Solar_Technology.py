@@ -2,7 +2,9 @@ from __future__ import division
 import math
 import random
 
-def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, solar_bigbox_array=None, solar_office_array=None, solar_stripmall_array=None, solar_residential_array=None):
+def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, 
+                 solar_bigbox_array=None, solar_office_array=None, 
+                 solar_stripmall_array=None, solar_residential_array=None):
     # PV_Tech_Dict - the dictionary that we add solar objects to
     # use_flags - the output from TechnologyParameters.py
     # config_data - the output from Configuration.py
@@ -11,6 +13,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
     # solar_stripmall_array - contains a list of commercial houses, corresponding floor areas, parents,and phases that commercial PV can be attached to
     # solar_residential_array - contains a list of residential houses, corresponding floor areas, parents,and phases that residential PV can be attached to
     # last_key should be a numbered key that is the next key in PV_Tech_Dict
+    last_key = PV_Tech_Dict.last_key()
     
     # Initialize psuedo-random seed
     random.seed(4)

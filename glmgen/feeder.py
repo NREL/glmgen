@@ -99,6 +99,29 @@ class GlmFile(dict):
                 result = obj_key
                 break
         return result
+        
+    def get_children_keys(self, key, child_type = None):
+        """
+        Looks for self[key]'s children, possibly by type.
+        
+        Parameters:
+            key (int): self[key] is the glm object whose children we are to find
+            child_type (string): None, or the type of child objects we want to return
+            
+        Returns the list of child object keys for whom self[key] is the parent of 
+        self[child_key] and object_is_type(self[child_key], child_type).
+        """
+        result = []
+        if (key in self) and ('name' in self[key]):
+            parent_name = self[key]['name']
+        else:
+            return result
+        for obj_key, obj in self.items():
+            if 'parent' in obj and obj['parent'] == parent_name:
+                if not GlmFile.object_is_type(obj, child_type):
+                    continue
+                result.append(obj_key)
+        return result
       
     def get_connector_by_to_node(self,to_node_key,connector_type=None):
         """
