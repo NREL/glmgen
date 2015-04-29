@@ -14,6 +14,7 @@ class GlmFile(dict):
     """
     def __init__(self, *arg, **kw):
         super(GlmFile, self).__init__(*arg,**kw)
+        self.__cache_maps = None
         self.__reindex = True
         
     def set_no_reindexing(self):
@@ -37,11 +38,8 @@ class GlmFile(dict):
         Returns a list of deep copies of all objects ('object') of glm_type 
         in this GlmFile.
         """
-        result = []
-        for key, value in sorted(self.items(), key=lambda pair: pair[0]):
-            if GlmFile.object_is_type(value,glm_type):
-                result.append(copy.deepcopy(value))
-        return result
+        self.__populate_cache_maps(glm_type)
+        return self.__cache_maps['type_map'][glm_type]
 
     @staticmethod
     def object_is_type(obj, glm_type):
@@ -64,11 +62,13 @@ class GlmFile(dict):
         return result
         
     def get_object_key_by_name(self, object_name, glm_type=None):
-        for key, value in sorted(self.items(), key = lambda pair: pair[0]):
-            if not GlmFile.object_is_type(value, glm_type):
-                continue
-            if ('name' in value) and (value['name'] == object_name):
+        self.__populate_cache_maps()
+        if object_name in self.__cache_maps['name_map']:
+            for key in self.__cache_maps['name_map'][object_name]:
+                if not GlmFile.object_is_type(self[key], glm_type):
+                    continue
                 return key
+        return None
         
     def get_parent_key(self,key,parent_type=None):
         """
@@ -87,18 +87,9 @@ class GlmFile(dict):
         parent, and object_is_type(self[parent_key],parent_type) (which always 
         returns True if parent_type is None).
         """
-        result = None
         if key in self and 'parent' in self[key]:
-          parent_name = self[key]['parent']
-        else:
-          return result
-        for obj_key, obj in self.items():
-            if 'name' in obj and obj['name'] == parent_name:
-                if not GlmFile.object_is_type(obj,parent_type):
-                    continue
-                result = obj_key
-                break
-        return result
+          return self.get_object_key_by_name(self[key]['parent'], parent_type)
+        return None
         
     def get_children_keys(self, key, child_type = None):
         """
@@ -112,15 +103,13 @@ class GlmFile(dict):
         self[child_key] and object_is_type(self[child_key], child_type).
         """
         result = []
+        self.__populate_cache_maps()
         if (key in self) and ('name' in self[key]):
-            parent_name = self[key]['name']
-        else:
-            return result
-        for obj_key, obj in self.items():
-            if 'parent' in obj and obj['parent'] == parent_name:
-                if not GlmFile.object_is_type(obj, child_type):
+            candidate_keys = self.__cache_maps['parent_name_map'][self[key]['name']]
+            for candidate_key in candidate_keys:
+                if not GlmFile.object_is_type(self[candidate_key], child_type):
                     continue
-                result.append(obj_key)
+                result.append(candidate_key)            
         return result
       
     def get_connector_by_to_node(self,to_node_key,connector_type=None):
@@ -166,6 +155,30 @@ class GlmFile(dict):
                         return value['name']
         return None
         
+    def __populate_cache_maps(self, glm_type = None):
+        if self.__cache_maps is None:
+            self.__cache_maps = {}
+            self.__cache_maps['name_map'] = {}
+            self.__cache_maps['type_map'] = {}
+            self.__cache_maps['parent_name_map'] = {}
+            for key, glm_object in self.items():
+                if 'name' in glm_object:
+                    if not glm_object['name'] in self.__cache_maps['name_map']:
+                        self.__cache_maps['name_map'][glm_object['name']] = []
+                    if not glm_object['name'] in self.__cache_maps['parent_name_map']:
+                        self.__cache_maps['parent_name_map'][glm_object['name']] = []
+                    self.__cache_maps['name_map'][glm_object['name']].append(key)
+                if 'parent' in glm_object:
+                    if not glm_object['parent'] in self.__cache_maps['parent_name_map']:
+                        self.__cache_maps['parent_name_map'][glm_object['parent']] = []
+                    self.__cache_maps['parent_name_map'][glm_object['parent']].append(key)
+        if not glm_type is None:
+            if not glm_type in self.__cache_maps['type_map']:
+                self.__cache_maps['type_map'][glm_type] = []
+                for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+                    if GlmFile.object_is_type(value, glm_type):
+                        self.__cache_maps['type_map'][glm_type].append(copy.deepcopy(value))
+        
     def __setitem__(self, key, item):
         if not isinstance(key, int):
             raise KeyError("GlmFile keys must be integers.")
@@ -181,9 +194,11 @@ class GlmFile(dict):
             for k in reversed(keys_to_shift):
                 super(GlmFile, self).__setitem__(k+1, self[k])
                 super(GlmFile, self).__delitem__(k)
+        self.__cache_maps = None
         super(GlmFile, self).__setitem__(key, item)
         
     def __delitem__(self, key):
+        self.__cache_maps = None
         if self.__reindex:
             keys_to_shift = [k for k in sorted(self.keys()) if k >= key]
             assert keys_to_shift[0] == key
