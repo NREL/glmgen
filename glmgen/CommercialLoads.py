@@ -12,7 +12,9 @@ import math
 # @param last_object_key: the last ID used to key objects in glmCaseDict ... not an actual index! 
 # @param PV_loads: initialized at line 1484 in Feeder_Generator_updated.m
 # @param spot_check: initialized at line 1110 in Feeder_Generator_updated.m
-def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, wdir, resources_dir, use_config_file=None):
+def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_object_key, 
+                      commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, 
+                      wdir, resources_dir):
   # real inits
   solar_office_array = [0,[],[]]
   solar_bigbox_array = [0,[],[]]
@@ -21,7 +23,7 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
   ts_bigbox_array = [0,[]]
   ts_stripmall_array = [0,[]]
   # Initialize psuedo-random seed
-  random.seed(4)
+  random.seed(4) if config_data["fix_random_seed"] else random.seed()
 
   # Phase ABC - convert to "commercial buildings" 
   #  if number of "houses" > 15, then create a large office
@@ -179,9 +181,6 @@ def append_commercial(glmCaseDict, use_flags, tech_data, last_object_key, commer
 
       # Grab the load classification
       classID = commercial_dict[iii]['load_classification'] # Get load classification
-      # Recall Configuration.m with this load's classification
-      # @todo figure out what to do with this!
-      config_data = Configuration.ConfigurationFunc(wdir,resources_dir,use_config_file,None,classID) 
       # Determine how many houses and of what building type the classification designates
       com_buildings_classified = [config_data["com_buildings"][0][classID] * total_comm_houses,config_data["com_buildings"][1][classID] * total_comm_houses,config_data["com_buildings"][2][classID] * total_comm_houses] # cID-1 for index fixing
 

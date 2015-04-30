@@ -16,13 +16,13 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
     last_key = PV_Tech_Dict.last_key()
     
     # Initialize psuedo-random seed
-    random.seed(4)
+    random.seed(4) if config_data["fix_random_seed"] else random.seed()
             
     # Populating solar as percentage of feeder peak load
     # Add Commercial PV
     if use_flags['use_solar'] != 0 or use_flags['use_solar_com'] != 0:
         # Initialize psuedo-random seed
-        random.seed(4)
+        random.seed(4) if config_data["fix_random_seed"] else random.seed()
         
         # solar_penetration should apply equally to all solar-eligible building types
         penetration_stripmall = config_data['solar_penetration']
@@ -246,7 +246,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
     # Add Residential PV
     if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0:
         # Initialize psuedo-random seed
-        random.seed(5)
+        random.seed(5) if config_data["fix_random_seed"] else random.seed()
         
         solar_rating = config_data['solar_rating']*1000 #Convert kW to W
         # Determine solar penetrations for residential

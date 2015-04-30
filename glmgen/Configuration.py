@@ -26,6 +26,7 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
   working_directory = re.sub('\\\\','\\\\\\\\',wdir)
   dir = working_directory+'\\\\schedules\\\\'
   data["directory"] = dir
+  data["fix_random_seed"] = True
   
   default_weather_by_region = { 1:  ['CA-San_francisco.tmy2',   'PST+8PDT'],
                                 2:  ['IL-Chicago.tmy2',     'CST+6CDT'],

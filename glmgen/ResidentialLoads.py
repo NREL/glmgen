@@ -5,7 +5,10 @@ import math
 import random
 from glmgen import Configuration
 
-def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last_object_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir,resources_dir,configuration_file=None):
+def append_residential(ResTechDict, use_flags, config_data, tech_data, residential_dict, 
+                       last_object_key, CPP_flag_name, market_penetration_random, dlc_rand, 
+                       pool_pump_recovery_random, slider_random, xval, elasticity_random, 
+                       wdir, resources_dir):
   #ResTechDict is a dictionary containing all the objects in WindMIL model represented as equivalent GridLAB-D objects that this function will append residential load object to.
   solar_residential_array = [0,[],[]]
   ts_residential_array = [0,[]]
@@ -20,7 +23,7 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
     count_house = 0
     fl_area = []
     
-    random.seed(3)  
+    random.seed(3) if config_data["fix_random_seed"] else random.seed() 
     #print('iterating over residential_dict')
     # Begin attaching houses to designated triplex_meters    
     for x in residential_dict:

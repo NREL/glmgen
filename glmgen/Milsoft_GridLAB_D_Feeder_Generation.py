@@ -45,8 +45,6 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   GLD_Feeder returns a dictionary, glmCaseDict, similar to glmDict with additional object dictionaries added according to the model_opts['tech_flag'] selected.
   """
 
-  random.seed(1)
-  
   # Check to make sure we have a valid case flag
   if model_opts['tech_flag'] < -1:
     model_opts['tech_flag'] = 0
@@ -63,6 +61,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
                               
   for key, value in model_opts['config_data'].items():
       config_data[key] = value
+      
+  random.seed(1) if config_data["fix_random_seed"] else random.seed()
   
   # HERE -- feeder_rating to 20 MVA since there is a 17 MVA (bigger than the current default of 16 MVA) feeder
   
@@ -681,7 +681,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   # Calculate some random numbers needed for TOU/CPP and DLC technologies
   if use_flags['use_market'] != 0:
     # Initialize psuedo-random seed
-    random.seed(2)
+    random.seed(2) if config_data["fix_random_seed"] else random.seed()
 
     if total_house_number > 0:
       # Initialize random number arrays
@@ -763,7 +763,10 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
     else:
-      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'] if 'config_file' in io_opts else None)    
+      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(
+          glmCaseDict, use_flags, config_data, tech_data, residential_dict, last_key, CPP_flag_name,
+          market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, 
+          io_opts['dir'], io_opts['resources_dir'])
     
   # End addition of residential loads ########################################################################################################################
 
@@ -774,7 +777,10 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
     else:
-      glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'] if 'config_file' in io_opts else None)
+      glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, \
+      ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(
+          glmCaseDict, use_flags, config_data, tech_data, last_key, commercial_dict, comm_slider_random, 
+          dlc_c_rand, dlc_c_rand2, io_opts['dir'], io_opts['resources_dir'])
       
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
   if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
