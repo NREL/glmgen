@@ -1,121 +1,338 @@
 '''
 Created on Apr 2, 2013
+Author: D3P988
 
-@author: D3P988
+Updated on May 6, 2015
+Author = Elaine Hale
 '''
 import re
 
-# start big ugly .m copy/paste - about 3329 lines
-
-#function [data] = Configuration(file_to_extract, classification)
-def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, classification=None):
-  data = {}
-  # This file contains data particular to each feeder, and regionalization data for each load classification being used. This data may be different for each feeder. 
-  if file_to_extract == None:
-    file_extracted = ''
-  else:
-    file_extracted = file_to_extract
-
-  data["intro"] = 'Populated feeder '+ file_extracted +'.'
-  
-  if classification == None:
-    classID = None
-  else:
-    classID = classification
-    
-  working_directory = re.sub('\\\\','\\\\\\\\',wdir)
-  dir = working_directory+'\\\\schedules\\\\'
+def append_default_feeder_config_data(data, working_directory, dir):
   data["directory"] = dir
   data["fix_random_seed"] = True
+  data["regions"] = { 1: 'Temperate, West Cost (San Francisco)',
+                      2: 'North Central/Northeast, Cold (Chicago)',
+                      3: 'Southwest, Hot/Arid (Phoenix)',
+                      4: 'Southeast Central, Hot/Cold (Nashville)',
+                      5: 'Southeast Coastal, Hot/Humid (Miami)',
+                      6: 'Hawaii, Sub-Tropical (Honolulu)',
+                      7: 'Other -- defaults not provided' }
+  data["weather"] = '{:s}/SCADA_weather_NC_gld_shifted.csv'.format(resources_dir)
+  data["timezone"] = 'PST+8PDT'
+  data["region"] = 7
+  # Feeder Properties
+  # - Substation Rating in MVA (Additional 15% gives rated kW & pf = 0.87)
+  # - Nominal Voltage of Feeder Trunk
+  # - Secondary (Load Side) of Transformers
+  # - Voltage Players Read Into Swing Node
+  data["feeder_rating"] = 1.15*14.0
+  data["nom_volt"] = 14400
+  data["nom_volt2"] = 14400 #was set to 480 for taxonomy feeders
+  #data["load_shape_norm"] = dir + "FRIENDSHIP_2012_normalized_loadshape.player"
+  data["load_shape_norm"] = dir + 'load_shape_player.player'
+  vA='{:s}/VA.player'.format(resources_dir)
+  vB='{:s}/VB.player'.format(resources_dir)
+  vC='{:s}/VC.player'.format(resources_dir)
+  data["voltage_players"] = ['"{:s}"'.format(vA),'"{:s}"'.format(vB),'"{:s}"'.format(vC)]
+     
+  # Voltage Regulation
+  # - EOL Measurements (name of node, phases to measure (i.e. ['GC-12-47-1_node_7','ABC',1]))
+  # - Voltage Regulationn ( [desired, min, max, high deadband, low deadband] )
+  # - Regulators (list of names)
+  # - Capacitor Outages ( [name of capacitor, outage player file])
+  # - Peak Power of Feeder in kVA 
+  data["EOL_points"] = []
+  data["voltage_regulation"] = [14400, 12420, 15180, 60, 60]     
+  data["regulators"] = []
+  data["capacitor_outtage"] = []
+  data["emissions_peak"] = 13910 # Peak in kVa base .85 pf of 29 (For emissions)
+      
+  # Time of Use (TOU)
+  data["TOU_prices"] = [0.07590551, 0.15181102]
+  data["TOU_hours"] = [12, 12, 6]
+  data["TOU_stats"] = [0.11385826, 0.03795329]
+  data["TOU_price_player"] = 'R1_1247_1_t0_TOU.player'
+      
+  # Critical Peak Price (CPP) 
+  data["CPP_prices"] = [0.06998667, 0.13997334, 0.69986670]
+  data["CPP_stats"] = [0.10999954, 0.03795329]
+  data["CPP_price_player"] = 'R1_1247_1_t0_CPP.player'
+  data["CPP_flag"] = 'CPP_days_R1.player' # Specifies critical day
+      
+  # Load Classifications
+  data["load_classifications"] = ['Residential1', 'Residential2', 'Residential3', 'Residential4', 'Residential5', 'Residential6', 'Commercial1', 'Commercial2', 'Commercial3']    
+
+  # Industrial Loads
+  # - For each classification, flag if you want loads populated using normalized load shape
+  #   from player files rather than with houses. You may include a
+  #   maximum value such that loads less than that size are populated with
+  #   houses, and loads greater are populated with loadshape from player. 
+  # - Note that the option exists to print any classification as constant power scaled by players.. the term "industrial" is used loosely.
+  data["indust_class"] = [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]  #[(0 or 1), kW]
+  data["loadshape_r"]='' # player file
+  data["loadshape_i"]='' # player file
+  data["loadshape"]=0+0j
+  data["indust_scalar_com_r"]=0
+  data["indust_scalar_com_i"]=0
+  data["indust_scalar_com"]=0+0j    
   
-  default_weather_by_region = { 1:  ['CA-San_francisco.tmy2',   'PST+8PDT'],
-                                2:  ['IL-Chicago.tmy2',     'CST+6CDT'],
-                                3:  ['AZ-Phoenix.tmy2',     'MST+7MDT'],
-                                4:  ['TN-Nashville.tmy2',     'CST+6CDT'],
-                                5:  ['FL-Miami.tmy2',       'EST+5EDT'],
-                                6:  ['HI-Honolulu.tmy2',     'HST10'] }
-    
-  if file_to_extract == None:
-    # Use default values.
-    
-    # Region Properties
-    # - Weather File (May be .tmy2 or .csv)
-    # - Region Identifier (1:West Coast (temperate), 2:North Central/Northeast (cold/cold), 3:Southwest (hot/arid), 4:Southeast/Central (hot/cold), 5:Southeast Coastal (hot/humid), 6: Hawaii (sub-tropical))
-    # - Timezone
-    
-    # TODO: These variables should be filled in automatically, probably from 'make weather file' script. Within that function we should get the appropriate timestamp and region ID too. 
-    #data["weather"] = 'schedules\\\\SCADA_weather_ISW_gld.csv'
-    data["weather"] = '{:s}/SCADA_weather_NC_gld_shifted.csv'.format(resources_dir)
-    data["timezone"] = 'PST+8PDT'
-    region = 4
-    
-    if not region or region not in range(1,7):
-      print ("No region ID found. Using region 1 (West Coast, Temperate) to fill in default house configurations.")
-      region = 1
-    data["region"] = region
-    
-    if "weather" not in data.keys() or not data["weather"]:
-      print ("Using default weather file for climate region "+str(region))
-      data["weather"] = '{:s}/'.format(resources_dir) + default_weather_by_region[region][0]
-      data["timezone"] = default_weather_by_region[region][1]
-    elif "timezone" not in data.keys() or not data["timezone"]:
-      data["timezone"] = default_weather_by_region[region][1]
+  # Additional Solar Modules
+  # - penetration (%)
+  # - solar rating (kVA)
+  data["solar_penetration"] = 0.0
+  data["solar_rating"] = 5  
+  
+  # Existing Solar (modules in utility database)
+  # - inverter object properties to be used
+  # - solar module object properties to be used
+  # if entry is blank (i.e. ''), default property value will be used in in the .glm:
+  data['sol_inv_properties'] = \
+      ['', #1    # inverter_type (TWO_PULSE|SIX_PULSE|TWELVE_PULSE|PWM|FOUR_QUADRANT)
+       '', #2    # generator_status (ONLINE|OFFLINE)
+       '', #3    # generator_mode (UNKNOWN|CONSTANT_V|CONSTANT_PQ|CONSTANT_PF|SUPPLY_DRIVEN), 
+                 # -- default is CONSTANT_PF, and this property is irrelevent if 
+                 # inverter type is four quadrant:
+       '', #4    # V_In [V]
+       '', #5    # I_In [A]
+       '', #6    # four_quadrant_control_mode (NONE|CONSTANT_PQ|CONSTANT_PF)
+                 # -- this property is necessary only if inverter type is four quadrant:
+       '', #7    # P_Out [VA]  -- used for constant PQ mode
+       '', #8    # Q_Out [VAr] -- used for constant PQ mode
+       '', #9    # power_factor [pu] (used for constant pf mode)
+       '', #10   # rated_power [W]
+       '', #11   # use_multipoint_efficiency (TRUE|FALSE)
+       '', #12   # inverter_manufacturer (NONE|FRONIUS|SMA|XANTREX)
+                 #-- only used if multipoint efficiency:
+       '', #13   # maximum_dc_power [W] -- used if multipoint efficiency:
+       '', #14   # maximum_dc_voltage [V] -- used if multipoint effici ency:
+       '', #15   # minimum_dc_power [W] -- used if multipoint efficiency:
+       '', #16   # c_0 -- coefficient descibing the parabolic relationship between AC and DC power of the inverter
+                 #-- only used if multipoint efficiency:
+       '', #17   # c_1 -- coefficient allowing the maximum DC power to vary linearly with DC voltage
+                 #-- only used if multipoint efficiency:
+       '', #18   # c_2 -- coefficient allowing the minimum DC power to vary linearly with DC voltage
+                 #-- only used if multipoint efficiency:
+        ''] #19  # c_3 -- coefficient allowing c_0 to vary linearly with DC voltage
+                 #-- only used if multipoint efficiency:
 
-    # Feeder Properties
-    # - Substation Rating in MVA (Additional 15% gives rated kW & pf = 0.87)
-    # - Nominal Voltage of Feeder Trunk
-    # - Secondary (Load Side) of Transformers
-    # - Voltage Players Read Into Swing Node
-    data["feeder_rating"] = 1.15*14.0
-    data["nom_volt"] = 14400
-    data["nom_volt2"] = 14400 #was set to 480 for taxonomy feeders
-    #data["load_shape_norm"] = dir + "FRIENDSHIP_2012_normalized_loadshape.player"
-    data["load_shape_norm"] = dir + 'load_shape_player.player'
-    vA='{:s}/VA.player'.format(resources_dir)
-    vB='{:s}/VB.player'.format(resources_dir)
-    vC='{:s}/VC.player'.format(resources_dir)
-    data["voltage_players"] = ['"{:s}"'.format(vA),'"{:s}"'.format(vB),'"{:s}"'.format(vC)]
-    
-    # Voltage Regulation
-    # - EOL Measurements (name of node, phases to measure (i.e. ['GC-12-47-1_node_7','ABC',1]))
-    # - Voltage Regulationn ( [desired, min, max, high deadband, low deadband] )
-    # - Regulators (list of names)
-    # - Capacitor Outages ( [name of capacitor, outage player file])
-    # - Peak Power of Feeder in kVA 
-    data["EOL_points"] = []
-    data["voltage_regulation"] = [14400, 12420, 15180, 60, 60]     
-    data["regulators"] = []
-    data["capacitor_outtage"] = []
-    data["emissions_peak"] = 13910 # Peak in kVa base .85 pf of 29 (For emissions)
-    
-    # Time of Use (TOU)
-    data["TOU_prices"] = [0.07590551, 0.15181102]
-    data["TOU_hours"] = [12, 12, 6]
-    data["TOU_stats"] = [0.11385826, 0.03795329]
-    data["TOU_price_player"] = 'R1_1247_1_t0_TOU.player'
-    
-    # Critical Peak Price (CPP) 
-    data["CPP_prices"] = [0.06998667, 0.13997334, 0.69986670]
-    data["CPP_stats"] = [0.10999954, 0.03795329]
-    data["CPP_price_player"] = 'R1_1247_1_t0_CPP.player'
-    data["CPP_flag"] = 'CPP_days_R1.player' # Specifies critical day
-    
-    # Load Classifications
-    data["load_classifications"] = ['Residential1', 'Residential2', 'Residential3', 'Residential4', 'Residential5', 'Residential6', 'Commercial1', 'Commercial2', 'Commercial3']    
+  # properties of solar modules
+  data['sol_module_properties'] = \
+      ['',             #1  # generator_mode (SUPPLY_DRIVEN)
+       '',             #2  # generator_status (ONLINE|OFFLINE)
+       'MULTI_CRYSTAL_SILICON',   #3  # panel_type (SINGLE_CRYSTAL_SILICON|MULTI_CRYSTAL_SILICON|AMORPHOUS_SILICON|THIN_FILM_GA_AS|CONCENTRATOR)
+       '',             #4  # NOCT [degF] --default is 118.4 degF, used to calculate Tmodule
+       '',             #5  # Tmodule [degF] -- used to calculate Voc and VA_Out  
+       '',             #6  # power_factor [pu] (used for constant pf mode)
+       '',             #7  # Rated_Insolation [W/sf] -- default is 92.902
+       '',             #8  # Pmax_temp_coeff -- used to calculate VA_Out, set by panel type selection if not set here:
+       '',             #9  # Voc_temp_coeff -- used to calculate Voc, set by panel type selection if not set here:
+       '',             #10 # V_Max [V] -- default is 27.1 + 0j, used to calculate V_Out
+       '',             #11 # Voc_Max [V] -- default is 34 + 0j, used to calculate Voc and V_Out
+       '',             #12 # efficiency [unit] -- set by panel type selection if not set here:
+       '',             #13 # area [sf] -- default is 323 #TODO: should they be allowed to change this since it's figured out according to load size?
+       '',             #14 # shading_factor -- default is 1 (no shading)
+       '20',           #15 # tilt_angle -- default is 45 degrees
+       '',             #16 # orientation_azimuth -- default is 0 (equator facing)
+       '',             #17 # latitude_angle_fix (TRUE|FALSE) -- default is false (this fixes tilt angle to regions latitude as determined by the included climate info
+       'FIXED_AXIS']   #18 # orientation  (FIXED|DEFAULT) -- default is DEFAULT, which means tracking
 
-    # Industrial Loads
-    # - For each classification, flag if you want loads populated using normalized load shape
-    #   from player files rather than with houses. You may include a
-    #   maximum value such that loads less than that size are populated with
-    #   houses, and loads greater are populated with loadshape from player. 
-    # - Note that the option exists to print any classification as constant power scaled by players.. the term "industrial" is used loosely.
-    data["indust_class"] = [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]  #[(0 or 1), kW]
-    data["loadshape_r"]='' # player file
-    data["loadshape_i"]='' # player file
-    data["loadshape"]=0+0j
-    data["indust_scalar_com_r"]=0
-    data["indust_scalar_com_i"]=0
-    data["indust_scalar_com"]=0+0j
+  # what percentage breakdown of these configurations? (inverter with sol_inv_properties{n} will be parent to solar object with solar_module_properties{n})
+  data["solar_inverter_config_breakdown"] = [1, #Res1
+                                             1, #Res2
+                                             1, #Res3
+                                             1, #Res4
+                                             1, #Res5
+                                             1, #Res6
+                                             1, #Com1
+                                             1, #Com2
+                                             1] #Com3
+                                               
+  # Commercial Buildings
+  # - Designate what type of commercial building each classification represents.
+  data["com_buildings"] = [[0, 0, 0, 0, 0, 0, 0, 0, 1],  # office buildings 
+                           [0, 0, 0, 0, 0, 0, 0, 1, 0],  # big box 
+                           [0, 0, 0, 0, 0, 0, 1, 0, 0]]  # strip mall
+  data["no_cool_sch"] = 8
+  data["no_heat_sch"] = 6
+  data["no_water_sch"] = 6
+  data["ts_penetration"] = 10 #0-100, percent of buildings utilizing thermal storage - for all regions
+  
+  # Determines how many houses to populate (bigger avg_house = less houses)
+  data["avg_house"] = 15000 # W
+  
+  # Determines sizing of commercial loads (bigger avg_commercial = less houses)
+  data["avg_commercial"] = 35000 # W
+  
+  # Scale the responsive and unresponsive loads (percentage)
+  data["base_load_scalar"] = 1.0
+  
+  # heating offset
+  allsame_c = 2
+  
+  # cooling offset
+  allsame_h = 2
+  
+  # COP high scalar
+  COP_high = 1
+  
+  # COP low scalar
+  COP_low = 1
+  
+  #variable to shift the residential schedule skew (seconds)
+  data["residential_skew_shift"] = 0
+  
+  # decrease gas heating percentage
+  decrease_gas = 1
+  
+  # widen schedule skew
+  data["residential_skew_std"] = 2700
+  
+  # window wall ratio
+  data["window_wall_ratio"] = 0.15
+  
+  # additional set point degrees
+  data["addtl_heat_degrees"] = 0
+  
+  # normalized load shape scalar
+  data["normalized_loadshape_scalar"] = 1
+  
+  if 'load_shape_norm' in data.keys() and data['load_shape_norm'] is not None:
+    # commercial zip fractions for loadshapes
+    data["c_z_pf"] = 0.97
+    data["c_i_pf"] = 0.97
+    data["c_p_pf"] = 0.97
+    data["c_zfrac"] = 0.2
+    data["c_ifrac"] = 0.4
+    data["c_pfrac"] = 1 - data["c_zfrac"] - data["c_ifrac"]
+    
+    # residential zip fractions for loadshapes
+    data["r_z_pf"] = 0.97
+    data["r_i_pf"] = 0.97
+    data["r_p_pf"] = 0.97
+    #data["r_zfrac"] = 0.2
+    #data["r_ifrac"] = 0.4
+    data["r_zfrac"] = 0.0
+    data["r_ifrac"] = 0.0
+    data["r_pfrac"] = 1 - data["r_zfrac"] - data["r_ifrac"]  
+  
+  return data
+
+def FeederConfiguration(wdir, resources_dir, config_data = None):
+  data = {}; update = False  
+  if config_data is not None:
+    data = config_data; update = True
+   
+  working_directory = re.sub('\\\\','\\\\\\\\',wdir)
+  dir = working_directory+'\\\\schedules\\\\'
+  if not update:
+    data = append_default_feeder_config_data(data, working_directory, dir)
+  
+  if update:
+    region = data['region']
+    default_weather_by_region = { 1:  ['CA-San_francisco.tmy2',   'PST+8PDT'],
+                                  2:  ['IL-Chicago.tmy2',     'CST+6CDT'],
+                                  3:  ['AZ-Phoenix.tmy2',     'MST+7MDT'],
+                                  4:  ['TN-Nashville.tmy2',     'CST+6CDT'],
+                                  5:  ['FL-Miami.tmy2',       'EST+5EDT'],
+                                  6:  ['HI-Honolulu.tmy2',     'HST10'] }
+    # keyed on region number,  the index position in the lists then represent load classifications, 
+    # see data["load_classifications"], and Commercial1 = Strip Mall, Commercial2 = Big Box and 
+    # Commercial 3 = Office
+    # Individual house power in W.
+    default_average_peak_load_by_region_and_load_class = { \
+        1: [9346.0, 6107.0, 9489.0],
+        2: [12351.0, 7814.0, 12447.0],
+        3: [11668.0, 7142.0, 11863.0],
+        4: [12342.0, 7820.0, 12528.0],
+        5: [9179.0, 6003.0, 9393.0], 
+        6: [10000.0, 6000.0, 9500.0] # punting on Hawaii for now -- calculate on next go-around        
+    }
+    if region in default_weather_by_region:
+        if 'weather' not in data or not data["weather"]:
+            data["weather"] = '{:s}/'.format(resources_dir) + default_weather_by_region[region][0]
+        if 'timezone' not in data.keys() or not data['timezone']:    
+            data["timezone"] = default_weather_by_region[region][1]
+
+  # HERE 
+    
+    
+  # Apply calibration scalars
+  for x in cooling_setpoint:
+    if x is None:
+      pass
+    else:
+      for j in range(len(x)):
+        x[j].insert(1,allsame_c)
+        
+  for x in heating_setpoint:
+    if x is None:
+      pass
+    else:
+      for j in range(len(x)):
+        x[j].insert(1,allsame_h)
+        
+  cop_high_new = []
+  
+  for x in cop_high:
+    cop_high_new.append([round(COP_high*y,2) for y in x])
+    
+  cop_low_new = []
+  
+  for x in cop_low:
+    cop_low_new.append([round(COP_low*y,2) for y in x])
+    
+  for i in range(len(thermal_properties)):
+    if thermal_properties[i] is None:
+      pass
+    else:
+      for j in range(len(thermal_properties[i])):
+        if thermal_properties[i][j] is None:
+          pass
+        else:
+          thermal_properties[i][j].extend([cop_high_new[i][j],cop_low_new[i][j]])
+          
+  perc_pump = list(map(lambda x, y: x + (1-decrease_gas)*y,perc_pump,perc_gas))
+  perc_gas = list(map(lambda x:x*decrease_gas,perc_gas))
+  
+  #print("classification is = "+str(classID))
+
+  #Variables referenced by Feeder_Generator.m
+  if classification != None :
+    data["thermal_percentages"] = [None]*len(thermal_percentages)
+    for x in range(len(thermal_percentages)):
+      data["thermal_percentages"][x] = thermal_percentages[x][classID]
+
+    data["thermal_properties"] = [None]*len(thermal_properties)
+    for x in range(len(thermal_properties)):
+      data["thermal_properties"][x] = thermal_properties[x][classID]
+
+    data["cooling_setpoint"] = cooling_setpoint[classID] 
+    data["heating_setpoint"] = heating_setpoint[classID]
+    data["perc_gas"] = perc_gas[classID]
+    data["perc_pump"] = perc_pump[classID]
+    data["perc_res"] = perc_res[classID]
+    data["perc_AC"] = perc_AC[classID]
+    data["perc_poolpumps"] = perc_pool_pumps[classID]
+    data["wh_electric"] = wh_electric[classID]
+    data["wh_size"] = wh_size[classID]
+    
+    data["over_sizing_factor"] = [None]*len(over_sizing_factor)
+    for x in range(len(over_sizing_factor)):
+      data["over_sizing_factor"][x] = over_sizing_factor[x][classID]
+      
+    data["AC_type"] = [None]*len(AC_type)
+    for x in range(len(AC_type)):
+      data["AC_type"][x] = AC_type[x][classID]
+      
+    data["dispatch_order"] = dispatch_order[classID]
+
+    data["SFH"] = [None]*len(SFH)
+    for x in range(len(SFH)):
+      data["SFH"][x] = SFH[x][classID]
+
+  return data
+  
+def LoadClassConfiguration(f_config_data, classification=None):
 
     # Thermal Percentages by Region
     # - The "columns" represent load classifications. The "rows" represent the breakdown within that classification of building age. 
@@ -125,6 +342,18 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
     #   1:1960-69   2:-         3:1960-69   4:-         5:-         6:-         7:-     8:-     9:-
     #   1:1970-79   2:-         3:1970-79   4:-         5:-         6:-         7:-     8:-     9:-
     #   1:-         2:-         3:-       4:-         5:-         6:-         7:-     8:-     9:-
+    
+    ## emission dispatch order
+    # Nuc Hydro Solar BioMass Wind Coal NG GeoTherm Petro
+    dispatch_order = [[1,5,2,3,4,7,6,8,9],   #Res1
+                      [1,7,2,3,4,5,6,8,9],   #Res2
+                      [1,7,2,3,4,5,6,8,9],   #Res3
+                      [1,7,2,3,4,5,6,8,9],   #Res4
+                      [1,7,2,3,4,6,5,8,9],   #Res5
+                      [1,7,2,3,4,5,6,8,9],   #Res6
+                      [1,7,2,3,4,5,6,8,9],   #Com1
+                      [1,7,2,3,4,5,6,8,9],   #Com2
+                      [1,7,2,3,4,6,5,8,9]]   #Com3    
     
     # Using values from the old regionalization.m script. 
     # Retooled the old thermal percentages values into this new "matrix" form for classifications.
@@ -252,12 +481,6 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
                [1, 1, 1, 1, 0, 0, 0, 0, 0],
                [1, 1, 1, 1, 0, 0, 0, 0, 0],
                [1, 1, 1, 1, 0, 0, 0, 0, 0]] 
-
-    # Commercial Buildings
-    # - Designate what type of commercial building each classification represents.
-    com_buildings = [[0, 0, 0, 0, 0, 0, 0, 0, 1],  # office buildings 
-                         [0, 0, 0, 0, 0, 0, 0, 1, 0],  # big box 
-                         [0, 0, 0, 0, 0, 0, 1, 0, 0]]  # strip mall
 
     # COP High/Low Values
     # - "columns" represent load classifications. The "rows" represent the sub-classifications (See thermal_percentages).
@@ -533,317 +756,6 @@ def ConfigurationFunc(wdir, resources_dir, config_file, file_to_extract=None, cl
                    # [0, 0, 0],                #Com1
                    # [0, 0, 0],                #Com2
                    # [0, 0, 0]]                #Com3
-    
-    # Additional Solar Modules
-    # - penetration (%)
-    # - solar rating (kVA)
-    data["solar_penetration"] = 0.0
-    data["solar_rating"] = 5
-    
-    # Existing Solar (modules in utility database)
-    # - inverter object properties to be used
-    # - solar module object properties to be used
-    # if entry is blank (i.e. ''), default property value will be used in in the .glm:
-    sol_inv_properties = ['', #1    # inverter_type (TWO_PULSE|SIX_PULSE|TWELVE_PULSE|PWM|FOUR_QUADRANT)
-                '', #2    # generator_status (ONLINE|OFFLINE)
-                '', #3    # generator_mode (UNKNOWN|CONSTANT_V|CONSTANT_PQ|CONSTANT_PF|SUPPLY_DRIVEN), 
-                    # -- default is CONSTANT_PF, and this property is irrelevent if inverter type is four quadrant:
-                '', #4    # V_In [V]
-                '', #5    # I_In [A]
-                '', #6    # four_quadrant_control_mode (NONE|CONSTANT_PQ|CONSTANT_PF)
-                    # -- this property is necessary only if inverter type is four quadrant:
-                '', #7    # P_Out [VA]  -- used for constant PQ mode
-                '', #8    # Q_Out [VAr] -- used for constant PQ mode
-                '', #9    # power_factor [pu] (used for constant pf mode)
-                '', #10   # rated_power [W]
-                '', #11   # use_multipoint_efficiency (TRUE|FALSE)
-                '', #12   # inverter_manufacturer (NONE|FRONIUS|SMA|XANTREX)
-                    #-- only used if multipoint efficiency:
-                '', #13   # maximum_dc_power [W] -- used if multipoint efficiency:
-                '', #14   # maximum_dc_voltage [V] -- used if multipoint effici ency:
-                '', #15   # minimum_dc_power [W] -- used if multipoint efficiency:
-                '', #16   # c_0 -- coefficient descibing the parabolic relationship between AC and DC power of the inverter
-                    #-- only used if multipoint efficiency:
-                '', #17   # c_1 -- coefficient allowing the maximum DC power to vary linearly with DC voltage
-                    #-- only used if multipoint efficiency:
-                '', #18   # c_2 -- coefficient allowing the minimum DC power to vary linearly with DC voltage
-                    #-- only used if multipoint efficiency:
-                ''] #19   # c_3 -- coefficient allowing c_0 to vary linearly with DC voltage
-                    #-- only used if multipoint efficiency:
-
-    # properties of solar modules
-    sol_module_properties = ['',             #1  # generator_mode (SUPPLY_DRIVEN)
-                 '',             #2  # generator_status (ONLINE|OFFLINE)
-                 'MULTI_CRYSTAL_SILICON',   #3  # panel_type (SINGLE_CRYSTAL_SILICON|MULTI_CRYSTAL_SILICON|AMORPHOUS_SILICON|THIN_FILM_GA_AS|CONCENTRATOR)
-                 '',             #4  # NOCT [degF] --default is 118.4 degF, used to calculate Tmodule
-                 '',             #5  # Tmodule [degF] -- used to calculate Voc and VA_Out  
-                 '',             #6  # power_factor [pu] (used for constant pf mode)
-                 '',             #7  # Rated_Insolation [W/sf] -- default is 92.902
-                 '',             #8  # Pmax_temp_coeff -- used to calculate VA_Out, set by panel type selection if not set here:
-                 '',             #9  # Voc_temp_coeff -- used to calculate Voc, set by panel type selection if not set here:
-                 '',             #10 # V_Max [V] -- default is 27.1 + 0j, used to calculate V_Out
-                 '',             #11 # Voc_Max [V] -- default is 34 + 0j, used to calculate Voc and V_Out
-                 '',             #12 # efficiency [unit] -- set by panel type selection if not set here:
-                 '',             #13 # area [sf] -- default is 323 #TODO: should they be allowed to change this since it's figured out according to load size?
-                 '',             #14 # shading_factor -- default is 1 (no shading)
-                 '20',            #15 # tilt_angle -- default is 45 degrees
-                 '',             #16 # orientation_azimuth -- default is 0 (equator facing)
-                 '',             #17 # latitude_angle_fix (TRUE|FALSE) -- default is false (this fixes tilt angle to regions latitude as determined by the included climate info
-                 'FIXED_AXIS']         #18 # orientation  (FIXED|DEFAULT) -- default is DEFAULT, which means tracking
-
-    # what percentage breakdown of these configurations? (inverter with sol_inv_properties{n} will be parent to solar object with solar_module_properties{n})
-    data["solar_inverter_config_breakdown"] = [1, #Res1
-                           1, #Res2
-                           1, #Res3
-                           1, #Res4
-                           1, #Res5
-                           1, #Res6
-                           1, #Com1
-                           1, #Com2
-                           1] #Com3
-
-    ## emission dispatch order
-    # Nuc Hydro Solar BioMass Wind Coal NG GeoTherm Petro
-    dispatch_order = [[1,5,2,3,4,7,6,8,9],   #Res1
-              [1,7,2,3,4,5,6,8,9],   #Res2
-              [1,7,2,3,4,5,6,8,9],   #Res3
-              [1,7,2,3,4,5,6,8,9],   #Res4
-              [1,7,2,3,4,6,5,8,9],   #Res5
-              [1,7,2,3,4,5,6,8,9],   #Res6
-              [1,7,2,3,4,5,6,8,9],   #Com1
-              [1,7,2,3,4,5,6,8,9],   #Com2
-              [1,7,2,3,4,6,5,8,9]]   #Com3
-  else:
-    # set dictionary values for basic configuration data for this feeder.
-    pass
-    
-  if config_file==None:
-    # set dictionary values (for default case)
-    # Determines how many houses to populate (bigger avg_house = less houses)
-    data["avg_house"] = 15000 # W
-    
-    # Determines sizing of commercial loads (bigger avg_commercial = less houses)
-    data["avg_commercial"] = 35000 # W
-    
-    # Scale the responsive and unresponsive loads (percentage)
-    data["base_load_scalar"] = 1.0
-    
-    # heating offset
-    allsame_c = 2
-    
-    # cooling offset
-    allsame_h = 2
-    
-    # COP high scalar
-    COP_high = 1
-    
-    # COP low scalar
-    COP_low = 1
-    
-    #variable to shift the residential schedule skew (seconds)
-    data["residential_skew_shift"] = 0
-    
-    # decrease gas heating percentage
-    decrease_gas = 1
-    
-    # widen schedule skew
-    data["residential_skew_std"] = 2700
-    
-    # window wall ratio
-    data["window_wall_ratio"] = 0.15
-    
-    # additional set point degrees
-    data["addtl_heat_degrees"] = 0
-    
-    # normalized load shape scalar
-    data["normalized_loadshape_scalar"] = 1
-    
-    if 'load_shape_norm' in data.keys() and data['load_shape_norm'] is not None:
-      # commercial zip fractions for loadshapes
-      data["c_z_pf"] = 0.97
-      data["c_i_pf"] = 0.97
-      data["c_p_pf"] = 0.97
-      data["c_zfrac"] = 0.2
-      data["c_ifrac"] = 0.4
-      data["c_pfrac"] = 1 - data["c_zfrac"] - data["c_ifrac"]
-      
-      # residential zip fractions for loadshapes
-      data["r_z_pf"] = 0.97
-      data["r_i_pf"] = 0.97
-      data["r_p_pf"] = 0.97
-      #data["r_zfrac"] = 0.2
-      #data["r_ifrac"] = 0.4
-      data["r_zfrac"] = 0.0
-      data["r_ifrac"] = 0.0
-      data["r_pfrac"] = 1 - data["r_zfrac"] - data["r_ifrac"]
-    
-  else:
-    def num(s):
-      try:
-        return int(s)
-      except ValueError:
-        return float(s)
-    
-    couplets={}
-    # open calibration file
-    calib = open(config_file, 'r')
-    # separate into lines
-    lines = (calib.read()).split('\n')
-    for l in lines:
-      # ignore comment lines
-      if re.match(r'^#',l) is None:
-        # split at first comma
-        f = l.split(',',1)
-        if f[0] == 'all':
-          couplets[f[0]]=f[1].split(',')
-        else:
-          # insert variable name and value into dictionary
-          couplets[f[0]]=num(f[1])
-    calib.close()
-    data["avg_house"] = couplets['avg_house']
-
-    data["avg_commercial"] = couplets['avg_comm']
-
-    data["base_load_scalar"] = couplets['base_load_scalar'] + 1
-
-    allsame_c = couplets['cooling_offset']
-
-    allsame_h = couplets['heating_offset']
-
-    COP_high = couplets['COP_high_scalar'] + 1
-
-    COP_low = couplets['COP_low_scalar'] + 1
-
-    data["residential_skew_shift"] = couplets['res_skew_shift']
-
-    decrease_gas = 1 - couplets['decrease_gas']
-
-    # widen schedule skew
-    data["residential_skew_std"] = couplets['sched_skew_std']
-
-    # window wall ratio
-    data["window_wall_ratio"] = couplets['window_wall_ratio']
-
-    # additional set point degrees
-    data["addtl_heat_degrees"] = couplets['addtl_heat_degrees']
-    
-    if "load_shape_scalar" in couplets.keys():
-      data["normalized_loadshape_scalar"] = couplets['load_shape_scalar']
-    else:
-      data["normalized_loadshape_scalar"] = 1
-      
-    if 'load_shape_norm' in data.keys() and data['load_shape_norm'] is not None:
-      # commercial zip fractions for loadshapes
-      data["c_z_pf"] = 0.97
-      data["c_i_pf"] = 0.97
-      data["c_p_pf"] = 0.97
-      data["c_zfrac"] = 0.2
-      data["c_ifrac"] = 0.4
-      # data["c_z_pf"] = couplets["c_z_pf"]
-      # data["c_i_pf"] = couplets["c_i_pf"]
-      # data["c_p_pf"] = couplets["c_p_pf"]
-      # data["c_zfrac"] = couplets["c_zfrac"]
-      # data["c_ifrac"] = couplets["c_ifrac"]
-      data["c_pfrac"] = 1 - data["c_zfrac"] - data["c_ifrac"]
-      
-      # residential zip fractions for loadshapes
-      data["r_z_pf"] = 0.97
-      data["r_i_pf"] = 0.97
-      data["r_p_pf"] = 0.97
-      #data["r_zfrac"] = 0.2
-      #data["r_ifrac"] = 0.4
-      data["r_zfrac"] = 0.0
-      data["r_ifrac"] = 0.0
-      # data["r_z_pf"] = couplets["r_z_pf"]
-      # data["r_i_pf"] = couplets["r_i_pf"]
-      # data["r_p_pf"] = couplets["r_p_pf"]
-      # data["r_zfrac"] = couplets["r_zfrac"]
-      # data["r_ifrac"] = couplets["r_ifrac"]
-      data["r_pfrac"] = 1 - data["r_zfrac"] - data["r_ifrac"]
-    
-  # Apply calibration scalars
-  for x in cooling_setpoint:
-    if x is None:
-      pass
-    else:
-      for j in range(len(x)):
-        x[j].insert(1,allsame_c)
-        
-  for x in heating_setpoint:
-    if x is None:
-      pass
-    else:
-      for j in range(len(x)):
-        x[j].insert(1,allsame_h)
-        
-  cop_high_new = []
-  
-  for x in cop_high:
-    cop_high_new.append([round(COP_high*y,2) for y in x])
-    
-  cop_low_new = []
-  
-  for x in cop_low:
-    cop_low_new.append([round(COP_low*y,2) for y in x])
-    
-  for i in range(len(thermal_properties)):
-    if thermal_properties[i] is None:
-      pass
-    else:
-      for j in range(len(thermal_properties[i])):
-        if thermal_properties[i][j] is None:
-          pass
-        else:
-          thermal_properties[i][j].extend([cop_high_new[i][j],cop_low_new[i][j]])
-          
-  perc_pump = list(map(lambda x, y: x + (1-decrease_gas)*y,perc_pump,perc_gas))
-  perc_gas = list(map(lambda x:x*decrease_gas,perc_gas))
-  
-  #print("classification is = "+str(classID))
-
-  #Variables referenced by Feeder_Generator.m
-  if classification != None :
-    data["thermal_percentages"] = [None]*len(thermal_percentages)
-    for x in range(len(thermal_percentages)):
-      data["thermal_percentages"][x] = thermal_percentages[x][classID]
-
-    data["thermal_properties"] = [None]*len(thermal_properties)
-    for x in range(len(thermal_properties)):
-      data["thermal_properties"][x] = thermal_properties[x][classID]
-
-    data["cooling_setpoint"] = cooling_setpoint[classID] 
-    data["heating_setpoint"] = heating_setpoint[classID]
-    data["perc_gas"] = perc_gas[classID]
-    data["perc_pump"] = perc_pump[classID]
-    data["perc_res"] = perc_res[classID]
-    data["perc_AC"] = perc_AC[classID]
-    data["perc_poolpumps"] = perc_pool_pumps[classID]
-    data["wh_electric"] = wh_electric[classID]
-    data["wh_size"] = wh_size[classID]
-    
-    data["over_sizing_factor"] = [None]*len(over_sizing_factor)
-    for x in range(len(over_sizing_factor)):
-      data["over_sizing_factor"][x] = over_sizing_factor[x][classID]
-      
-    data["AC_type"] = [None]*len(AC_type)
-    for x in range(len(AC_type)):
-      data["AC_type"][x] = AC_type[x][classID]
-      
-    data["dispatch_order"] = dispatch_order[classID]
-
-    data["SFH"] = [None]*len(SFH)
-    for x in range(len(SFH)):
-      data["SFH"][x] = SFH[x][classID]
-
-
-  data["sol_inv_properties"] = sol_inv_properties
-  data["sol_module_properties"] = sol_module_properties
-  data["com_buildings"] = com_buildings
-  data["no_cool_sch"] = 8
-  data["no_heat_sch"] = 6
-  data["no_water_sch"] = 6
-  data["ts_penetration"] = 10 #0-100, percent of buildings utilizing thermal storage - for all regions
-  return data
 
 def main():
   #tests here
