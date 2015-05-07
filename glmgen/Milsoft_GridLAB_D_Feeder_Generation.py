@@ -524,6 +524,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
         
     for x in to_remove:
       del glmCaseDict[x]
+      
+    # print('Planning to replace {} load objects with {} commercial buildings.'.format(commercial_key, total_commercial_number))
         
   # Create dictionary that houses the number of residential 'load' objects where residential house objects will be tacked on.
   total_house_number = 0
@@ -663,6 +665,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
             del glmCaseDict[x]['power_1']
 
           if total_house_number == 0 and load > 0 and use_flags['use_normalized_loadshapes'] == 0: # Residential street light
+            print('No houses, making street lights instead.')
             glmCaseDict[x]['power_12_real'] = 'street_lighting*{:.4f}'.format(c_load.real*tech_data['light_scalar_res'])
             glmCaseDict[x]['power_12_reac'] = 'street_lighting*{:.4f}'.format(c_load.imag*tech_data['light_scalar_res'])
           else:
@@ -673,6 +676,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     
     for x in to_remove:
       del glmCaseDict[x]
+      
+    # print('Planning to replace {} triplex_node objects with {} houses.'.format(residential_key, total_house_number))
     
   # Calculate some random numbers needed for TOU/CPP and DLC technologies
   if use_flags['use_market'] != 0:
