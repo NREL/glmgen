@@ -181,6 +181,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
 
       # Grab the load classification
       classID = commercial_dict[iii]['load_classification'] # Get load classification
+      load_config_data = Configuration.LoadClassConfiguration(config_data,classID) 
       # Determine how many houses and of what building type the classification designates
       com_buildings_classified = [config_data["com_buildings"][0][classID] * total_comm_houses,config_data["com_buildings"][1][classID] * total_comm_houses,config_data["com_buildings"][2][classID] * total_comm_houses] # cID-1 for index fixing
 
@@ -253,7 +254,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
 
           glmCaseDict[last_object_key] = {"object" : "overhead_line",
                           "from" : "{:s}".format(my_parent),
-                          "to" : "{:s}_office_meter{:.0f}".format(my_name,jjj),
+                          "to" : "{:s}_office_m{:.0f}".format(my_name,jjj),
                           "phases" : "{:s}".format(commercial_dict[iii]['phases']),
                           "length" : "50ft",
                           "configuration" : "line_configuration_comm{:s}".format(ph)}
@@ -261,7 +262,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
 
           glmCaseDict[last_object_key] = {"object" : "meter",            
                           "phases" : "{:s}".format(commercial_dict[iii]['phases']),
-                          "name" : "{:s}_office_meter{:.0f}".format(my_name,jjj),
+                          "name" : "{:s}_office_m{:.0f}".format(my_name,jjj),
                           "groupid" : "Commercial_Meter",
                           "meter_power_consumption" : "{:s}".format(tech_data["comm_meter_cons"]),
                           "nominal_voltage" : "{:f}".format(nom_volt)}
@@ -298,7 +299,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             glmCaseDict[last_object_key] = {"object" : "transformer",
                             "name" : "{:s}_CTTF_{:s}_{:.0f}".format(my_name,ph[phind],jjj),
                             "phases" : "{:s}S".format(ph[phind]),
-                            "from" : "{:s}_office_meter{:.0f}".format(my_name,jjj),
+                            "from" : "{:s}_office_m{:.0f}".format(my_name,jjj),
                             "to" : "{:s}_tm_{:s}_{:.0f}".format(my_name,ph[phind],jjj),
                             "groupid" : "Distribution_Trans",
                             "configuration" : "CTTF_config_{:s}_{:s}".format(ph[phind],my_name)}
@@ -391,7 +392,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
               interior_exterior_wall_ratio = (floor_area * (2 - 1) + 0*20) / (no_of_stories * ceiling_height * 2 * (w+d)) - 1 + window_wall_ratio*exterior_wall_fraction;
               no_of_doors = 0.1; # will round to zero
               init_temp = 68 + 4*random.random();
-              os_rand = config_data["over_sizing_factor"][0] * (.8 + 0.4*random.random());
+              os_rand = load_config_data["over_sizing_factor"][0] * (.8 + 0.4*random.random());
               COP_A = tech_data["cooling_COP"] * (0.8 + 0.4*random.random());
               glmCaseDict[last_object_key] = {"object" : "house",
                               "name" :  "office{:s}_{:s}{:.0f}_zone{:.0f}_fl{:.0f}".format(my_name,my_phases[phind],jjj,zoneind,flrind), #added floor ID #jlh
@@ -642,7 +643,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
 
           glmCaseDict[last_object_key] = {"object" : "overhead_line",
                           "from" : "{:s}".format(my_parent),
-                          "to" : "{:s}_bigbox_meter{:.0f}".format(my_name,jjj),
+                          "to" : "{:s}_bigbox_m{:.0f}".format(my_name,jjj),
                           "phases" : "{:s}".format(commercial_dict[iii]["phases"]),
                           "length" : "50ft",
                           "configuration" : "line_configuration_comm{:s}".format(ph)}
@@ -650,7 +651,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
 
           glmCaseDict[last_object_key] = {"object" : "meter",            
                           "phases" : "{:s}".format(commercial_dict[iii]["phases"]),
-                          "name" : "{:s}_bigbox_meter{:.0f}".format(my_name,jjj),
+                          "name" : "{:s}_bigbox_m{:.0f}".format(my_name,jjj),
                           "groupid" : "Commercial_Meter",
                           "nominal_voltage" : "{:f}".format(nom_volt),
                           "meter_power_consumption" : "{:s}".format(tech_data["comm_meter_cons"])}
@@ -696,7 +697,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             glmCaseDict[last_object_key] = {"object" : "transformer",
                             "name" : "{:s}_CTTF_{:s}_{:.0f}".format(my_name,ph[phind],jjj),
                             "phases" : "{:s}S".format(ph[phind]),
-                            "from" : "{:s}_bigbox_meter{:.0f}".format(my_name,jjj),
+                            "from" : "{:s}_bigbox_m{:.0f}".format(my_name,jjj),
                             "to" : "{:s}_tm_{:s}_{:.0f}".format(my_name,ph[phind],jjj),
                             "groupid" : "Distribution_Trans",
                             "configuration" : "CTTF_config_{:s}_{:s}".format(ph[phind],my_name)}
@@ -746,7 +747,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                 raise Exception('Something wrong in the indexing of the retail strip.')
 
               init_temp = 68 + 4*random.random();
-              os_rand = config_data["over_sizing_factor"][0] * (.8 + 0.4*random.random());
+              os_rand = load_config_data["over_sizing_factor"][0] * (.8 + 0.4*random.random());
               COP_A = tech_data["cooling_COP"] * (0.8 + 0.4*random.random());
               glmCaseDict[last_object_key] = {"object" : "house",
                               "name" : "bigbox{:s}_{:s}{:.0f}_zone{:.0f}".format(my_name,ph[phind],jjj,zoneind),
@@ -1107,7 +1108,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             last_object_key += 1;
             
             init_temp = 68 + 4*random.random();
-            os_rand = config_data["over_sizing_factor"][0] * (.8 + 0.4*random.random());
+            os_rand = load_config_data["over_sizing_factor"][0] * (.8 + 0.4*random.random());
             COP_A = tech_data["cooling_COP"] * (0.8 + 0.4*random.random());
             glmCaseDict[last_object_key] = {"object" : "house",
                             "name" : "stripmall{:s}_{:s}{:.0f}".format(my_name,ph[phind],jjj),

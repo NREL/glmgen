@@ -72,17 +72,16 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                         # Write the PV meter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'meter',
-                                                  'name' : 'pv_meter{:d}_{:s}'.format(y,parent),
+                                                  'name' : 'pv_m{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
-                                                  'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
+                                                  # 'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
                                                   'groupid' : 'PV_Meter'}
                         
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',
-                                                  # 'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'name' : 'pv_inverter{:d}_{:s}'.format(y,parent),
+                                                  'name' : 'pv_inv{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'phases' : '{:s}'.format(phases),
                                                   'generator_mode' : 'CONSTANT_PF',
@@ -95,8 +94,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'solar',
-                                                  # 'name' : 'sol_panel_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'name' : 'pv_panel{:d}_{:s}'.format(y, parent),
+                                                  'name' : 'pv{:d}_{:s}'.format(y, parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'generator_mode' : 'SUPPLY_DRIVEN',
                                                   'generator_status' : 'ONLINE',
@@ -149,17 +147,16 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                         # Write the PV meter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'meter',
-                                                  'name' : 'pv_meter{:d}_{:s}'.format(y,parent),
+                                                  'name' : 'pv_m{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
-                                                  'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
+                                                  # 'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
                                                   'groupid' : 'PV_Meter'}
                         
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',
-                                                  # 'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'name' : 'pv_inverter{:d}_{:s}'.format(y,parent),
+                                                  'name' : 'pv_inv{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'phases' : '{:s}'.format(phases),
                                                   'generator_mode' : 'CONSTANT_PF',
@@ -172,8 +169,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'solar',
-                                                  # 'name' : 'sol_panel_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'name' : 'pv_panel{:d}_{:s}'.format(y, parent),
+                                                  'name' : 'pv{:d}_{:s}'.format(y, parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'generator_mode' : 'SUPPLY_DRIVEN',
                                                   'generator_status' : 'ONLINE',
@@ -234,7 +230,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                         # Write the PV meter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'triplex_meter',
-                                                  'name' : 'pv_triplex_meter{:d}_{:s}'.format(y,parent),
+                                                  'name' : 'pv_tm{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(grandparent),
                                                   'phases' : '{:s}'.format(phases),
                                                   'nominal_voltage' : '120',
@@ -244,9 +240,8 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',
                                                   # 'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'name' : 'pv_inverter{:d}_{:s}'.format(y,parent),
+                                                  'name' : 'pv_inv{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
                                                   'generator_mode' : 'CONSTANT_PF',
                                                   'generator_status' : 'ONLINE',
@@ -258,8 +253,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'solar',
-                                                  # 'name' : 'sol_panel_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'name' : 'pv_panel{:d}_{:s}'.format(y, parent),
+                                                  'name' : 'pv{:d}_{:s}'.format(y, parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'generator_mode' : 'SUPPLY_DRIVEN',
                                                   'generator_status' : 'ONLINE',
@@ -332,7 +326,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                         # Write the PV meter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'triplex_meter',
-                                                  'name' : 'pv_triplex_meter{:d}_{:s}'.format(y,parent),
+                                                  'name' : 'pv_tm{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(grandparent),
                                                   'phases' : '{:s}'.format(phases),
                                                   'nominal_voltage' : '120',
@@ -341,8 +335,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',
-                        #                           'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'name' : 'pv_inverter{:d}_{:s}'.format(y,parent),
+                                                  'name' : 'pv_inv{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'phases' : '{:s}'.format(phases),
                                                   'generator_mode' : 'CONSTANT_PF',
@@ -355,8 +348,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                         # Write the PV panel
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'solar',
-                                                  # 'name' : 'sol_panel_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'name' : 'pv_panel{:d}_{:s}'.format(y, parent),
+                                                  'name' : 'pv{:d}_{:s}'.format(y, parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'generator_mode' : 'SUPPLY_DRIVEN',
                                                   'generator_status' : 'ONLINE',

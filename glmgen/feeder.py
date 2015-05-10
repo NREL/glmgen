@@ -470,6 +470,8 @@ def dictToString(inDict):
     
   # Handle the different types of dictionaries that are leafs of the tree root:
   if 'omftype' in inDict:
+    if inDict['omftype'] == 'comment':
+      return inDict['argument']
     return inDict['omftype'] + ' ' + inDict['argument'] + ';'
     
   elif 'module' in inDict:

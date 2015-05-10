@@ -7,7 +7,7 @@ Author = Elaine Hale
 '''
 import re
 
-def append_default_feeder_config_data(data, working_directory, dir):
+def append_default_feeder_config_data(data, working_directory, resources_dir, dir):
   data["directory"] = dir
   data["fix_random_seed"] = True
   data["regions"] = { 1: 'Temperate, West Cost (San Francisco)',
@@ -19,7 +19,7 @@ def append_default_feeder_config_data(data, working_directory, dir):
                       7: 'Other -- defaults not provided' }
   data["weather"] = '{:s}/SCADA_weather_NC_gld_shifted.csv'.format(resources_dir)
   data["timezone"] = 'PST+8PDT'
-  data["region"] = 7
+  data["region"] = 1
   # Feeder Properties
   # - Substation Rating in MVA (Additional 15% gives rated kW & pf = 0.87)
   # - Nominal Voltage of Feeder Trunk
@@ -34,6 +34,8 @@ def append_default_feeder_config_data(data, working_directory, dir):
   vB='{:s}/VB.player'.format(resources_dir)
   vC='{:s}/VC.player'.format(resources_dir)
   data["voltage_players"] = ['"{:s}"'.format(vA),'"{:s}"'.format(vB),'"{:s}"'.format(vC)]
+  data['standard_transformer_ratings'] = [10,15,25,37.5,50,75,100,150,167,250,333.3,500,666.7] # kW
+  data['tranformer_oversize_factor'] = 1.5
      
   # Voltage Regulation
   # - EOL Measurements (name of node, phases to measure (i.e. ['GC-12-47-1_node_7','ABC',1]))
@@ -61,6 +63,17 @@ def append_default_feeder_config_data(data, working_directory, dir):
       
   # Load Classifications
   data["load_classifications"] = ['Residential1', 'Residential2', 'Residential3', 'Residential4', 'Residential5', 'Residential6', 'Commercial1', 'Commercial2', 'Commercial3']    
+  # Columns correspond to 'standard_transformer_ratings'.
+  #                                [ 10,  15,  25,37.5,  50,  75, 100,150,167,250,333.3, 500,666.7]
+  data['comm_load_class_dists'] = [[100, 100, 100, 100, 100, 100, 100, 15, 11,  0,    0,   0,    0], # Strip Mall - 6
+                                   [  0,   0,   0,   0,   0,   0,   0, 41, 32, 27,   17,   0,   50], # Big Box - 7
+                                   [  0,   0,   0,   0,   0,   0,   0, 44, 57, 73,   83, 100,   50]] # Office - 8
+  data['res_load_class_dists'] =  [[ 18,  43,  22,   0,  14,  10,   8,  2, 16, 16,   16,  16,   16], # Res 1 - Older SFH < 2000 ft2
+                                   [ 76,  14,  61,   0,  48,   8,   4,  1, 16, 16,   16,  16,   16], # Res 2 - Newer SFH < 2000 ft2
+                                   [  0,   0,   2, 100,   3,   8,  30,  1, 16, 16,   16,  16,   16], # Res 3 - Older SFH > 2000 ft2
+                                   [  0,   0,   2,   0,  21,  43,  26,  9, 16, 16,   16,  16,   16], # Res 4 - Newer SFH > 2000 ft2
+                                   [  0,  10,   3,   0,   3,   8,   8, 20, 18, 18,   18,  18,   18], # Res 5 - Mobile Homes
+                                   [  6,  33,  10,   0,  11,  23,  24, 67, 18, 18,   18,  18,   18]] # Res 6 - Apartments (seem sized for 1 apt., but shouldn't it be whole building?)
 
   # Industrial Loads
   # - For each classification, flag if you want loads populated using normalized load shape
@@ -166,23 +179,8 @@ def append_default_feeder_config_data(data, working_directory, dir):
   # Scale the responsive and unresponsive loads (percentage)
   data["base_load_scalar"] = 1.0
   
-  # heating offset
-  allsame_c = 2
-  
-  # cooling offset
-  allsame_h = 2
-  
-  # COP high scalar
-  COP_high = 1
-  
-  # COP low scalar
-  COP_low = 1
-  
   #variable to shift the residential schedule skew (seconds)
   data["residential_skew_shift"] = 0
-  
-  # decrease gas heating percentage
-  decrease_gas = 1
   
   # widen schedule skew
   data["residential_skew_std"] = 2700
@@ -225,7 +223,7 @@ def FeederConfiguration(wdir, resources_dir, config_data = None):
   working_directory = re.sub('\\\\','\\\\\\\\',wdir)
   dir = working_directory+'\\\\schedules\\\\'
   if not update:
-    data = append_default_feeder_config_data(data, working_directory, dir)
+    data = append_default_feeder_config_data(data, working_directory, resources_dir, dir)
   
   if update:
     region = data['region']
@@ -240,99 +238,39 @@ def FeederConfiguration(wdir, resources_dir, config_data = None):
     # Commercial 3 = Office
     # Individual house power in W.
     default_average_peak_load_by_region_and_load_class = { \
-        1: [9346.0, 6107.0, 9489.0],
-        2: [12351.0, 7814.0, 12447.0],
-        3: [11668.0, 7142.0, 11863.0],
-        4: [12342.0, 7820.0, 12528.0],
-        5: [9179.0, 6003.0, 9393.0], 
-        6: [10000.0, 6000.0, 9500.0] # punting on Hawaii for now -- calculate on next go-around        
+        1: [9346.0, 6107.0, 9489.0, 6197.0, 6107.0, 9198.0, 7065.0, 105378.0, 176252.0],
+        2: [12351.0, 7814.0, 12447.0, 7836.0, 7814.0, 12067.0, 7104.0, 108561.0, 187000.0],
+        3: [11668.0, 7142.0, 11863.0, 7243.0, 7142.0, 11870.0, 8531.0, 128828.0, 218691.0],
+        4: [12342.0, 7820.0, 12528.0, 7879.0, 7820.0, 12231.0, 7470.0, 113591.0, 196630.0],
+        5: [9179.0, 6003.0, 9393.0, 6132.0, 6003.0, 9139.0, 6892.0, 105969.0, 184539.0], 
+        6: [10000.0, 6000.0, 9500.0, 6500.0, 6000.0, 9250.0, 7000.0, 105000.0, 185000.0] # punting on Hawaii for now -- calculate on next go-around        
     }
     if region in default_weather_by_region:
         if 'weather' not in data or not data["weather"]:
             data["weather"] = '{:s}/'.format(resources_dir) + default_weather_by_region[region][0]
         if 'timezone' not in data.keys() or not data['timezone']:    
             data["timezone"] = default_weather_by_region[region][1]
-
-  # HERE 
-    
-    
-  # Apply calibration scalars
-  for x in cooling_setpoint:
-    if x is None:
-      pass
-    else:
-      for j in range(len(x)):
-        x[j].insert(1,allsame_c)
-        
-  for x in heating_setpoint:
-    if x is None:
-      pass
-    else:
-      for j in range(len(x)):
-        x[j].insert(1,allsame_h)
-        
-  cop_high_new = []
+        if 'avg_peak_loads' not in data or not data['avg_peak_loads']:
+            data['avg_peak_loads'] = default_average_peak_load_by_region_and_load_class[region]
+            
+    n_trans = len(data['standard_transformer_ratings'])
+    for percentages in data['comm_load_class_dists']:
+        if len(percentages) != n_trans:
+            raise RuntimeError("Number of distribution percentages for commercial loads ({}) "
+                               "does not match the number of standard transformer sizes ({}).".format(
+                                   len(percentages), n_trans))
+    for percentages in data['res_load_class_dists']:
+        if len(percentages) != n_trans:
+            raise RuntimeError("Number of distribution percentages for residential loads ({}) "
+                               "does not match the number of standard transformer sizes ({}).".format(
+                                   len(percentages), n_trans))
   
-  for x in cop_high:
-    cop_high_new.append([round(COP_high*y,2) for y in x])
-    
-  cop_low_new = []
-  
-  for x in cop_low:
-    cop_low_new.append([round(COP_low*y,2) for y in x])
-    
-  for i in range(len(thermal_properties)):
-    if thermal_properties[i] is None:
-      pass
-    else:
-      for j in range(len(thermal_properties[i])):
-        if thermal_properties[i][j] is None:
-          pass
-        else:
-          thermal_properties[i][j].extend([cop_high_new[i][j],cop_low_new[i][j]])
-          
-  perc_pump = list(map(lambda x, y: x + (1-decrease_gas)*y,perc_pump,perc_gas))
-  perc_gas = list(map(lambda x:x*decrease_gas,perc_gas))
-  
-  #print("classification is = "+str(classID))
-
-  #Variables referenced by Feeder_Generator.m
-  if classification != None :
-    data["thermal_percentages"] = [None]*len(thermal_percentages)
-    for x in range(len(thermal_percentages)):
-      data["thermal_percentages"][x] = thermal_percentages[x][classID]
-
-    data["thermal_properties"] = [None]*len(thermal_properties)
-    for x in range(len(thermal_properties)):
-      data["thermal_properties"][x] = thermal_properties[x][classID]
-
-    data["cooling_setpoint"] = cooling_setpoint[classID] 
-    data["heating_setpoint"] = heating_setpoint[classID]
-    data["perc_gas"] = perc_gas[classID]
-    data["perc_pump"] = perc_pump[classID]
-    data["perc_res"] = perc_res[classID]
-    data["perc_AC"] = perc_AC[classID]
-    data["perc_poolpumps"] = perc_pool_pumps[classID]
-    data["wh_electric"] = wh_electric[classID]
-    data["wh_size"] = wh_size[classID]
-    
-    data["over_sizing_factor"] = [None]*len(over_sizing_factor)
-    for x in range(len(over_sizing_factor)):
-      data["over_sizing_factor"][x] = over_sizing_factor[x][classID]
-      
-    data["AC_type"] = [None]*len(AC_type)
-    for x in range(len(AC_type)):
-      data["AC_type"][x] = AC_type[x][classID]
-      
-    data["dispatch_order"] = dispatch_order[classID]
-
-    data["SFH"] = [None]*len(SFH)
-    for x in range(len(SFH)):
-      data["SFH"][x] = SFH[x][classID]
-
   return data
   
-def LoadClassConfiguration(f_config_data, classification=None):
+def LoadClassConfiguration(f_config_data, classID):
+
+    data = {}
+    region = f_config_data['region']
 
     # Thermal Percentages by Region
     # - The "columns" represent load classifications. The "rows" represent the breakdown within that classification of building age. 
@@ -359,50 +297,50 @@ def LoadClassConfiguration(f_config_data, classification=None):
     # Retooled the old thermal percentages values into this new "matrix" form for classifications.
     if region == 1:
       thermal_percentages = [  [0.1652, 0.4935, 0.1652, 0.4935, 0.0000, 0.1940, 1, 1, 1],  #1
-                  [0.1486, 0.5064, 0.1486, 0.5064, 0.7535, 0.6664, 0, 0, 0],   #2
-                  [0.2238, 0.0000, 0.2238, 0.0000, 0.2462, 0.1395, 0, 0, 0],   #3
-                  [0.1780, 0.0000, 0.1780, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #4
-                  [0.2841, 0.0000, 0.2841, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #5
-                  [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0, 0]]   #6 
-      data["floor_area"] = [2209, 2209, 2209, 2209, 1054, 820, 0, 0, 0]
+                               [0.1486, 0.5064, 0.1486, 0.5064, 0.7535, 0.6664, 0, 0, 0],   #2
+                               [0.2238, 0.0000, 0.2238, 0.0000, 0.2462, 0.1395, 0, 0, 0],   #3
+                               [0.1780, 0.0000, 0.1780, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #4
+                               [0.2841, 0.0000, 0.2841, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #5
+                               [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0, 0]]   #6 
+      data["floor_area"] = [1500, 1500, 2250, 2250, 1054, 820, 0, 0, 0]
       data["one_story"] = [0.6887] * 9
-      perc_gas = [0.7051] * 9 
-      perc_pump = [0.0321] * 9
-      perc_AC = [0.4348] * 9 
-      wh_electric = [0.7455] * 9
-      wh_size = [[0.0000,0.3333,0.6667]] * 9
+      perc_gas = [0.7051] * 9   # 'percentage' (appears to be fraction) heating with natural gas
+      perc_pump = [0.0321] * 9  # 'percentage' (appears to be fraction) heating with heat pump
+      perc_AC = [0.4348] * 9    # 'percentage' (appears to be fraction) with air conditioning
+      wh_electric = [0.7455] * 9 # 'percentage' (appears to be fraction) with electric waterheaters
+      wh_size = [[0.0000,0.3333,0.6667]] * 9 # waterheater sizing breakdown  [<30, 31-49, >50]
       AC_type = [  [1, 1, 1, 1, 1, 1, 0, 0, 0], # central
-            [0, 0, 0, 0, 0, 0, 0, 0, 0]] # window/wall unit
-      over_sizing_factor = [  [ 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0, 0, 0], # central
-                  [ 0, 0, 0, 0, 0, 0, 0, 0, 0]] # window/wall unit
-      perc_pool_pumps= [0.0904] * 9
+                   [0, 0, 0, 0, 0, 0, 0, 0, 0]] # window/wall unit
+      over_sizing_factor = [ [ 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0, 0, 0], # central
+                             [ 0, 0, 0, 0, 0, 0, 0, 0, 0] ] # window/wall unit
+      perc_pool_pumps= [0.0904] * 9 # 'percentage' (appears to be fraction) of SFH (?) with pool pumps
     elif region == 2:
       thermal_percentages = [  [0.2873, 0.3268, 0.2873, 0.3268, 0.0000, 0.2878, 1, 1, 1],  #1
-                  [0.1281, 0.6731, 0.1281, 0.6731, 0.6480, 0.5308, 0, 0, 0],   #2
-                  [0.2354, 0.0000, 0.2354, 0.0000, 0.3519, 0.1813, 0, 0, 0],   #3
-                  [0.1772, 0.0000, 0.1772, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #4
-                  [0.1717, 0.0000, 0.1717, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #5
-                  [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0, 0]]   #6 
-      data["floor_area"] = [2951] * 9
+                               [0.1281, 0.6731, 0.1281, 0.6731, 0.6480, 0.5308, 0, 0, 0],   #2
+                               [0.2354, 0.0000, 0.2354, 0.0000, 0.3519, 0.1813, 0, 0, 0],   #3
+                               [0.1772, 0.0000, 0.1772, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #4
+                               [0.1717, 0.0000, 0.1717, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #5
+                               [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0, 0]]   #6 
+      data["floor_area"] = [1500, 1500, 2250, 2250, 1054, 820, 0, 0, 0]
       data["one_story"] = [0.5210] * 9
       perc_gas = [0.8927] * 9
       perc_pump = [0.0177] * 9
       perc_AC = [0.7528] * 9 
       wh_electric = [0.7485] * 9
       wh_size = [[0.1459,0.5836,0.2706]] * 9
-      AC_type = [  [1, 1, 1, 1, 1, 1, 0, 0, 0], # central
-            [0, 0, 0, 0, 0, 0, 0, 0, 0]] # window/wall unit
-      over_sizing_factor = [  [ 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0, 0, 0], # central
-                  [ 0, 0, 0, 0, 0, 0, 0, 0, 0]] # window/wall unit
+      AC_type = [ [1, 1, 1, 1, 1, 1, 0, 0, 0],  # central
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0] ] # window/wall unit
+      over_sizing_factor = [ [ 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0, 0, 0], # central
+                             [ 0, 0, 0, 0, 0, 0, 0, 0, 0] ] # window/wall unit
       perc_pool_pumps= [0.0591] * 9
     elif region == 3:
       thermal_percentages = [  [0.1240, 0.3529, 0.1240, 0.3529, 0.0000, 0.1079, 1, 1, 1],  #1
-                  [0.0697, 0.6470, 0.0697, 0.6470, 0.6343, 0.6316, 0, 0, 0],   #2
-                  [0.2445, 0.0000, 0.2445, 0.0000, 0.3656, 0.2604, 0, 0, 0],   #3
-                  [0.2334, 0.0000, 0.2334, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #4
-                  [0.3281, 0.0000, 0.3281, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #5
-                  [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0, 0]]   #6 
-      data["floor_area"] = [2370] * 9
+                               [0.0697, 0.6470, 0.0697, 0.6470, 0.6343, 0.6316, 0, 0, 0],   #2
+                               [0.2445, 0.0000, 0.2445, 0.0000, 0.3656, 0.2604, 0, 0, 0],   #3
+                               [0.2334, 0.0000, 0.2334, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #4
+                               [0.3281, 0.0000, 0.3281, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #5
+                               [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0, 0]]   #6 
+      data["floor_area"] = [1500, 1500, 2250, 2250, 1054, 820, 0, 0, 0]
       data["one_story"] = [0.7745] * 9
       perc_gas = [0.6723] * 9
       perc_pump = [0.0559] * 9
@@ -415,23 +353,23 @@ def LoadClassConfiguration(f_config_data, classification=None):
                   [ 0, 0, 0, 0, 0, 0, 0, 0, 0]] # window/wall unit
       perc_pool_pumps= [0.0818] * 9
     elif region == 4:
-      thermal_percentages = [  [0.1470, 0.3297, 0.1470, 0.3297, 0.0000, 0.1198, 1, 1, 1],  #1
-                  [0.0942, 0.6702, 0.0942, 0.6702, 0.5958, 0.6027, 0, 0, 0],   #2
-                  [0.2253, 0.0000, 0.2253, 0.0000, 0.4041, 0.2773, 0, 0, 0],   #3
-                  [0.2311, 0.0000, 0.2311, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #4
-                  [0.3022, 0.0000, 0.3022, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #5
-                  [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0, 0]]   #6 
-      data["floor_area"] = [2655] * 9
+      thermal_percentages = [ [0.1470, 0.3297, 0.1470, 0.3297, 0.0000, 0.1198, 1, 1, 1],  #1
+                              [0.0942, 0.6702, 0.0942, 0.6702, 0.5958, 0.6027, 0, 0, 0],   #2
+                              [0.2253, 0.0000, 0.2253, 0.0000, 0.4041, 0.2773, 0, 0, 0],   #3
+                              [0.2311, 0.0000, 0.2311, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #4
+                              [0.3022, 0.0000, 0.3022, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #5
+                              [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0, 0]]   #6 
+      data["floor_area"] = [1500, 1500, 2250, 2250, 1054, 820, 0, 0, 0]
       data["one_story"] = [0.7043] * 9
       perc_gas = [0.4425] * 9
       perc_pump = [0.1983] * 9
       perc_AC = [0.9673] * 9
       wh_electric = [0.3572] * 9
       wh_size = [[0.2259,0.5267,0.2475]] * 9
-      AC_type = [  [1, 1, 1, 1, 1, 1, 0, 0, 0], # central
-            [0, 0, 0, 0, 0, 0, 0, 0, 0]] # window/wall unit
+      AC_type = [ [1, 1, 1, 1, 1, 1, 0, 0, 0],  # central
+                  [0, 0, 0, 0, 0, 0, 0, 0, 0] ] # window/wall unit
       over_sizing_factor = [  [ 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0, 0, 0], # central
-                  [ 0, 0, 0, 0, 0, 0, 0, 0, 0]] # window/wall unit
+                              [ 0, 0, 0, 0, 0, 0, 0, 0, 0]] # window/wall unit
       perc_pool_pumps= [0.0657] * 9
     elif region == 5:
       thermal_percentages = [  [0.1470, 0.3297, 0.1470, 0.3297, 0.0000, 0.1198, 1, 1, 1],  #1
@@ -440,7 +378,7 @@ def LoadClassConfiguration(f_config_data, classification=None):
                   [0.2311, 0.0000, 0.2311, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #4
                   [0.3022, 0.0000, 0.3022, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #5
                   [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0, 0]]   #6 
-      data["floor_area"] = [2655] * 9
+      data["floor_area"] = [1500, 1500, 2250, 2250, 1054, 820, 0, 0, 0]
       data["one_story"] = [0.7043] * 9
       perc_gas = [0.4425] * 9
       perc_pump = [0.1983] * 9
@@ -453,13 +391,13 @@ def LoadClassConfiguration(f_config_data, classification=None):
                   [ 0, 0, 0, 0, 0, 0, 0, 0, 0]] # window/wall unit
       perc_pool_pumps= [0.0657] * 9
     elif region == 6:
-      thermal_percentages = [  [0.2184, 0.3545, 0.2184, 0.3545, 0.0289, 0.2919, 1, 1, 1],  #1
-                  [0.0818, 0.6454, 0.0818, 0.6454, 0.6057, 0.5169, 0, 0, 0],   #2
-                  [0.2390, 0.0000, 0.2390, 0.0000, 0.3652, 0.1911, 0, 0, 0],   #3
-                  [0.2049, 0.0000, 0.2049, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #4
-                  [0.2556, 0.0000, 0.2556, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #5
-                  [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0, 0]]   #6 
-      data["floor_area"] = [2655] * 9
+      thermal_percentages = [ [0.2184, 0.3545, 0.2184, 0.3545, 0.0289, 0.2919, 1, 1, 1],   #1
+                              [0.0818, 0.6454, 0.0818, 0.6454, 0.6057, 0.5169, 0, 0, 0],   #2
+                              [0.2390, 0.0000, 0.2390, 0.0000, 0.3652, 0.1911, 0, 0, 0],   #3
+                              [0.2049, 0.0000, 0.2049, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #4
+                              [0.2556, 0.0000, 0.2556, 0.0000, 0.0000, 0.0000, 0, 0, 0],   #5
+                              [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0, 0] ]  #6 
+      data["floor_area"] = [1500, 1500, 2250, 2250, 1054, 820, 0, 0, 0]
       data["one_story"] = [0.7043] * 9
       perc_gas = [0.4425] * 9
       perc_pump = [0.1983] * 9
@@ -476,27 +414,27 @@ def LoadClassConfiguration(f_config_data, classification=None):
     # Single-Family Homes
     # - Designate the percentage of SFH in each classification
     SFH = [[1, 1, 1, 1, 0, 0, 0, 0, 0], # Res1-Res4 are 100% SFH.
-               [1, 1, 1, 1, 0, 0, 0, 0, 0],
-               [1, 1, 1, 1, 0, 0, 0, 0, 0],
-               [1, 1, 1, 1, 0, 0, 0, 0, 0],
-               [1, 1, 1, 1, 0, 0, 0, 0, 0],
-               [1, 1, 1, 1, 0, 0, 0, 0, 0]] 
+           [1, 1, 1, 1, 0, 0, 0, 0, 0],
+           [1, 1, 1, 1, 0, 0, 0, 0, 0],
+           [1, 1, 1, 1, 0, 0, 0, 0, 0],
+           [1, 1, 1, 1, 0, 0, 0, 0, 0],
+           [1, 1, 1, 1, 0, 0, 0, 0, 0]] 
 
     # COP High/Low Values
     # - "columns" represent load classifications. The "rows" represent the sub-classifications (See thermal_percentages).
     cop_high = [[2.8, 3.8, 2.8, 3.8, 0.0, 2.8, 0, 0, 0], 
-                    [3.0, 4.0, 3.0, 4.0, 2.8, 3.0, 0, 0, 0], 
-                    [3.2, 0.0, 3.2, 0.0, 3.5, 3.2, 0, 0, 0], 
-                    [3.4, 0.0, 3.4, 0.0, 0.0, 0.0, 0, 0, 0], 
-                    [3.6, 0.0, 3.6, 0.0, 0.0, 0.0, 0, 0, 0], 
-                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0]]
+                [3.0, 4.0, 3.0, 4.0, 2.8, 3.0, 0, 0, 0], 
+                [3.2, 0.0, 3.2, 0.0, 3.5, 3.2, 0, 0, 0], 
+                [3.4, 0.0, 3.4, 0.0, 0.0, 0.0, 0, 0, 0], 
+                [3.6, 0.0, 3.6, 0.0, 0.0, 0.0, 0, 0, 0], 
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0]]
     
     cop_low = [[2.4, 3.0, 2.4, 3.0, 0.0, 1.9, 0, 0, 0], 
-                   [2.5, 3.0, 2.5, 3.0, 1.9, 2.0, 0, 0, 0], 
-                   [2.6, 0.0, 2.6, 0.0, 2.2, 2.1, 0, 0, 0], 
-                   [2.8, 0.0, 2.8, 0.0, 0.0, 0.0, 0, 0, 0], 
-                   [3.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0, 0, 0], 
-                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0]]
+               [2.5, 3.0, 2.5, 3.0, 1.9, 2.0, 0, 0, 0], 
+               [2.6, 0.0, 2.6, 0.0, 2.2, 2.1, 0, 0, 0], 
+               [2.8, 0.0, 2.8, 0.0, 0.0, 0.0, 0, 0, 0], 
+               [3.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0, 0, 0], 
+               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0]]
 
     # Thermal Properties
     # - There should be a list of properties for each entry in thermal_percentages. (Each sub-classification in each classification)
@@ -579,12 +517,6 @@ def LoadClassConfiguration(f_config_data, classification=None):
     thermal_properties[3][8] = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # n/a
     thermal_properties[4][8] = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # n/a
     thermal_properties[5][8] = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # n/a
-    
-    # Floor Area by Classification
-    #data["floor_area"] = [1200, 1200, 2400, 2400, 1710, 820, 0, 0, 0]
-
-    # Percentage One Story Homes by Classification
-    #data["one_story"] = [0.6295, 0.5357, 0.6295, 0.5357, 1.0000, 0.9073, 0, 0, 0]
     
     # Cooling Setpoint Bins by Classification
     # [nighttime percentage, high bin value, low bin value]
@@ -719,43 +651,94 @@ def LoadClassConfiguration(f_config_data, classification=None):
                                 [0.120, 73, 71],
                                 [0.141, 79, 74]]
     
-    # Heating
-    # - Percentage breakdown of heating system type by classification.
-    #perc_gas     = [0.52, 0.36, 0.52, 0.36, 0.16, 0.33, 0, 0, 0] 
-    
-    #perc_pump    = [0.37, 0.57, 0.37, 0.57, 0.34, 0.53, 0, 0, 0]
-    
     perc_res = list(map(lambda x, y:1-x-y, perc_pump, perc_gas))
     
-    # Cooling
-    # - Percentage AC
-    # - Breakdown AC unit types([central AC; window/wall units])
-    # - Oversizing factor of AC units by load classification and unit type (central/window wall)
-    #perc_AC = [0.94, 1.00, 0.94, 1.00, 0.94, 0.93, 0, 0, 0] 
+    # heating offset
+    allsame_c = 2
     
-    # AC_type = [[0.90, 1.00, 0.90, 1.00, 0.88, 0.87, 0, 0, 0],
-                   # [0.10, 0.00, 0.10, 0.00, 0.12, 0.13, 0, 0, 0]]
+    # cooling offset
+    allsame_h = 2
     
-    # over_sizing_factor = [[ 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                              # [ 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+    # COP high scalar
+    COP_high = 1
     
-    # Percent Pool Pumps by Classification
-    #perc_pool_pumps = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    # COP low scalar
+    COP_low = 1    
+                   
+    # decrease gas heating percentage
+    decrease_gas = 1                   
+                   
+    # Apply calibration scalars
+    for x in cooling_setpoint:
+      if x is None:
+        pass
+      else:
+        for j in range(len(x)):
+          x[j].insert(1,allsame_c)
+          
+    for x in heating_setpoint:
+      if x is None:
+        pass
+      else:
+        for j in range(len(x)):
+          x[j].insert(1,allsame_h)
+          
+    cop_high_new = []
     
-    # Waterheater
-    # - Percentage electric water heaters by classificaition
-    # - Waterheater sizing breakdown  [<30, 31-49, >50] by classification
-    #wh_electric = [0.67, 0.49, 0.67, 0.49, 0.73, 0.96, 0, 0, 0]
+    for x in cop_high:
+      cop_high_new.append([round(COP_high*y,2) for y in x])
+      
+    cop_low_new = []
     
-    # wh_size = [[0.2259,0.5267, 0.2475],  #Res1
-                   # [0.2259, 0.5267, 0.2475], #Res2
-                   # [0.2259, 0.5267, 0.2475], #Res3
-                   # [0.2259, 0.5267, 0.2475], #Res4
-                   # [0.2259, 0.5267, 0.2475], #Res5
-                   # [0.2259, 0.5267, 0.2475], #Res6
-                   # [0, 0, 0],                #Com1
-                   # [0, 0, 0],                #Com2
-                   # [0, 0, 0]]                #Com3
+    for x in cop_low:
+      cop_low_new.append([round(COP_low*y,2) for y in x])
+      
+    for i in range(len(thermal_properties)):
+      if thermal_properties[i] is None:
+        pass
+      else:
+        for j in range(len(thermal_properties[i])):
+          if thermal_properties[i][j] is None:
+            pass
+          else:
+            thermal_properties[i][j].extend([cop_high_new[i][j],cop_low_new[i][j]])
+            
+      perc_pump = list(map(lambda x, y: x + (1-decrease_gas)*y,perc_pump,perc_gas))
+      perc_gas = list(map(lambda x:x*decrease_gas,perc_gas))
+                       
+      data["thermal_percentages"] = [None]*len(thermal_percentages)
+      for x in range(len(thermal_percentages)):
+        data["thermal_percentages"][x] = thermal_percentages[x][classID]
+
+      data["thermal_properties"] = [None]*len(thermal_properties)
+      for x in range(len(thermal_properties)):
+        data["thermal_properties"][x] = thermal_properties[x][classID]
+
+      data["cooling_setpoint"] = cooling_setpoint[classID] 
+      data["heating_setpoint"] = heating_setpoint[classID]
+      data["perc_gas"] = perc_gas[classID]
+      data["perc_pump"] = perc_pump[classID]
+      data["perc_res"] = perc_res[classID]
+      data["perc_AC"] = perc_AC[classID]
+      data["perc_poolpumps"] = perc_pool_pumps[classID]
+      data["wh_electric"] = wh_electric[classID]
+      data["wh_size"] = wh_size[classID]
+      
+      data["over_sizing_factor"] = [None]*len(over_sizing_factor)
+      for x in range(len(over_sizing_factor)):
+        data["over_sizing_factor"][x] = over_sizing_factor[x][classID]
+        
+      data["AC_type"] = [None]*len(AC_type)
+      for x in range(len(AC_type)):
+        data["AC_type"][x] = AC_type[x][classID]
+        
+      data["dispatch_order"] = dispatch_order[classID]
+
+      data["SFH"] = [None]*len(SFH)
+      for x in range(len(SFH)):
+        data["SFH"][x] = SFH[x][classID]
+        
+    return data
 
 def main():
   #tests here
