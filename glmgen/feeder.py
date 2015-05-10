@@ -14,6 +14,7 @@ class GlmFile(dict):
     """
     def __init__(self, *arg, **kw):
         super(GlmFile, self).__init__(*arg,**kw)
+        self.__cache_maps = None
         self.__reindex = True
         
     def set_no_reindexing(self):
@@ -45,13 +46,11 @@ class GlmFile(dict):
         Returns a list of deep copies of all objects ('object') of glm_type 
         in this GlmFile.
         """
-        result = []
-        for key, value in sorted(self.items(), key=lambda pair: pair[0]):
-            if self.object_is_type(value,glm_type):
-                result.append(copy.deepcopy(value))
-        return result
+        self.__populate_cache_maps(glm_type)
+        return self.__cache_maps['type_map'][glm_type]
 
-    def object_is_type(self, obj, glm_type):
+    @staticmethod
+    def object_is_type(obj, glm_type):
         """
         Inspects obj, a dict representing an item in a glm file, determining
         whether it is an 'object', and if so, if it is of glm_type.
@@ -70,6 +69,15 @@ class GlmFile(dict):
                 result = False
         return result
         
+    def get_object_key_by_name(self, object_name, glm_type=None):
+        self.__populate_cache_maps()
+        if object_name in self.__cache_maps['name_map']:
+            for key in self.__cache_maps['name_map'][object_name]:
+                if not GlmFile.object_is_type(self[key], glm_type):
+                    continue
+                return key
+        return None
+        
     def get_parent_key(self,key,parent_type=None):
         """
         Looks for the key of the parent of self[key].
@@ -87,17 +95,29 @@ class GlmFile(dict):
         parent, and object_is_type(self[parent_key],parent_type) (which always 
         returns True if parent_type is None).
         """
-        result = None
         if key in self and 'parent' in self[key]:
-          parent_name = self[key]['parent']
-        else:
-          return result
-        for obj_key, obj in self.items():
-            if 'name' in obj and obj['name'] == parent_name:
-                if not self.object_is_type(obj,parent_type):
+          return self.get_object_key_by_name(self[key]['parent'], parent_type)
+        return None
+        
+    def get_children_keys(self, key, child_type = None):
+        """
+        Looks for self[key]'s children, possibly by type.
+        
+        Parameters:
+            key (int): self[key] is the glm object whose children we are to find
+            child_type (string): None, or the type of child objects we want to return
+            
+        Returns the list of child object keys for whom self[key] is the parent of 
+        self[child_key] and object_is_type(self[child_key], child_type).
+        """
+        result = []
+        self.__populate_cache_maps()
+        if (key in self) and ('name' in self[key]):
+            candidate_keys = self.__cache_maps['parent_name_map'][self[key]['name']]
+            for candidate_key in candidate_keys:
+                if not GlmFile.object_is_type(self[candidate_key], child_type):
                     continue
-                result = obj_key
-                break
+                result.append(candidate_key)            
         return result
       
     def get_connector_by_to_node(self,to_node_key,connector_type=None):
@@ -126,7 +146,7 @@ class GlmFile(dict):
             return result
         for obj_key, obj in self.items():
             if 'to' in obj and obj['to'] == to_node_name:
-                if not self.object_is_type(obj,connector_type):
+                if not GlmFile.object_is_type(obj,connector_type):
                     continue
                 result = obj_key
                 break
@@ -143,6 +163,30 @@ class GlmFile(dict):
                         return value['name']
         return None
         
+    def __populate_cache_maps(self, glm_type = None):
+        if self.__cache_maps is None:
+            self.__cache_maps = {}
+            self.__cache_maps['name_map'] = {}
+            self.__cache_maps['type_map'] = {}
+            self.__cache_maps['parent_name_map'] = {}
+            for key, glm_object in self.items():
+                if 'name' in glm_object:
+                    if not glm_object['name'] in self.__cache_maps['name_map']:
+                        self.__cache_maps['name_map'][glm_object['name']] = []
+                    if not glm_object['name'] in self.__cache_maps['parent_name_map']:
+                        self.__cache_maps['parent_name_map'][glm_object['name']] = []
+                    self.__cache_maps['name_map'][glm_object['name']].append(key)
+                if 'parent' in glm_object:
+                    if not glm_object['parent'] in self.__cache_maps['parent_name_map']:
+                        self.__cache_maps['parent_name_map'][glm_object['parent']] = []
+                    self.__cache_maps['parent_name_map'][glm_object['parent']].append(key)
+        if not glm_type is None:
+            if not glm_type in self.__cache_maps['type_map']:
+                self.__cache_maps['type_map'][glm_type] = []
+                for key, value in sorted(self.items(), key=lambda pair: pair[0]):
+                    if GlmFile.object_is_type(value, glm_type):
+                        self.__cache_maps['type_map'][glm_type].append(copy.deepcopy(value))
+        
     def __setitem__(self, key, item):
         if not isinstance(key, int):
             raise KeyError("GlmFile keys must be integers.")
@@ -158,9 +202,11 @@ class GlmFile(dict):
             for k in reversed(keys_to_shift):
                 super(GlmFile, self).__setitem__(k+1, self[k])
                 super(GlmFile, self).__delitem__(k)
+        self.__cache_maps = None
         super(GlmFile, self).__setitem__(key, item)
         
     def __delitem__(self, key):
+        self.__cache_maps = None
         if self.__reindex:
             keys_to_shift = [k for k in sorted(self.keys()) if k >= key]
             assert keys_to_shift[0] == key
@@ -299,13 +345,14 @@ class GlmFile(dict):
         # Get rid of http for stylesheets because we don't need it and it conflicts with comment syntax.
         data = re.sub(r'http:\/\/', '', data)  
         # Strip comments.
-        data = re.sub(r'\/\/.*\n', '', data)
+        # ETH: Actually, I would like to keep comments ... use double semicolon to mark end
+        data = re.sub(re.compile(r'//(.*)$',re.MULTILINE), r'//\1;;', data)
         # Add semicolons to # lines
         data = re.sub(re.compile(r'^#(.*)$',re.MULTILINE),r'#\1;',data)
         # Strip non-single whitespace because it's only for humans:
         data = data.replace('\n','').replace('\r','').replace('\t',' ')
-        # Tokenize around semicolons, braces and whitespace.
-        tokenized = re.split(r'(;|\}|\{|\s)',data)
+        # Tokenize around semicolons, comments, braces and whitespace.
+        tokenized = re.split(r'(;|//|\}|\{|\s)',data)
         # Get rid of whitespace strings.
         basicList = deque([x for x in tokenized if (x != '') and (x != ' ')])
         return basicList
@@ -335,14 +382,32 @@ class GlmFile(dict):
                     result = result + ' ' + x
             return result
             
+        def is_full_token(token):
+            if token == []:
+                return False
+            if token[0] == '//':
+                if len(token) < 3:
+                    return False
+                if (token[-1] == ';') and (token[-2] == ';'):
+                    return True
+                else:
+                    return False
+            elif token [-1] in ['{', ';', '}']:
+                return True
+            return False
+            
         # Pop off a full token, put it on the tree, rinse, repeat.
         while len(tokenList) > 0:
             # Pop, then keep going until we have a full token (i.e. 'object house', not just 'object')
             fullToken = []
-            while fullToken == [] or fullToken[-1] not in ['{',';','}']:
+            while not is_full_token(fullToken):
                 fullToken.append(tokenList.popleft())
             # Work with what we've collected.
             if fullToken[-1] == ';':
+                # Process comments.
+                if fullToken[0] == '//':
+                    fullToken.insert(0, 'comment')
+                    fullToken = fullToken[0:-1]
                 # Special case when we have zero-attribute items (like #include, #set, module).
                 if guidStack == [] and fullToken != [';']:
                     tree[guid] = {'omftype':fullToken[0],'argument':listToString(fullToken)}
@@ -405,6 +470,8 @@ def dictToString(inDict):
     
   # Handle the different types of dictionaries that are leafs of the tree root:
   if 'omftype' in inDict:
+    if inDict['omftype'] == 'comment':
+      return inDict['argument']
     return inDict['omftype'] + ' ' + inDict['argument'] + ';'
     
   elif 'module' in inDict:

@@ -2,7 +2,9 @@ from __future__ import division
 import math
 import random
 
-def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, solar_bigbox_array=None, solar_office_array=None, solar_stripmall_array=None, solar_residential_array=None):
+def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, 
+                 solar_bigbox_array=None, solar_office_array=None, 
+                 solar_stripmall_array=None, solar_residential_array=None):
     # PV_Tech_Dict - the dictionary that we add solar objects to
     # use_flags - the output from TechnologyParameters.py
     # config_data - the output from Configuration.py
@@ -11,15 +13,16 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
     # solar_stripmall_array - contains a list of commercial houses, corresponding floor areas, parents,and phases that commercial PV can be attached to
     # solar_residential_array - contains a list of residential houses, corresponding floor areas, parents,and phases that residential PV can be attached to
     # last_key should be a numbered key that is the next key in PV_Tech_Dict
+    last_key = PV_Tech_Dict.last_key()
     
     # Initialize psuedo-random seed
-    random.seed(4)
+    random.seed(4) if config_data["fix_random_seed"] else random.seed()
             
     # Populating solar as percentage of feeder peak load
     # Add Commercial PV
     if use_flags['use_solar'] != 0 or use_flags['use_solar_com'] != 0:
         # Initialize psuedo-random seed
-        random.seed(4)
+        random.seed(4) if config_data["fix_random_seed"] else random.seed()
         
         # solar_penetration should apply equally to all solar-eligible building types
         penetration_stripmall = config_data['solar_penetration']
@@ -69,16 +72,16 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                         # Write the PV meter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'meter',
-                                                  'name' : 'pv_meter{:d}_{:s}'.format(y,parent),
+                                                  'name' : 'pv_m{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
-                                                  'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
-                                                  'groupid' : 'Commercial_m_solar_office'}
+                                                  # 'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
+                                                  'groupid' : 'PV_Meter'}
                         
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',
-                                                  'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                                                  'name' : 'pv_inv{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'phases' : '{:s}'.format(phases),
                                                   'generator_mode' : 'CONSTANT_PF',
@@ -91,7 +94,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'solar',
-                                                  'name' : 'sol_panel_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                                                  'name' : 'pv{:d}_{:s}'.format(y, parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'generator_mode' : 'SUPPLY_DRIVEN',
                                                   'generator_status' : 'ONLINE',
@@ -144,16 +147,16 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                         # Write the PV meter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'meter',
-                                                  'name' : 'pv_meter{:d}_{:s}'.format(y,parent),
+                                                  'name' : 'pv_m{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(parent),
                                                   'phases' : '{:s}'.format(phases),
-                                                  'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
-                                                  'groupid' : 'Commercial_m_solar_bigbox'}
+                                                  # 'nominal_voltage' : '{:f}'.format(config_data['nom_volt2']),
+                                                  'groupid' : 'PV_Meter'}
                         
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',
-                                                  'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                                                  'name' : 'pv_inv{:d}_{:s}'.format(y,parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'phases' : '{:s}'.format(phases),
                                                   'generator_mode' : 'CONSTANT_PF',
@@ -166,7 +169,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'solar',
-                                                  'name' : 'sol_panel_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                                                  'name' : 'pv{:d}_{:s}'.format(y, parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'generator_mode' : 'SUPPLY_DRIVEN',
                                                   'generator_status' : 'ONLINE',
@@ -210,30 +213,35 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
             floor_area = round(solar_rating / (92.902 * 0.20))
             
             for x in range(total_stripmall_number):
-                parent = solar_stripmall_array[1][random_index[x]]
-                phases = solar_stripmall_array[2][random_index[x]]                 
-
+                parent = solar_stripmall_array[1][random_index[x]] # house triplex_meter
+                parent_key = PV_Tech_Dict.get_object_key_by_name(parent, 'triplex_meter')
+                grandparent = PV_Tech_Dict[PV_Tech_Dict.get_parent_key(parent_key)]['name']
+                phases = solar_stripmall_array[2][random_index[x]]
+                
                 if pv_unit < total_stripmall_pv_units:
-                    
+                        
                     for y in range(pv_units_per_stripmall):
-                        # ETH: Two meters is okay, but two triplex_meters is not. Hook the 
-                        # inverter up directly to the parent triplex_meter.
+                        # ETH: The house triplex_meter is hooked into another triplex_meter, but 
+                        # GridLAB-D does not appear to allow a chain of three triplex meters. 
+                        # Originally, the triplex_meter for the PV was parented by the house 
+                        # triplex_meter; instead, to get a feasible model, have the PV triplex_meter
+                        # parented by the house's triplex_meter's parent (the 'grandparent'). 
+                        
                         # Write the PV meter
-                        # last_key += 1
-                        # PV_Tech_Dict[last_key] = {'object' : 'triplex_meter',
-                        #                           'name' : 'pv_triplex_meter{:d}_{:s}'.format(y,parent),
-                        #                           'parent' : '{:s}'.format(parent),
-                        #                           'phases' : '{:s}'.format(phases),
-                        #                           'nominal_voltage' : '120',
-                        #                           'groupid' : 'Commercial_tm_solar_stripmall'}
+                        last_key += 1
+                        PV_Tech_Dict[last_key] = {'object' : 'triplex_meter',
+                                                  'name' : 'pv_tm{:d}_{:s}'.format(y,parent),
+                                                  'parent' : '{:s}'.format(grandparent),
+                                                  'phases' : '{:s}'.format(phases),
+                                                  'nominal_voltage' : '120',
+                                                  'groupid' : 'PV_Meter'}
                         
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',
-                        #                           'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                        #                           'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'name' : 'pv_inverter{:d}_{:s}'.format(y,parent),
-                                                  'parent' : '{:s}'.format(parent),
+                                                  # 'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                                                  'name' : 'pv_inv{:d}_{:s}'.format(y,parent),
+                                                  'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'phases' : '{:s}'.format(phases),
                                                   'generator_mode' : 'CONSTANT_PF',
                                                   'generator_status' : 'ONLINE',
@@ -245,7 +253,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'solar',
-                                                  'name' : 'sol_panel_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                                                  'name' : 'pv{:d}_{:s}'.format(y, parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'generator_mode' : 'SUPPLY_DRIVEN',
                                                   'generator_status' : 'ONLINE',
@@ -265,7 +273,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
     # Add Residential PV
     if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0:
         # Initialize psuedo-random seed
-        random.seed(5)
+        random.seed(5) if config_data["fix_random_seed"] else random.seed()
         
         solar_rating = config_data['solar_rating']*1000 #Convert kW to W
         # Determine solar penetrations for residential
@@ -302,28 +310,33 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
             
             for x in range(total_residential_number):
                 parent = solar_residential_array[1][random_index[x]]
+                parent_key = PV_Tech_Dict.get_object_key_by_name(parent, 'triplex_meter')
+                grandparent = PV_Tech_Dict[PV_Tech_Dict.get_parent_key(parent_key)]['name']
                 phases = solar_residential_array[2][random_index[x]]
                 
                 if pv_unit < total_residential_pv_units:
                         
                     for y in range(pv_units_per_residential):
-                        # ETH: Two meters is okay, but two triplex_meters is not. Hook the 
-                        # inverter up directly to the parent triplex_meter.
+                        # ETH: The house triplex_meter is hooked into another triplex_meter, but 
+                        # GridLAB-D does not appear to allow a chain of three triplex meters. 
+                        # Originally, the triplex_meter for the PV was parented by the house 
+                        # triplex_meter; instead, to get a feasible model, have the PV triplex_meter
+                        # parented by the house's triplex_meter's parent (the 'grandparent'). 
+                        
                         # Write the PV meter
-                        # last_key += 1
-                        # PV_Tech_Dict[last_key] = {'object' : 'triplex_meter',
-                        #                           'name' : 'pv_triplex_meter{:d}_{:s}'.format(y,parent),
-                        #                           'parent' : '{:s}'.format(parent),
-                        #                           'phases' : '{:s}'.format(phases),
-                        #                           'nominal_voltage' : '120',
-                        #                           'groupid' : 'Residential_tm_solar'}
+                        last_key += 1
+                        PV_Tech_Dict[last_key] = {'object' : 'triplex_meter',
+                                                  'name' : 'pv_tm{:d}_{:s}'.format(y,parent),
+                                                  'parent' : '{:s}'.format(grandparent),
+                                                  'phases' : '{:s}'.format(phases),
+                                                  'nominal_voltage' : '120',
+                                                  'groupid' : 'PV_Meter'}
+                        
                         # Write the PV inverter
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'inverter',
-                        #                           'name' : 'pv_inverter_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                        #                           'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
-                                                  'name' : 'pv_inverter{:d}_{:s}'.format(y,parent),
-                                                  'parent' : '{:s}'.format(parent),
+                                                  'name' : 'pv_inv{:d}_{:s}'.format(y,parent),
+                                                  'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'phases' : '{:s}'.format(phases),
                                                   'generator_mode' : 'CONSTANT_PF',
                                                   'generator_status' : 'ONLINE',
@@ -331,10 +344,11 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, sola
                                                   'power_factor' : '1.0',
                                                   'inverter_efficiency' : '0.9',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
+                                                  
                         # Write the PV panel
                         last_key += 1
                         PV_Tech_Dict[last_key] = {'object' : 'solar',
-                                                  'name' : 'sol_panel_{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
+                                                  'name' : 'pv{:d}_{:s}'.format(y, parent),
                                                   'parent' : '{:s}'.format(PV_Tech_Dict[last_key-1]['name']),
                                                   'generator_mode' : 'SUPPLY_DRIVEN',
                                                   'generator_status' : 'ONLINE',
