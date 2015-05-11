@@ -13,6 +13,7 @@ from glmgen import Configuration
 from glmgen import TechnologyParameters
 from glmgen import Solar_Technology
 from glmgen import feeder
+from glmgen import helpers
 from glmgen import AddTapeObjects
 from glmgen import AddLoadShapes
 from glmgen import ResidentialLoads
@@ -44,8 +45,6 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   GLD_Feeder returns a dictionary, glmCaseDict, similar to glmDict with additional object dictionaries added according to the model_opts['tech_flag'] selected.
   """
 
-  random.seed(1)
-  
   # Check to make sure we have a valid case flag
   if model_opts['tech_flag'] < -1:
     model_opts['tech_flag'] = 0
@@ -54,14 +53,18 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     model_opts['tech_flag'] = 13
   
   # Get information about each feeder from Configuration() and  TechnologyParameters()
-  config_data = Configuration.ConfigurationFunc(io_opts['dir'], 
-                                                io_opts['resources_dir'], 
-                                                io_opts['config_file'] if 'config_file' in io_opts else None,
-                                                None,
-                                                None)                                              
-                              
+  config_data = Configuration.FeederConfiguration(io_opts['dir'], io_opts['resources_dir'])
+  
   for key, value in model_opts['config_data'].items():
       config_data[key] = value
+      
+  # Update regional data not filled in by the user. Specifically:
+  #   - weather file
+  #   - time zone
+  #   - average peak load by load classification
+  config_data = Configuration.FeederConfiguration(io_opts['dir'], io_opts['resources_dir'], config_data)
+      
+  random.seed(1) if config_data["fix_random_seed"] else random.seed()
   
   # HERE -- feeder_rating to 20 MVA since there is a 17 MVA (bigger than the current default of 16 MVA) feeder
   
@@ -396,58 +399,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           commercial_dict[commercial_key]['load_classification'] = glmCaseDict[x]['load_class']
 
         # Figure out how many houses should be attached to this load object
-        load_A = 0
-        load_B = 0
-        load_C = 0
-
-        # determine the total ZIP load for each phase
-        if 'constant_power_A' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_power_A'])
-          load_A += abs(c_num)
-
-        if 'constant_power_B' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_power_B'])
-          load_B += abs(c_num)
-
-        if 'constant_power_C' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_power_C'])
-          load_C += abs(c_num)
-
-        if 'constant_impedance_A' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_impedance_A'])
-          load_A += pow(commercial_dict[commercial_key]['nom_volt'],2)/(3*abs(c_num))
-
-        if 'constant_impedance_B' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_impedance_B'])
-          load_B += pow(commercial_dict[commercial_key]['nom_volt'],2)/(3*abs(c_num))
-
-        if 'constant_impedance_C' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_impedance_C'])
-          load_C += pow(commercial_dict[commercial_key]['nom_volt'],2)/(3*abs(c_num))
-
-        if 'constant_current_A' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_current_A'])
-          load_A += commercial_dict[commercial_key]['nom_volt']*(abs(c_num))
-
-        if 'constant_current_B' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_current_B'])
-          load_B += commercial_dict[commercial_key]['nom_volt']*(abs(c_num))
-
-        if 'constant_current_C' in glmCaseDict[x]:
-          c_num = complex(glmCaseDict[x]['constant_current_C'])
-          load_C += commercial_dict[commercial_key]['nom_volt']*(abs(c_num))
-
-        if load_A >= tech_data['load_cutoff']:
-          commercial_dict[commercial_key]['number_of_houses'][0] = int(math.ceil(load_A/config_data['avg_commercial']))
-          total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][0]
-
-        if load_B >= tech_data['load_cutoff']:
-          commercial_dict[commercial_key]['number_of_houses'][1] = int(math.ceil(load_B/config_data['avg_commercial']))
-          total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][1]
-
-        if load_C >= tech_data['load_cutoff']:
-          commercial_dict[commercial_key]['number_of_houses'][2] = int(math.ceil(load_C/config_data['avg_commercial']))
-          total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][2]
+        # First determine the total ZIP load for each phase
+        load_A, load_B, load_C = helpers.calculate_load_by_phase(glmCaseDict[x], 'real')
 
         commercial_dict[commercial_key]['load'][0] = load_A
         commercial_dict[commercial_key]['load'][1] = load_B
@@ -455,93 +408,53 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
         # TODO: Bypass this if load rating is known
         # Determine load_rating
-        standard_transformer_rating = [10,15,25,37.5,50,75,100,150,167,250,333.3,500,666.7]
         total_load = (load_A + load_B + load_C)/1000
         load_rating = 0
-        for y in standard_transformer_rating:
-          if y >= total_load * 1.5:
-            load_rating = y
-            break
-          elif y == 666.7:
-            load_rating = y
-            break
+        load_rating_index = None
+        for i, y in enumerate(config_data['standard_transformer_ratings']):
+            if y >= total_load * config_data['tranformer_oversize_factor']:
+              load_rating = y
+              load_rating_index = i
+              break
+            elif y == config_data['standard_transformer_ratings'][-1]:
+              load_rating = y
+              load_rating_index = i
+              break          
+        assert load_rating_index is not None
 
         # Deterimine load classification
+        load_class = None
         if commercial_dict[commercial_key]['load_classification'].isdigit():
-          commercial_dict[commercial_key]['load_classification'] = int(commercial_dict[commercial_key]['load_classification'])
-        else: # load_classification is unknown determine from no_houses and transformer size
-          #TODO: Determine what classID should be from no_houses and transformer size
-          commercial_dict[commercial_key]['load_classification'] = None
+          load_class = int(commercial_dict[commercial_key]['load_classification'])
+        else: 
+          # load_classification is unknown determine from no_houses and transformer size
           random_class_number = random.random()*100
-          if load_rating == 10:
-            commercial_dict[commercial_key]['load_classification'] = 6
-          elif load_rating == 15:
-            commercial_dict[commercial_key]['load_classification'] = 6
-          elif load_rating == 25:
-            if random_class_number <= 5:
-              commercial_dict[commercial_key]['load_classification'] = 7
-            elif 5 < random_class_number <= 11:
-              commercial_dict[commercial_key]['load_classification'] = 8
-            elif random_class_number > 11:
-              commercial_dict[commercial_key]['load_classification'] = 6
-          elif load_rating == 37.5:
-            commercial_dict[commercial_key]['load_classification'] = 6
-          elif load_rating == 50:
-            if random_class_number <= 28:
-              commercial_dict[commercial_key]['load_classification'] = 7
-            elif 28 < random_class_number <= 61:
-              commercial_dict[commercial_key]['load_classification'] = 8
-            elif random_class_number > 61:
-              commercial_dict[commercial_key]['load_classification'] = 6
-          elif load_rating == 75:
-            if random_class_number <= 18:
-              commercial_dict[commercial_key]['load_classification'] = 6
-            elif 18 < random_class_number <= 49:
-              commercial_dict[commercial_key]['load_classification'] = 8
-            elif random_class_number > 49:
-              commercial_dict[commercial_key]['load_classification'] = 7
-          elif load_rating == 100:
-            if random_class_number <= 15:
-              commercial_dict[commercial_key]['load_classification'] = 6
-            elif 15 < random_class_number <= 56:
-              commercial_dict[commercial_key]['load_classification'] = 7
-            elif random_class_number > 56:
-              commercial_dict[commercial_key]['load_classification'] = 8
-          elif load_rating == 150:
-            commercial_dict[commercial_key]['load_classification'] = 6
-          elif load_rating == 167:
-            if random_class_number <= 11:
-              commercial_dict[commercial_key]['load_classification'] = 6
-            elif 11 < random_class_number <= 43:
-              commercial_dict[commercial_key]['load_classification'] = 8
-            elif random_class_number > 43:
-              commercial_dict[commercial_key]['load_classification'] = 7
-          elif load_rating == 250:
-            if random_class_number <= 27:
-              commercial_dict[commercial_key]['load_classification'] = 7
-            elif random_class_number > 27:
-              commercial_dict[commercial_key]['load_classification'] = 8
-          elif load_rating == 333.3:
-            if random_class_number <= 17:
-              commercial_dict[commercial_key]['load_classification'] = 7
-            elif random_class_number > 17:
-              commercial_dict[commercial_key]['load_classification'] = 8
-          elif load_rating == 500:
-            commercial_dict[commercial_key]['load_classification'] = 8
-          elif load_rating == 666.7:
-            if random_class_number <= 50:
-              commercial_dict[commercial_key]['load_classification'] = 7
-            elif random_class_number > 50:
-              commercial_dict[commercial_key]['load_classification'] = 8
-          else:
-            if sum(commercial_dict[commercial_key]['number_of_houses']) >= 15:
-              commercial_dict[commercial_key]['load_classification'] = 8
-            elif sum(commercial_dict[commercial_key]['number_of_houses']) >= 6:
-              commercial_dict[commercial_key]['load_classification'] = 7
-            elif sum(commercial_dict[commercial_key]['number_of_houses']) > 0:
-              commercial_dict[commercial_key]['load_classification'] = 6
-            else:
-              commercial_dict[commercial_key]['load_classification'] = None
+          cum_perc = 0
+          for i, perc in enumerate([one_load_class[load_rating_index] for one_load_class in config_data['comm_load_class_dists']]):
+            if cum_perc < random_class_number <= cum_perc + perc:
+                 load_class = 6 + i
+                 break
+            cum_perc += perc
+        
+        assert load_class is not None
+        commercial_dict[commercial_key]['load_classification'] = load_class
+        if load_A >= tech_data['load_cutoff']:
+          commercial_dict[commercial_key]['number_of_houses'][0] = int(math.ceil( load_A / config_data['avg_peak_loads'][load_class] ))
+          total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][0]
+
+        if load_B >= tech_data['load_cutoff']:
+          commercial_dict[commercial_key]['number_of_houses'][1] = int(math.ceil(load_B / config_data['avg_peak_loads'][load_class] ))
+          total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][1]
+
+        if load_C >= tech_data['load_cutoff']:
+          commercial_dict[commercial_key]['number_of_houses'][2] = int(math.ceil(load_C / config_data['avg_peak_loads'][load_class] ))
+          total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][2] 
+          
+        # print('Replacing {:.0f} kW with {} buildings of type {}, on a transformer rated at {} kW.'.format(
+        #       total_load,
+        #       sum(commercial_dict[commercial_key]['number_of_houses']),
+        #       config_data["load_classifications"][load_class],
+        #       load_rating))
 
         # Remove load (used to be changed into a node, but then the node was dangling)
         to_remove.append(x)
@@ -565,6 +478,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
         
     for x in to_remove:
       del glmCaseDict[x]
+      
+    # print('Planning to replace {} load objects with {} commercial buildings.'.format(commercial_key, total_commercial_number))
         
   # Create dictionary that houses the number of residential 'load' objects where residential house objects will be tacked on.
   total_house_number = 0
@@ -589,115 +504,55 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           if 'load_class' in glmCaseDict[x]:
             residential_dict[residential_key]['load_classification'] = glmCaseDict[x]['load_class']
 
-          # Figure out how many houses should be attached to this load object
-          load = 0
-          # determine the total ZIP load for each phase
-          if 'power_1' in glmCaseDict[x]:
-            c_num = complex(glmCaseDict[x]['power_1'])
-            load += abs(c_num)
-
-          if 'power_12' in glmCaseDict[x]:
-            c_num = complex(glmCaseDict[x]['power_12'])
-            load += abs(c_num)
+          # Figure out how many houses should be attached to this load object          
+          # First determine the total ZIP load
+          load = helpers.calculate_load(glmCaseDict[x], 'real')
+          c_load = helpers.calculate_load(glmCaseDict[x], 'complex')
           
           residential_dict[residential_key]['load'] = load  
-          residential_dict[residential_key]['number_of_houses'] = int(round(load/config_data['avg_house']))
-          total_house_number += residential_dict[residential_key]['number_of_houses']
-          # Determine whether we rounded down of up to help determine the square footage (neg. number => small homes)
-          residential_dict[residential_key]['large_vs_small'] = load/config_data['avg_house'] - residential_dict[residential_key]['number_of_houses']
 
           # Determine load_rating
-          standard_transformer_rating = [10,15,25,37.5,50,75,100,150,167,250,333.3,500,666.7] # kW
           total_load = load/1000 # kW
           load_rating = 0
-          for y in standard_transformer_rating:
-            if y >= total_load * 1.5:
+          load_rating_index = None
+          for i, y in enumerate(config_data['standard_transformer_ratings']):
+            if y >= total_load * config_data['tranformer_oversize_factor']:
               load_rating = y
+              load_rating_index = i
               break
-            elif y == 666.7:
+            elif y == config_data['standard_transformer_ratings'][-1]:
               load_rating = y
+              load_rating_index = i
               break
+          assert load_rating_index is not None
 
           # Deterimine load classification
+          load_class = None
           if residential_dict[residential_key]['load_classification'].isdigit():
-            residential_dict[residential_key]['load_classification'] = int(residential_dict[residential_key]['load_classification'])
-          else: # load_classification is unknown. determine from no_houses and transformer size
-            #TODO: Determine what classID should be from no_houses and transformer size
+            load_class = int(residential_dict[residential_key]['load_classification'])
+          else: 
+            # load_classification is unknown. determine from no_houses and transformer size
             residential_dict[residential_key]['load_classification'] = None
             random_class_number = random.random()*100
-            if load_rating == 10:
-              if random_class_number <= 6:
-                residential_dict[residential_key]['load_classification'] = 5
-              elif 6 < random_class_number <= 24:
-                residential_dict[residential_key]['load_classification'] = 0
-              elif random_class_number > 24:
-                residential_dict[residential_key]['load_classification'] = 1
-            elif load_rating == 15:
-              if random_class_number <= 14:
-                residential_dict[residential_key]['load_classification'] = 1
-              elif 14 < random_class_number <= 57:
-                residential_dict[residential_key]['load_classification'] = 0
-              elif random_class_number > 57:
-                residential_dict[residential_key]['load_classification'] = 5
-            elif load_rating == 25:
-              if random_class_number <= 1.5:
-                residential_dict[residential_key]['load_classification'] = 2
-              elif 1.5 < random_class_number <= 3.7:
-                residential_dict[residential_key]['load_classification'] = 3
-              elif 3.7 < random_class_number <= 16.6:
-                residential_dict[residential_key]['load_classification'] = 5
-              elif 16.6 < random_class_number <= 38.7:
-                residential_dict[residential_key]['load_classification'] = 0
-              elif random_class_number > 38.7:
-                residential_dict[residential_key]['load_classification'] = 1
-            elif load_rating == 37.5:
-              residential_dict[residential_key]['load_classification'] = 2
-            elif load_rating == 50:
-              if random_class_number <= 3.1:
-                residential_dict[residential_key]['load_classification'] = 2
-              elif 3.1 < random_class_number <= 16.7:
-                residential_dict[residential_key]['load_classification'] = 5
-              elif 16.7 < random_class_number <= 30.6:
-                residential_dict[residential_key]['load_classification'] = 0
-              elif 30.6 < random_class_number <= 51.6:
-                residential_dict[residential_key]['load_classification'] = 3
-              elif random_class_number > 51.6:
-                residential_dict[residential_key]['load_classification'] = 1
-            elif load_rating == 75:
-              if random_class_number <= 7.9:
-                residential_dict[residential_key]['load_classification'] = 1
-              elif 7.9 < random_class_number <= 15.8:
-                residential_dict[residential_key]['load_classification'] = 2
-              elif 15.8 < random_class_number <= 26.2:
-                residential_dict[residential_key]['load_classification'] = 0
-              elif 26.2 < random_class_number <= 56.7:
-                residential_dict[residential_key]['load_classification'] = 5
-              elif random_class_number > 56.7:
-                residential_dict[residential_key]['load_classification'] = 3
-            elif load_rating == 100:
-              if random_class_number <= 4:
-                residential_dict[residential_key]['load_classification'] = 1
-              elif 4 < random_class_number <= 12:
-                residential_dict[residential_key]['load_classification'] = 0
-              elif 12 < random_class_number <= 38:
-                residential_dict[residential_key]['load_classification'] = 3
-              elif 38 < random_class_number <= 68:
-                residential_dict[residential_key]['load_classification'] = 2
-              elif random_class_number > 68:
-                residential_dict[residential_key]['load_classification'] = 5
-            elif load_rating == 167:
-              if random_class_number <= 1:
-                residential_dict[residential_key]['load_classification'] = 1
-              elif 1 < random_class_number <= 2:
-                residential_dict[residential_key]['load_classification'] = 2
-              elif 2 < random_class_number <= 4:
-                residential_dict[residential_key]['load_classification'] = 0
-              elif 4 < random_class_number <= 13:
-                residential_dict[residential_key]['load_classification'] = 3
-              elif random_class_number > 13:
-                residential_dict[residential_key]['load_classification'] = 5
-            else:
-              residential_dict[residential_key]['load_classification'] = random.choice([0, 1, 2, 3, 4, 5]) # randomly pick between the 6 residential classifications
+            load_class = None
+            cum_perc = 0
+            for i, perc in enumerate([one_load_class[load_rating_index] for one_load_class in config_data['res_load_class_dists']]):
+               if cum_perc < random_class_number <= cum_perc + perc:
+                 load_class = i
+                 break
+               cum_perc += perc
+            
+          assert load_class is not None
+          residential_dict[residential_key]['load_classification'] = load_class
+          residential_dict[residential_key]['number_of_houses'] = int(round( load / config_data['avg_peak_loads'][load_class] ))
+          total_house_number += residential_dict[residential_key]['number_of_houses']
+          # Determine whether we rounded down of up to help determine the square footage (neg. number => small homes)
+          residential_dict[residential_key]['large_vs_small'] = load / config_data['avg_peak_loads'][load_class] - residential_dict[residential_key]['number_of_houses']
+          # print('Replacing {:.0f} kW with {} houses of type {}, on a transformer rated at {} kW.'.format(
+          #     total_load,
+          #     residential_dict[residential_key]['number_of_houses'],
+          #     config_data["load_classifications"][load_class],
+          #     load_rating))
 
           # Remove constant load keys
           if 'load_class' in glmCaseDict[x]:
@@ -709,9 +564,10 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           if 'power_1' in glmCaseDict[x]:
             del glmCaseDict[x]['power_1']
 
-          if total_house_number == 0 and load > 0 and use_flags['use_normalized_loadshapes'] == 0: # Residential street light
-            glmCaseDict[x]['power_12_real'] = 'street_lighting*{:.4f}'.format(c_num.real*tech_data['light_scalar_res'])
-            glmCaseDict[x]['power_12_reac'] = 'street_lighting*{:.4f}'.format(c_num.imag*tech_data['light_scalar_res'])
+          if residential_dict[residential_key]['number_of_houses'] == 0 and load > 0 and use_flags['use_normalized_loadshapes'] == 0: # Residential street light
+            # print('No houses, making street lights instead.')
+            glmCaseDict[x]['power_12_real'] = 'street_lighting*{:.4f}'.format(c_load.real*tech_data['light_scalar_res'])
+            glmCaseDict[x]['power_12_reac'] = 'street_lighting*{:.4f}'.format(c_load.imag*tech_data['light_scalar_res'])
           else:
             # Remove the soon-to-be-dangling node
             to_remove.append(x)
@@ -720,11 +576,13 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     
     for x in to_remove:
       del glmCaseDict[x]
+      
+    # print('Planning to replace {} triplex_node objects with {} houses.'.format(residential_key, total_house_number))
     
   # Calculate some random numbers needed for TOU/CPP and DLC technologies
   if use_flags['use_market'] != 0:
     # Initialize psuedo-random seed
-    random.seed(2)
+    random.seed(2) if config_data["fix_random_seed"] else random.seed()
 
     if total_house_number > 0:
       # Initialize random number arrays
@@ -806,7 +664,10 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_residential_ziploads(glmCaseDict, residential_dict, config_data, last_key)
     else:
-      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(glmCaseDict, use_flags, tech_data, residential_dict, last_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'] if 'config_file' in io_opts else None)    
+      glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(
+          glmCaseDict, use_flags, config_data, tech_data, residential_dict, last_key, CPP_flag_name,
+          market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, 
+          io_opts['dir'], io_opts['resources_dir'])
     
   # End addition of residential loads ########################################################################################################################
 
@@ -817,11 +678,16 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     if use_flags['use_normalized_loadshapes'] == 1:
       glmCaseDict, last_key = AddLoadShapes.add_normalized_commercial_ziploads(glmCaseDict, commercial_dict, config_data, last_key)
     else:
-      glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(glmCaseDict, use_flags, tech_data, last_key, commercial_dict, comm_slider_random, dlc_c_rand, dlc_c_rand2, io_opts['dir'], io_opts['resources_dir'], io_opts['config_file'] if 'config_file' in io_opts else None)
+      glmCaseDict, solar_office_array, solar_bigbox_array, solar_stripmall_array, ts_office_array, \
+      ts_bigbox_array, ts_stripmall_array, last_key = CommercialLoads.append_commercial(
+          glmCaseDict, use_flags, config_data, tech_data, last_key, commercial_dict, comm_slider_random, 
+          dlc_c_rand, dlc_c_rand2, io_opts['dir'], io_opts['resources_dir'])
       
   # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
   if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
-    glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, tech_data, last_key, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array)
+    glmCaseDict = Solar_Technology.Append_Solar(glmCaseDict, use_flags, config_data, tech_data, 
+                      last_key, solar_bigbox_array, solar_office_array, solar_stripmall_array, 
+                      solar_residential_array)
     
   # Append recorders
   glmCaseDict, last_key = AddTapeObjects.add_recorders(glmCaseDict, io_opts, time_opts, last_key)

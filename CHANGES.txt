@@ -1,3 +1,5 @@
+v3.0.0, 5/11/2015  -- Refactored the Configuration module and its dependencies to improve the 
+                      replacement of loads with house models. 
 v2.3.0, 2/20/2014  -- GlmFile methods for setting the clock and voltage player files.
                       (Optional) overload of __setitem__ and __delitem__ to support 
                       inserts and dense keying.

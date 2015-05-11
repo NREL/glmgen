@@ -5,7 +5,10 @@ import math
 import random
 from glmgen import Configuration
 
-def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last_object_key, CPP_flag_name, market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, wdir,resources_dir,configuration_file=None):
+def append_residential(ResTechDict, use_flags, config_data, tech_data, residential_dict, 
+                       last_object_key, CPP_flag_name, market_penetration_random, dlc_rand, 
+                       pool_pump_recovery_random, slider_random, xval, elasticity_random, 
+                       wdir, resources_dir):
   #ResTechDict is a dictionary containing all the objects in WindMIL model represented as equivalent GridLAB-D objects that this function will append residential load object to.
   solar_residential_array = [0,[],[]]
   ts_residential_array = [0,[]]
@@ -20,7 +23,7 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
     count_house = 0
     fl_area = []
     
-    random.seed(3)  
+    random.seed(3) if config_data["fix_random_seed"] else random.seed() 
     #print('iterating over residential_dict')
     # Begin attaching houses to designated triplex_meters    
     for x in residential_dict:
@@ -37,23 +40,23 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
         lg_vs_sm = residential_dict[x]['large_vs_small']
         classID = residential_dict[x]['load_classification']
         
-        config_data = Configuration.ConfigurationFunc(wdir,resources_dir,configuration_file,None,classID) # recall Configuration() with this load's classification
+        load_config_data = Configuration.LoadClassConfiguration(config_data,classID) 
         # Find out how many houses in any sub-classifications
-        thermal_integrity = list(map(lambda a:math.ceil(a*no_houses),config_data['thermal_percentages']))
-        no_pool_pumps = math.fsum(config_data['SFH'])*no_houses # Total Single-Family Homes (only allow pool-pumps on SFH)
+        thermal_integrity = list(map(lambda a:math.ceil(a*no_houses),load_config_data['thermal_percentages']))
+        no_pool_pumps = math.fsum(load_config_data['SFH'])*no_houses # Total Single-Family Homes (only allow pool-pumps on SFH)
         
         # Find the number of houses in each thermal setpoint bin
         cool_sp = []
         heat_sp = []
-        sfh = list(map(lambda a,b:a*b,config_data['SFH'],thermal_integrity)) # Number of single-family homes in each subclass
+        sfh = list(map(lambda a,b:a*b,load_config_data['SFH'],thermal_integrity)) # Number of single-family homes in each subclass
         
         #range(thermal_integrity.length)
         for y in range(len(thermal_integrity)):
           cool_sp.append([])
           heat_sp.append([])
-          for z in range(len(config_data['cooling_setpoint'])):
-            cool_sp[y].append(math.ceil(config_data['cooling_setpoint'][z][0] * thermal_integrity[y]))
-            heat_sp[y].append(math.ceil(config_data['heating_setpoint'][z][0] * thermal_integrity[y]))
+          for z in range(len(load_config_data['cooling_setpoint'])):
+            cool_sp[y].append(math.ceil(load_config_data['cooling_setpoint'][z][0] * thermal_integrity[y]))
+            heat_sp[y].append(math.ceil(load_config_data['heating_setpoint'][z][0] * thermal_integrity[y]))
         #print('iterating over number of houses')
         # Start adding house dictionaries
         for y in range(no_houses):
@@ -144,9 +147,9 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
             col_ti = therm_int % size_b
             
           thermal_integrity[row_ti] -= 1
-          thermal_temp = config_data['thermal_properties'][row_ti]
+          thermal_temp = load_config_data['thermal_properties'][row_ti]
           
-          f_area = config_data['floor_area'][classID]
+          f_area = load_config_data['floor_area'][classID]
           story_rand = random.random()
           height_rand = random.randint(1,2)
           fa_rand = random.random()
@@ -154,7 +157,7 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
           if sfh[row_ti] > 0:
             floor_area = f_area + (f_area / 2) * fa_rand * ((row_ti - 4) / 3)
             
-            if story_rand < config_data['one_story'][classID]:
+            if story_rand < load_config_data['one_story'][classID]:
               stories = 1
             else:
               stories = 2
@@ -222,17 +225,17 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
           h_COP = c_COP
           
           ct = 'NONE'
-          if heat_type <= config_data['perc_gas']:
+          if heat_type <= load_config_data['perc_gas']:
             ResTechDict[last_object_key]['heating_system_type'] = 'GAS'
             
-            if cool_type <= config_data['perc_AC']:
+            if cool_type <= load_config_data['perc_AC']:
               ResTechDict[last_object_key]['cooling_system_type'] = 'ELECTRIC'
               ct = 'ELEC'
             else:
               ResTechDict[last_object_key]['cooling_system_type'] = 'NONE'
             
             ht = 'GAS'
-          elif heat_type <= (config_data['perc_gas'] + config_data['perc_pump']):
+          elif heat_type <= (load_config_data['perc_gas'] + load_config_data['perc_pump']):
             ResTechDict[last_object_key]['heating_system_type'] = 'HEAT_PUMP'
             ResTechDict[last_object_key]['heating_COP'] = '{:.1f}'.format(h_COP)
             ResTechDict[last_object_key]['cooling_system_type'] = 'ELECTRIC'
@@ -245,7 +248,7 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
           elif (floor_area * ceiling_height) > 12000: # No resistive homes with large volumes
             ResTechDict[last_object_key]['heating_system_type'] = 'GAS'
             
-            if cool_type <= config_data['perc_AC']:
+            if cool_type <= load_config_data['perc_AC']:
               ResTechDict[last_object_key]['cooling_system_type'] = 'ELECTRIC'
               ct = 'ELEC'
             else:
@@ -255,7 +258,7 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
           else:
             ResTechDict[last_object_key]['heating_system_type'] = 'RESISTANCE'
             
-            if cool_type <= config_data['perc_AC']:
+            if cool_type <= load_config_data['perc_AC']:
               ResTechDict[last_object_key]['cooling_system_type'] = 'ELECTRIC'
               ResTechDict[last_object_key]['motor_model'] = 'BASIC'
               ResTechDict[last_object_key]['motor_efficiency'] = 'VERY_GOOD'
@@ -266,11 +269,12 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
             ht = 'ELEC';
             
           AC_unit_type = random.random()
+          os_rand = 0.0
           if ct == 'ELEC': # I house has electric AC
-            if AC_unit_type <= config_data['AC_type'][1]: # AC is central
-              os_rand = config_data['over_sizing_factor'][0] * (0.8 + (0.4 * random.random()))
+            if AC_unit_type <= load_config_data['AC_type'][1]: # AC is central
+              os_rand = load_config_data['over_sizing_factor'][0] * (0.8 + (0.4 * random.random()))
             else: # AC is window/wall unit
-              os_rand = config_data['over_sizing_factor'][1] * (0.8 + (0.4 * random.random()))
+              os_rand = load_config_data['over_sizing_factor'][1] * (0.8 + (0.4 * random.random()))
             
           ResTechDict[last_object_key]['over_sizing_factor'] = '{:.1f}'.format(os_rand)
           ResTechDict[last_object_key]['breaker_amps'] = '1000'
@@ -281,7 +285,7 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
           heating_set = int(math.ceil(config_data['no_heat_sch'] * random.random()))
           
           # Choose a cooling bin
-          coolsp = config_data['cooling_setpoint']
+          coolsp = load_config_data['cooling_setpoint']
           no_cool_bins = len(coolsp)
           
           # See if we have that bin left
@@ -293,7 +297,7 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
           cool_sp[row_ti][cool_bin] -= 1
           
           # Choose a heating bin
-          heatsp = config_data['heating_setpoint']
+          heatsp = load_config_data['heating_setpoint']
           no_heat_bins = len(heatsp)
           heat_bin = random.randint(0,no_heat_bins - 1)
           heat_count = 1
@@ -606,7 +610,7 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
           last_object_key += 1
           #print('finished unresponsive zipload')
           # Add pool pumps only on single-family homes
-          if pool_pump_perc < (2*config_data['perc_poolpumps']) and no_pool_pumps >= 1 and row_ti == 0:
+          if pool_pump_perc < (2*load_config_data['perc_poolpumps']) and no_pool_pumps >= 1 and row_ti == 0:
             ResTechDict[last_object_key] = {'object' : 'ZIPload',
                             'name' : 'house{:d}_ppump_{:s}'.format(y,my_name),
                             'parent' : 'house{:d}_{:s}'.format(y,my_name),
@@ -680,7 +684,7 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
           wh_size_test = random.random()
           wh_size_rand = random.randint(1,3)
           
-          if heat_type > (1 - config_data['wh_electric']) and tech_data['use_wh'] == 1:
+          if heat_type > (1 - load_config_data['wh_electric']) and tech_data['use_wh'] == 1:
             last_object_key += 1
             ResTechDict[last_object_key] = {'object' : 'waterheater',
                             'name' : 'house{:d}_wh_{:s}'.format(y,my_name),
@@ -688,17 +692,17 @@ def append_residential(ResTechDict, use_flags, tech_data, residential_dict, last
                             'schedule_skew' : '{:.0f}'.format(wh_skew_value),
                             'heating_element_capacity' : '{:.1f} kW'.format(heat_element),
                             'tank_setpoint' : '{:.1f}'.format(tank_set),
-                            'temperature' : '132',
+                            'temperature' : '{:.1f}'.format(tank_set), # was uniformly 132
                             'thermostat_deadband' : '{:.1f}'.format(therm_dead),
                             'location' : 'INSIDE',
                             'tank_UA' : '{:.1f}'.format(tank_UA)}
                             
-            if wh_size_test < config_data['wh_size'][0]:
+            if wh_size_test < load_config_data['wh_size'][0]:
               ResTechDict[last_object_key]['demand'] = 'small_{:.0f}*{:.02f}'.format(water_sch,water_var)
               
               whsize = 20 + (5 * (wh_size_rand - 1))
               ResTechDict[last_object_key]['tank_volume'] = '{:.0f}'.format(whsize)
-            elif wh_size_test < (config_data['wh_size'][0] + config_data['wh_size'][1]):
+            elif wh_size_test < (load_config_data['wh_size'][0] + load_config_data['wh_size'][1]):
               if floor_area < 2000:
                 ResTechDict[last_object_key]['demand'] = 'small_{:.0f}*{:.02f}'.format(water_sch,water_var)
               else:
