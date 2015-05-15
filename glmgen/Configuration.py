@@ -236,22 +236,22 @@ def FeederConfiguration(wdir, resources_dir, config_data = None):
     # keyed on region number,  the index position in the lists then represent load classifications, 
     # see data["load_classifications"], and Commercial1 = Strip Mall, Commercial2 = Big Box and 
     # Commercial 3 = Office
-    # Individual house power in W.
-    default_average_peak_load_by_region_and_load_class = { \
-        1: [9346.0, 6107.0, 9489.0, 6197.0, 6107.0, 9198.0, 7065.0, 105378.0, 176252.0],
-        2: [12351.0, 7814.0, 12447.0, 7836.0, 7814.0, 12067.0, 7104.0, 108561.0, 187000.0],
-        3: [11668.0, 7142.0, 11863.0, 7243.0, 7142.0, 11870.0, 8531.0, 128828.0, 218691.0],
-        4: [12342.0, 7820.0, 12528.0, 7879.0, 7820.0, 12231.0, 7470.0, 113591.0, 196630.0],
-        5: [9179.0, 6003.0, 9393.0, 6132.0, 6003.0, 9139.0, 6892.0, 105969.0, 184539.0], 
-        6: [10000.0, 6000.0, 9500.0, 6500.0, 6000.0, 9250.0, 7000.0, 105000.0, 185000.0] # punting on Hawaii for now -- calculate on next go-around        
+    # Third quartile of individual house power in W/ft^2.
+    default_peak_power_intensity_by_region_and_load_class = { \
+        1: [6.496, 5.387, 6.471, 5.780, 5.5, 5.056, 6.021, 5.927, 5.952],
+        2: [9.684, 6.903, 9.246, 7.583, 7.0, 7.075, 6.236, 6.130, 6.297],
+        3: [8.655, 6.098, 8.569, 6.477, 7.0, 6.731, 7.443, 7.286, 7.357],
+        4: [9.519, 6.758, 9.103, 7.262, 7.5, 6.940, 6.413, 6.458, 6.646],
+        5: [6.644, 5.266, 6.744, 5.499, 6.0, 5.028, 5.873, 6.018, 6.266], 
+        6: [  7.0,   5.5,   7.0,   6.0, 6.0,   5.5,   6.0,   6.5,   6.5] # punting on Hawaii for now -- calculate on next go-around        
     }
     if region in default_weather_by_region:
         if 'weather' not in data or not data["weather"]:
             data["weather"] = '{:s}/'.format(resources_dir) + default_weather_by_region[region][0]
         if 'timezone' not in data.keys() or not data['timezone']:    
             data["timezone"] = default_weather_by_region[region][1]
-        if 'avg_peak_loads' not in data or not data['avg_peak_loads']:
-            data['avg_peak_loads'] = default_average_peak_load_by_region_and_load_class[region]
+        if 'peak_load_intensities' not in data or not data['peak_load_intensities']:
+            data['peak_load_intensities'] = default_peak_power_intensity_by_region_and_load_class[region]
             
     n_trans = len(data['standard_transformer_ratings'])
     for percentages in data['comm_load_class_dists']:

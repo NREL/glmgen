@@ -385,12 +385,12 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     for x in glmCaseDict:
       if 'object' in glmCaseDict[x] and re.match("load.*",glmCaseDict[x]['object']):
         commercial_dict[commercial_key] = {'name' : glmCaseDict[x]['name'],
-                           'parent' : 'None',
-                           'load_classification' : 'None',
-                           'load' : [0,0,0],
-                           'number_of_houses' : [0,0,0], #[phase A, phase B, phase C]
-                           'nom_volt' : glmCaseDict[x]['nominal_voltage'],
-                           'phases' : glmCaseDict[x]['phases']}
+                                           'parent' : 'None',
+                                           'load_classification' : 'None',
+                                           'load' : [0,0,0],
+                                           'number_of_houses' : [0,0,0], #[phase A, phase B, phase C]
+                                           'nom_volt' : glmCaseDict[x]['nominal_voltage'],
+                                           'phases' : glmCaseDict[x]['phases']}
         
         if 'parent' in glmCaseDict[x]:
           commercial_dict[commercial_key]['parent'] = glmCaseDict[x]['parent']
@@ -408,7 +408,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
         # TODO: Bypass this if load rating is known
         # Determine load_rating
-        total_load = (load_A + load_B + load_C)/1000
+        total_load = (load_A + load_B + load_C)/1000.0
         load_rating = 0
         load_rating_index = None
         for i, y in enumerate(config_data['standard_transformer_ratings']):
@@ -435,9 +435,13 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
                  load_class = 6 + i
                  break
             cum_perc += perc
+            
+        # HERE -- Do not calculate number of houses here. Use a median peak kWh/ft^2 and determine number of 
+        # houses in Residential and Commercial scripts (keeping cumulative track). 
         
         assert load_class is not None
         commercial_dict[commercial_key]['load_classification'] = load_class
+        
         if load_A >= tech_data['load_cutoff']:
           commercial_dict[commercial_key]['number_of_houses'][0] = int(math.ceil( load_A / config_data['avg_peak_loads'][load_class] ))
           total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][0]
@@ -450,9 +454,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           commercial_dict[commercial_key]['number_of_houses'][2] = int(math.ceil(load_C / config_data['avg_peak_loads'][load_class] ))
           total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][2] 
           
-        # print('Replacing {:.0f} kW with {} buildings of type {}, on a transformer rated at {} kW.'.format(
+        # print('Replacing {:.0f} kW with buildings of type {}, on a transformer rated at {} kW.'.format(
         #       total_load,
-        #       sum(commercial_dict[commercial_key]['number_of_houses']),
         #       config_data["load_classifications"][load_class],
         #       load_rating))
 
@@ -541,6 +544,9 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
                  load_class = i
                  break
                cum_perc += perc
+            
+          # HERE -- Do not calculate number of houses here. Use a median peak kWh/ft^2 and determine number of 
+          # houses in Residential and Commercial scripts (keeping cumulative track). 
             
           assert load_class is not None
           residential_dict[residential_key]['load_classification'] = load_class

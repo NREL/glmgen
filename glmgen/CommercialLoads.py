@@ -43,110 +43,108 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
   if len(commercial_dict) > 0 and use_flags["use_commercial"] == 1:
     # setup all of the line configurations we may need
     glmCaseDict[last_object_key] = {"object" : "triplex_line_conductor",
-                    "name" : "comm_line_cfg_cnd1",
-                    "resistance" : "0.48",
-                    "geometric_mean_radius" : "0.0158"}
+                                    "name" : "comm_line_cfg_cnd1",
+                                    "resistance" : "0.48",
+                                    "geometric_mean_radius" : "0.0158"}
     last_object_key += 1
     
     glmCaseDict[last_object_key] = {"object" : "triplex_line_conductor",
-                    "name" : "comm_line_cfg_cnd2",
-                    "resistance" : "0.48",
-                    "geometric_mean_radius" : "0.0158"}
+                                    "name" : "comm_line_cfg_cnd2",
+                                    "resistance" : "0.48",
+                                    "geometric_mean_radius" : "0.0158"}
 
     last_object_key += 1
     
     glmCaseDict[last_object_key] = {"object" : "triplex_line_conductor",
-                    "name" : "comm_line_cfg_cndN",
-                    "resistance" : "0.48",
-                    "geometric_mean_radius" : "0.0158"}
+                                    "name" : "comm_line_cfg_cndN",
+                                    "resistance" : "0.48",
+                                    "geometric_mean_radius" : "0.0158"}
     last_object_key += 1
     
     glmCaseDict[last_object_key] = {"object" : "triplex_line_configuration",
-                    "name" : "commercial_line_config",
-                    "conductor_1" : "comm_line_cfg_cnd1", 
-                    "conductor_2" : "comm_line_cfg_cnd2",
-                    "conductor_N" : "comm_line_cfg_cndN",
-                    "insulation_thickness" : "0.08",
-                    "diameter" : "0.522"}
+                                    "name" : "commercial_line_config",
+                                    "conductor_1" : "comm_line_cfg_cnd1", 
+                                    "conductor_2" : "comm_line_cfg_cnd2",
+                                    "conductor_N" : "comm_line_cfg_cndN",
+                                    "insulation_thickness" : "0.08",
+                                    "diameter" : "0.522"}
     last_object_key += 1
     
     glmCaseDict[last_object_key] = {"object" : "line_spacing",     
-                    "name" : "line_spacing_commABC",     
-                    "distance_AB" : "53.19999999996 in",    
-                    "distance_BC" : "53.19999999996 in",    
-                    "distance_AC" : "53.19999999996 in",    
-                    "distance_AN" : "69.80000000004 in",    
-                    "distance_BN" : "69.80000000004 in",    
-                    "distance_CN" : "69.80000000004 in"}
+                                    "name" : "line_spacing_commABC",     
+                                    "distance_AB" : "53.19999999996 in",    
+                                    "distance_BC" : "53.19999999996 in",    
+                                    "distance_AC" : "53.19999999996 in",    
+                                    "distance_AN" : "69.80000000004 in",    
+                                    "distance_BN" : "69.80000000004 in",    
+                                    "distance_CN" : "69.80000000004 in"}
     last_object_key += 1;
 
     glmCaseDict[last_object_key] = {"object" : "overhead_line_conductor",     
-                    "name" : "overhead_line_conductor_comm",     
-                    "rating.summer.continuous" : "443.0",     
-                    "geometric_mean_radius" : "0.02270 ft",    
-                    "resistance" : "0.05230"}
+                                    "name" : "overhead_line_conductor_comm",     
+                                    "rating.summer.continuous" : "443.0",     
+                                    "geometric_mean_radius" : "0.02270 ft",    
+                                    "resistance" : "0.05230"}
     last_object_key += 1
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commABC",     
-                    "conductor_A" : "overhead_line_conductor_comm",     
-                    "conductor_B" : "overhead_line_conductor_comm",     
-                    "conductor_C" : "overhead_line_conductor_comm",     
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}
+                                    "name" : "line_configuration_commABC",     
+                                    "conductor_A" : "overhead_line_conductor_comm",     
+                                    "conductor_B" : "overhead_line_conductor_comm",     
+                                    "conductor_C" : "overhead_line_conductor_comm",     
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}
     last_object_key += 1 
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commAB",     
-                    "conductor_A" : "overhead_line_conductor_comm",     
-                    "conductor_B" : "overhead_line_conductor_comm",         
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}
+                                    "name" : "line_configuration_commAB",     
+                                    "conductor_A" : "overhead_line_conductor_comm",     
+                                    "conductor_B" : "overhead_line_conductor_comm",         
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}
     last_object_key += 1 
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commAC",     
-                    "conductor_A" : "overhead_line_conductor_comm",          
-                    "conductor_C" : "overhead_line_conductor_comm",     
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}     
+                                    "name" : "line_configuration_commAC",     
+                                    "conductor_A" : "overhead_line_conductor_comm",          
+                                    "conductor_C" : "overhead_line_conductor_comm",     
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}     
     last_object_key += 1
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commBC",         
-                    "conductor_B" : "overhead_line_conductor_comm",     
-                    "conductor_C" : "overhead_line_conductor_comm",     
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}
+                                    "name" : "line_configuration_commBC",         
+                                    "conductor_B" : "overhead_line_conductor_comm",     
+                                    "conductor_C" : "overhead_line_conductor_comm",     
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}
     last_object_key += 1 
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commA",     
-                    "conductor_A" : "overhead_line_conductor_comm",        
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}     
+                                    "name" : "line_configuration_commA",     
+                                    "conductor_A" : "overhead_line_conductor_comm",        
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}     
     last_object_key += 1
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commB",        
-                    "conductor_B" : "overhead_line_conductor_comm",         
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}     
+                                    "name" : "line_configuration_commB",        
+                                    "conductor_B" : "overhead_line_conductor_comm",         
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}     
     last_object_key += 1
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commC",        
-                    "conductor_C" : "overhead_line_conductor_comm",         
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}
+                                    "name" : "line_configuration_commC",        
+                                    "conductor_C" : "overhead_line_conductor_comm",         
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}
     last_object_key += 1
 
     #initializations for the commercial "house" list
 
     #print('iterating over commercial_dict')
-    for iii in commercial_dict:
-      total_comm_houses = commercial_dict[iii]['number_of_houses'][0] + commercial_dict[iii]['number_of_houses'][1] + commercial_dict[iii]['number_of_houses'][2]
-      
+    for iii in commercial_dict:      
       my_phases = 'ABC'
       
       # read through the phases and do some bit-wise math
@@ -182,8 +180,6 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
       # Grab the load classification
       classID = commercial_dict[iii]['load_classification'] # Get load classification
       load_config_data = Configuration.LoadClassConfiguration(config_data,classID) 
-      # Determine how many houses and of what building type the classification designates
-      com_buildings_classified = [config_data["com_buildings"][0][classID] * total_comm_houses,config_data["com_buildings"][1][classID] * total_comm_houses,config_data["com_buildings"][2][classID] * total_comm_houses] # cID-1 for index fixing
 
       # Same for everyone - TODO: move to tech specs?
       air_heat_fraction = 0
@@ -202,44 +198,46 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
       # Office building - must have all three phases and enough load for 15 zones
       #                     *or* load is classified to be office buildings 
       if (classID == 8): #jlh
-        no_of_offices = int(round(total_comm_houses / 15))
-        if (no_of_offices == 0):
-          no_of_offices = 1
         glmCaseDict[last_object_key] = {"object" : "transformer_configuration",
-                        "name" : "CTTF_config_A_{:s}".format(my_name),
-                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
-                        "install_type" : "POLETOP",
-                        "impedance" : "0.00033+0.0022j",
-                        "shunt_impedance" : "10000+10000j",
-                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
-                        "secondary_voltage" : "{:.3f}".format(120),
-                        "powerA_rating" : "50 kVA"}
+                                        "name" : "CTTF_config_A_{:s}".format(my_name),
+                                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
+                                        "install_type" : "POLETOP",
+                                        "impedance" : "0.00033+0.0022j",
+                                        "shunt_impedance" : "10000+10000j",
+                                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
+                                        "secondary_voltage" : "{:.3f}".format(120),
+                                        "powerA_rating" : "50 kVA"}
         last_object_key += 1
         
         glmCaseDict[last_object_key] = {"object" : "transformer_configuration",
-                        "name" : "CTTF_config_B_{:s}".format(my_name),
-                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
-                        "install_type" : "POLETOP",
-                        "impedance" : "0.00033+0.0022j",
-                        "shunt_impedance" : "10000+10000j",
-                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
-                        "secondary_voltage" : "{:.3f}".format(120),
-                        "powerB_rating" : "50 kVA"}
+                                        "name" : "CTTF_config_B_{:s}".format(my_name),
+                                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
+                                        "install_type" : "POLETOP",
+                                        "impedance" : "0.00033+0.0022j",
+                                        "shunt_impedance" : "10000+10000j",
+                                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
+                                        "secondary_voltage" : "{:.3f}".format(120),
+                                        "powerB_rating" : "50 kVA"}
         last_object_key += 1
 
         glmCaseDict[last_object_key] = {"object" : "transformer_configuration",
-                        "name" : "CTTF_config_C_{:s}".format(my_name),
-                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
-                        "install_type" : "POLETOP",
-                        "impedance" : "0.00033+0.0022j",
-                        "shunt_impedance" : "10000+10000j",
-                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
-                        "secondary_voltage" : "{:.3f}".format(120),
-                        "powerC_rating" : "50 kVA"}
+                                        "name" : "CTTF_config_C_{:s}".format(my_name),
+                                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
+                                        "install_type" : "POLETOP",
+                                        "impedance" : "0.00033+0.0022j",
+                                        "shunt_impedance" : "10000+10000j",
+                                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
+                                        "secondary_voltage" : "{:.3f}".format(120),
+                                        "powerC_rating" : "50 kVA"}
         last_object_key += 1
-        #print('iterating over number of offices')
-        for jjj in range(no_of_offices):
-          floor_area_choose = 40000 * (0.5 * random.random() + 0.5); #up to -50# #config_data.floor_area
+
+        load_to_allocate = sum(commercial_dict[iii]['load']) # W
+        median_office_area = 40000.0
+        no_of_offices = 0
+        while load_to_allocate > median_office_area * 0.5 * config_data['peak_load_intensities'][classID]:
+          floor_area_choose = median_office_area * (0.5 * random.random() + 0.5); #up to -50# #config_data.floor_area
+          load_to_allocate -= floor_area_choose * config_data['peak_load_intensities'][classID]
+          no_of_offices += 1
           ceiling_height = 13;
           airchange_per_hour = 0.69;
           Rroof = 19;

@@ -42,7 +42,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
             # 'emissions_peak' is not tied to the actual feeder, and is not an energy-based penetration.
             # penetration_* is also in % units, so should be divided by 100        
             # total_office_pv_units = math.ceil((config_data['emissions_peak'] * penetration_office) / tech_data['solar_averagepower_office'])
-            total_office_pv_units = int(math.ceil(solar_office_array[0] * penetration_office / 100.0))
+            total_office_pv_units = int(math.ceil(float(solar_office_array[0]) * penetration_office / 100.0))
             total_office_number = int(solar_office_array[0])
             
             # print("Num offices: {}, solar penetration: {}, num expected PV units: {}".format(
@@ -61,6 +61,12 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
             # Attach PV units to dictionary
             pv_unit = 0
             floor_area = round(solar_rating / (92.902 * 0.20))
+            # randomize
+            #   - cell efficiency
+            #   - orientation_azimuth [deg]
+            #   - tilt_angle [deg]
+            # size based on avg. CF, and avg. kWh/ft^2 by building class
+            
             
             for x in range(total_office_number):
                 parent = solar_office_array[1][random_index[x]]
@@ -88,7 +94,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                                                   'generator_status' : 'ONLINE',
                                                   'inverter_type' : 'PWM',
                                                   'power_factor' : '1.0',
-                                                  'inverter_efficiency' : '0.9',
+                                                  'inverter_efficiency' : '0.95',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
                                                   
                         # Write the PV inverter
@@ -163,7 +169,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                                                   'generator_status' : 'ONLINE',
                                                   'inverter_type' : 'PWM',
                                                   'power_factor' : '1.0',
-                                                  'inverter_efficiency' : '0.9',
+                                                  'inverter_efficiency' : '0.95',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
                                                   
                         # Write the PV inverter
@@ -247,7 +253,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                                                   'generator_status' : 'ONLINE',
                                                   'inverter_type' : 'PWM',
                                                   'power_factor' : '1.0',
-                                                  'inverter_efficiency' : '0.9',
+                                                  'inverter_efficiency' : '0.95',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
                                                   
                         # Write the PV inverter
@@ -342,7 +348,7 @@ def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key,
                                                   'generator_status' : 'ONLINE',
                                                   'inverter_type' : 'PWM',
                                                   'power_factor' : '1.0',
-                                                  'inverter_efficiency' : '0.9',
+                                                  'inverter_efficiency' : '0.95',
                                                   'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
                                                   
                         # Write the PV panel

@@ -119,17 +119,25 @@ class GlmFile(dict):
                     continue
                 result.append(candidate_key)            
         return result
-      
+        
     def get_connector_by_to_node(self,to_node_key,connector_type=None):
         """
-        Looks for the first connecting object that refers to self[to_node_key] 
-        in a 'to' field. Optionally restricts the returned object to be of a 
-        certain connector_type.
+        Deprecated. See get_connector_keys_by_node.
+        """
+        all_keys = get_connector_keys_by_node(self, to_node_key, 'to', connector_type)
+        return all_keys[0] if len(all_keys) > 0 else None
+      
+    def get_connector_keys_by_node(self, node_key, connector_field = 'to', connector_type=None):
+        """
+        Looks for connecting objects that refer to self[to_node_key] 
+        in the connector_field. Optionally restricts the returned objects 
+        to be of a certain connector_type.
         
         Parameters:
-            to_node_key (int): self[to_node_key] is the object we expect to 
-                               be in a 'to' field of another object
-            connector_type (string): 
+            node_key (int): self[node_key] is the object we expect to 
+                            be in a connector_field of another object
+            
+            connector_type (string): connector object type
             
         Returns None if self[to_node_key] is not connected 'to', or there is
         no such connector of connector type.
@@ -139,18 +147,19 @@ class GlmFile(dict):
         its 'to' field, and object_is_type(self[connector_key],connector_type)
         (which always returns True if parent_type is None).
         """
-        result = None
-        if to_node_key in self and 'name' in self[to_node_key]:
-            to_node_name = self[to_node_key]['name']
+        result = []
+        node_name = None
+        if node_key in self and 'name' in self[node_key]:
+            node_name = self[node_key]['name']
         else:
             return result
-        for obj_key, obj in self.items():
-            if 'to' in obj and obj['to'] == to_node_name:
-                if not GlmFile.object_is_type(obj,connector_type):
+        self.__populate_cache_maps(connector_field = connector_field)
+        if node_name in self.__cache_maps['connector_field_maps'][connector_field]:
+            for obj_key in self.__cache_maps['connector_field_maps'][connector_field][node_name]:
+                if not GlmFile.object_is_type(self[obj_key],connector_type):
                     continue
-                result = obj_key
-                break
-        return result  
+                result.append(obj_key)
+        return result
         
     def get_name_of_swing_bus(self):
         """
@@ -163,12 +172,15 @@ class GlmFile(dict):
                         return value['name']
         return None
         
-    def __populate_cache_maps(self, glm_type = None):
+    def __populate_cache_maps(self, glm_type = None, connector_field = None):
         if self.__cache_maps is None:
             self.__cache_maps = {}
-            self.__cache_maps['name_map'] = {}
-            self.__cache_maps['type_map'] = {}
-            self.__cache_maps['parent_name_map'] = {}
+            self.__cache_maps['name_map'] = {} # object name to list of keys
+            self.__cache_maps['type_map'] = {} # object type to list of deep copy objects
+            # object name to list of keys whose objects point to this name from 
+            # their parent field
+            self.__cache_maps['parent_name_map'] = {} 
+            self.__cache_maps['connector_field_maps'] = {}
             for key, glm_object in self.items():
                 if 'name' in glm_object:
                     if not glm_object['name'] in self.__cache_maps['name_map']:
@@ -183,9 +195,19 @@ class GlmFile(dict):
         if not glm_type is None:
             if not glm_type in self.__cache_maps['type_map']:
                 self.__cache_maps['type_map'][glm_type] = []
-                for key, value in sorted(self.items(), key=lambda pair: pair[0]):
-                    if GlmFile.object_is_type(value, glm_type):
-                        self.__cache_maps['type_map'][glm_type].append(copy.deepcopy(value))
+                for key, glm_object in sorted(self.items(), key=lambda pair: pair[0]):
+                    if GlmFile.object_is_type(glm_object, glm_type):
+                        self.__cache_maps['type_map'][glm_type].append(copy.deepcopy(glm_object))
+        if not connector_field is None:
+            if not connector_field in self.__cache_maps['connector_field_maps']:
+                # object name to list of keys of connector objects that point to 
+                # this name from their connector_field
+                self.__cache_maps['connector_field_maps'][connector_field] = {}
+                for key, glm_object in sorted(self.items(), key = lambda pair: pair[0]):
+                    if connector_field in glm_object:
+                        if not glm_object[connector_field] in self.__cache_maps['connector_field_maps'][connector_field]:
+                            self.__cache_maps['connector_field_maps'][connector_field][glm_object[connector_field]] = []
+                        self.__cache_maps['connector_field_maps'][connector_field][glm_object[connector_field]].append(key)
         
     def __setitem__(self, key, item):
         if not isinstance(key, int):
