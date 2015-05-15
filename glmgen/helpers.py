@@ -85,3 +85,16 @@ def complex_power_to_power_type(complex_power, power_type):
         print("Unexpected power_type '{}'. Was expecting 'real', 'reactive', or 'apparent'. Returning full complex power.".format(power_type))
     return result
     
+def get_transformer_size(load_kVA, transformer_ratings_kVA, oversize_factor)
+    for i, y in enumerate(transformer_ratings_kVA):
+        if y >= load_kVA * oversize_factor:
+          load_rating = y
+          load_rating_index = i
+          break
+        elif y == transformer_ratings_kVA[-1]:
+          load_rating = y
+          load_rating_index = i
+          break          
+    assert load_rating_index is not None
+    return load_rating, load_rating_index
+    

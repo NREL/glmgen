@@ -409,18 +409,11 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
         # TODO: Bypass this if load rating is known
         # Determine load_rating
         total_load = (load_A + load_B + load_C)/1000.0
-        load_rating = 0
-        load_rating_index = None
-        for i, y in enumerate(config_data['standard_transformer_ratings']):
-            if y >= total_load * config_data['tranformer_oversize_factor']:
-              load_rating = y
-              load_rating_index = i
-              break
-            elif y == config_data['standard_transformer_ratings'][-1]:
-              load_rating = y
-              load_rating_index = i
-              break          
-        assert load_rating_index is not None
+        load_rating, load_rating_index = helpers.get_transformer_size(
+                                             total_load, 
+                                             config_data['standard_transformer_ratings'], 
+                                             config_data['tranformer_oversize_factor'])
+        commercial_dict[commercial_key]['load_rating'] = load_rating
 
         # Deterimine load classification
         load_class = None
@@ -516,18 +509,11 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
           # Determine load_rating
           total_load = load/1000 # kW
-          load_rating = 0
-          load_rating_index = None
-          for i, y in enumerate(config_data['standard_transformer_ratings']):
-            if y >= total_load * config_data['tranformer_oversize_factor']:
-              load_rating = y
-              load_rating_index = i
-              break
-            elif y == config_data['standard_transformer_ratings'][-1]:
-              load_rating = y
-              load_rating_index = i
-              break
-          assert load_rating_index is not None
+          load_rating, load_rating_index = helpers.get_transformer_size(
+                                               total_load, 
+                                               config_data['standard_transformer_ratings'], 
+                                               config_data['tranformer_oversize_factor'])
+          residential_dict[residential_key]['load_rating'] = load_rating
 
           # Deterimine load classification
           load_class = None

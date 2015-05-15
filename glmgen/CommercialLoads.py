@@ -5,6 +5,7 @@ Created on Apr 9, 2013
 '''
 from __future__ import division
 from glmgen import Configuration
+from glmgen import helpers
 import random
 import math
 
@@ -145,6 +146,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
 
     #print('iterating over commercial_dict')
     for iii in commercial_dict:      
+      total_comm_houses = 0
       my_phases = 'ABC'
       
       # read through the phases and do some bit-wise math
@@ -176,6 +178,9 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
         my_parent = commercial_dict[iii]['name']
 
       nom_volt = float(commercial_dict[iii]['nom_volt'])
+      transformer_rating = helpers.get_transformer_size(commercial_dict[iii]['load_rating'] / float(no_of_phases), 
+                                                        config_data['standard_transformer_ratings'], 
+                                                        1.0)
       
       # size of original load object
       load_to_allocate = sum(commercial_dict[iii]['load']) # W
@@ -236,10 +241,12 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
 
         median_office_area = 40000.0
         no_of_offices = 0
+        print('Office minimum load to keep allocating: {} W'.format(median_office_area * 0.5 * config_data['peak_load_intensities'][classID]))
         while load_to_allocate > median_office_area * 0.5 * config_data['peak_load_intensities'][classID]:
+          print('Office load to allocate: {} W'.format(load_to_allocate))
           floor_area_choose = median_office_area * (random.random() + 0.5); #up to -50# #config_data.floor_area
           load_to_allocate -= floor_area_choose * config_data['peak_load_intensities'][classID]
-          no_of_offices += 1
+          no_of_offices += 1; total_comm_houses += 1
           ceiling_height = 13;
           airchange_per_hour = 0.69;
           Rroof = 19;
@@ -586,6 +593,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             #end # office zones (1-5)        
           #end  #office floors (1-3)
         #end # total offices needed
+        print('Office unallocated load: {} W'.format(load_to_allocate))
         #print('finished iterating over number of offices')
       # Big box - has at least 2 phases and enough load for 6 zones
       #            *or* load is classified to be big boxes
@@ -633,7 +641,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
           print('Big box load to allocate: {} W'.format(load_to_allocate))
           floor_area_choose = median_big_box_area * (0.5 + random.random()); #+/- 50#
           load_to_allocate -= floor_area_choose * config_data['peak_load_intensities'][classID]
-          no_of_bigboxes += 1
+          no_of_bigboxes += 1; total_comm_houses += 1
           ceiling_height = 14;
           airchange_per_hour = 1.5;
           Rroof = 19;
@@ -943,14 +951,13 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
               last_object_key += 1
         
             #end #zone index
-          #end #phase index    
-        print('Big box unallocated load: {} W'.format(load_to_allocate))
+          #end #phase index
         #end #number of big boxes
+        print('Big box unallocated load: {} W'.format(load_to_allocate))
         #print('finished iterating over number of big boxes')
       # Strip mall
-      elif (classID == 6 and total_comm_houses > 0): # unlike for big boxes and offices, if total house number = 0, just don't populate anything.
-        no_of_strip = total_comm_houses;
-        strip_per_phase = int(math.ceil(no_of_strip / no_of_phases))
+      elif (classID == 6): 
+        load_per_phase = load_to_allocate / float(no_of_phases)
         if (has_phase_A == 1):
           glmCaseDict[last_object_key] = {"object" : "transformer_configuration",
                           "name" : "CTTF_config_A_{:s}".format(my_name),
@@ -960,7 +967,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                           "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
-                          "powerA_rating" : "{:.0f} kVA".format(50*strip_per_phase)}
+                          "powerA_rating" : "50 kVA"}
 
           last_object_key += 1;
 
@@ -973,7 +980,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                           "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
-                          "powerB_rating" : "{:.0f} kVA".format(50*strip_per_phase)}
+                          "powerB_rating" : "50 kVA"}
 
           last_object_key += 1;
 
@@ -986,7 +993,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                           "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
-                          "powerC_rating" : "{:.0f} kVA".format(50*strip_per_phase)}
+                          "powerC_rating" : "50 kVA"}
 
           last_object_key += 1;
 
@@ -1016,7 +1023,6 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
           
         #print('iterating over number of stripmalls')    
         for phind in range(no_of_phases):
-          floor_area_choose = 2400 * (0.7 + 0.6 * random.random()); #+/- 30#
           ceiling_height = 12;
           airchange_per_hour = 1.76;
           Rroof = 19;
@@ -1031,7 +1037,16 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
           thermal_mass_per_floor_area = 3.9 * (0.5 + 1 * random.random()); #+/- 50#
           exterior_ceiling_fraction = 1;
 
-          for jjj in range(strip_per_phase):
+          median_strip_mall_area = 2400.0
+          strip_per_phase = 0
+          phase_load_to_allocate = load_per_phase
+          print('Strip mall minimum load to keep allocating on phase {}: {} W'.format(ph[phind], median_strip_mall_area * 0.7 * config_data['peak_load_intensities'][classID]))
+          while phase_load_to_allocate > median_strip_mall_area * 0.7 * config_data['peak_load_intensities'][classID]:
+            print('Strip mall load to allocate on phase {}: {} W'.format(ph[phind], phase_load_to_allocate))
+            floor_area = median_strip_mall_area * (0.7 + 0.6 * random.random())
+            phase_load_to_allocate -= floor_area * config_data['peak_load_intensities'][classID]
+            strip_per_phase += 1; total_comm_houses += 1
+          
             # skew each office zone identically per floor
             sk = round(2*random.normalvariate(0,1));
             skew_value = tech_data["commercial_skew_std"] * sk
@@ -1039,32 +1054,22 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
               skew_value = -tech_data["commercial_skew_max"]
             elif (skew_value > tech_data["commercial_skew_max"]):
               skew_value = tech_data["commercial_skew_max"]
-
-            if (jjj == 1 or jjj == (math.floor(strip_per_phase/2)+1)):
-              floor_area = floor_area_choose;
+           
+            if random.random() < 0.5:
               aspect_ratio = 1.5;
               window_wall_ratio = 0.05;
-
-              #if (j == jjj):
-              #    exterior_wall_fraction = 0.7;
-              #    exterior_floor_fraction = 1.4;                    
-              #else:
               exterior_wall_fraction = 0.4;
               exterior_floor_fraction = 0.8;
-
               interior_exterior_wall_ratio = -0.05;
             else:
-              floor_area = floor_area_choose/2;
               aspect_ratio = 3.0;
               window_wall_ratio = 0.03;
-
-              if (jjj == strip_per_phase):
+              if random.random() < 0.5:
                 exterior_wall_fraction = 0.63;
                 exterior_floor_fraction = 2;
               else:
                 exterior_wall_fraction = 0.25;
                 exterior_floor_fraction = 0.8;
-
               interior_exterior_wall_ratio = -0.40;
 
             no_of_doors = 1;
@@ -1307,6 +1312,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             last_object_key += 1
             #end
           #end #number of strip zones
+          print('Strip mall unallocated load on phase {}: {} W'.format(ph[phind], phase_load_to_allocate))
         #end #phase index
       #end #commercial selection
         #print('finished iterating over number of stripmalls')
