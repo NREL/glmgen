@@ -176,6 +176,9 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
         my_parent = commercial_dict[iii]['name']
 
       nom_volt = float(commercial_dict[iii]['nom_volt'])
+      
+      # size of original load object
+      load_to_allocate = sum(commercial_dict[iii]['load']) # W
 
       # Grab the load classification
       classID = commercial_dict[iii]['load_classification'] # Get load classification
@@ -231,11 +234,10 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                                         "powerC_rating" : "50 kVA"}
         last_object_key += 1
 
-        load_to_allocate = sum(commercial_dict[iii]['load']) # W
         median_office_area = 40000.0
         no_of_offices = 0
         while load_to_allocate > median_office_area * 0.5 * config_data['peak_load_intensities'][classID]:
-          floor_area_choose = median_office_area * (0.5 * random.random() + 0.5); #up to -50# #config_data.floor_area
+          floor_area_choose = median_office_area * (random.random() + 0.5); #up to -50# #config_data.floor_area
           load_to_allocate -= floor_area_choose * config_data['peak_load_intensities'][classID]
           no_of_offices += 1
           ceiling_height = 13;
@@ -475,6 +477,9 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
               else:
                 parent_house["cooling_setpoint"] = "office_cooling"
                 if (use_flags["use_market"] == 3):
+                  # no_of_offices is likely not the thing to use here now that no_of_offices is not
+                  # determined prior to creating all of the offices. 
+                  # TODO: SHOULD BE FIXED BEFORE USING MARKETS
                   c_on = 600 + 600*dlc_c_rand( (iii-1) * no_of_offices + jjj );
                   temp_c = 0.2+0.3*dlc_c_rand2( (iii-1) * no_of_offices + jjj );
                   c_off = c_on * ( temp_c / (1 - temp_c) ); # 30-50# of the total time should be "off"
@@ -585,9 +590,6 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
       # Big box - has at least 2 phases and enough load for 6 zones
       #            *or* load is classified to be big boxes
       elif (classID == 7): #jlh
-        no_of_bigboxes = int(round(total_comm_houses / 6))
-        if (no_of_bigboxes == 0): #jlh
-          no_of_bigboxes = 1
 
         if (has_phase_A == 1):
           glmCaseDict[last_object_key] = {"object" : "transformer_configuration",
@@ -624,9 +626,14 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                           "secondary_voltage" : "{:.3f}".format(120),
                           "powerC_rating" : "50 kVA"}
           last_object_key += 1;
-        #print('iterating over number of big boxes')
-        for jjj in range(no_of_bigboxes):
-          floor_area_choose = 20000 * (0.5 + 1 * random.random()); #+/- 50#
+        median_big_box_area = 20000.0
+        no_of_bigboxes = 0
+        print('Big box minimum load to keep allocating: {} W'.format(median_big_box_area * 0.5 * config_data['peak_load_intensities'][classID])
+        while load_to_allocate > median_big_box_area * 0.5 * config_data['peak_load_intensities'][classID]:
+          print('Big box load to allocate: {} W'.format(load_to_allocate))
+          floor_area_choose = median_big_box_area * (0.5 + random.random()); #+/- 50#
+          load_to_allocate -= floor_area_choose * config_data['peak_load_intensities'][classID]
+          no_of_bigboxes += 1
           ceiling_height = 14;
           airchange_per_hour = 1.5;
           Rroof = 19;
@@ -831,6 +838,9 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
               else:
                 parent_house["cooling_setpoint"] = "bigbox_cooling"
                 if (use_flags["use_market"] == 3):
+                  # no_of_bigboxes is likely not the thing to use here now that no_of_bigboxes is not
+                  # determined prior to creating all of the big boxes. 
+                  # TODO: SHOULD BE FIXED BEFORE USING MARKETS
                   c_on = 600 + 600*dlc_c_rand( (iii-1) * no_of_bigboxes + jjj + phind)
                   temp_c = 0.2+0.3*dlc_c_rand2((iii-1)*no_of_bigboxes + jjj +phind)
                   c_off = c_on * ( temp_c / (1 - temp_c) ); # 30-50# of the total time should be "off"
@@ -931,9 +941,10 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                               "power_pf" : "1.0",
                               "base_power" : "bigbox_occupancy*{:.2f}".format(adj_occ)}
               last_object_key += 1
-                              
+        
             #end #zone index
           #end #phase index    
+        print('Big box unallocated load: {} W'.format(load_to_allocate))
         #end #number of big boxes
         #print('finished iterating over number of big boxes')
       # Strip mall
@@ -1191,6 +1202,9 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             else:
               parent_house["cooling_setpoint"] = "stripmall_cooling"
               if (use_flags["use_market"] == 3):
+                # strip per phase is likely not the thing to use here now that strip_per_phase is not
+                # determined prior to creating all of the strip malls. 
+                # TODO: SHOULD BE FIXED BEFORE USING MARKETS
                 c_on = 600 + 600*dlc_c_rand( (iii-1) * strip_per_phase + jjj + phind );
                 temp_c = 0.2+0.3*dlc_c_rand2((iii-1)*strip_per_phase + jjj + phind);
                 c_off = c_on * ( temp_c / (1 - temp_c) ); # 30-50# of the total time should be "off"
