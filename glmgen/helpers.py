@@ -1,5 +1,6 @@
 from glmgen import feeder
 
+import random
 import re
 
 def calculate_load_by_phase(load_object, power_type = 'apparent'):
@@ -85,7 +86,7 @@ def complex_power_to_power_type(complex_power, power_type):
         print("Unexpected power_type '{}'. Was expecting 'real', 'reactive', or 'apparent'. Returning full complex power.".format(power_type))
     return result
     
-def get_transformer_size(load_kVA, transformer_ratings_kVA, oversize_factor)
+def get_transformer_size(load_kVA, transformer_ratings_kVA, oversize_factor):
     for i, y in enumerate(transformer_ratings_kVA):
         if y >= load_kVA * oversize_factor:
           load_rating = y
@@ -97,4 +98,24 @@ def get_transformer_size(load_kVA, transformer_ratings_kVA, oversize_factor)
           break          
     assert load_rating_index is not None
     return load_rating, load_rating_index
+    
+def get_bin_index(bins):
+    selection = random.random() * sum(bins)
+    cum_proportion = 0.0
+    for i, proportion in enumerate(bins):
+        if cum_proportion < selection <= cum_proportion + proportion:
+            return i
+        cum_proportion += proportion
+    assert False
+    return None
+    
+def cap_floor_area(chosen_floor_area, total_node_load, load_left_to_allocate, peak_load_intensity, tol = 0.5):
+    remainder = load_left_to_allocate - chosen_floor_area * peak_load_intensity
+    if remainder < 0.0:
+        if abs(remainder) > tol * total_node_load:
+            this_load = load_left_to_allocate + tol * total_node_load
+            new_floor_area = this_load / peak_load_intensity
+            print('Cutting floor area off at {:.0f} ft^2 (was {:.0f} ft^2).'.format(new_floor_area, chosen_floor_area))
+            return new_floor_area
+    return chosen_floor_area
     

@@ -4,6 +4,7 @@ from __future__ import division
 import math
 import random
 from glmgen import Configuration
+from glmgen import helpers
 
 def append_residential(ResTechDict, use_flags, config_data, tech_data, residential_dict, 
                        last_object_key, CPP_flag_name, market_penetration_random, dlc_rand, 
@@ -14,20 +15,19 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
   ts_residential_array = [0,[]]
   
   # Check if last_object_key exists in glmCaseDict
-  if last_object_key in ResTechDict:
-    while last_object_key in ResTechDict:
-      last_object_key += 1
+  last_key = ResTechDict.last_key()
   
   # Begin adding residential house dictionaries
-  if use_flags['use_homes'] == 1 and len(residential_dict) > 0:
-    count_house = 0
-    fl_area = []
-    
+  if use_flags['use_homes'] == 1 and len(residential_dict) > 0:    
     random.seed(3) if config_data["fix_random_seed"] else random.seed() 
-    #print('iterating over residential_dict')
+    to_remove = []
     # Begin attaching houses to designated triplex_meters    
     for x in residential_dict:
-      if residential_dict[x]['number_of_houses'] > 0:
+      total_houses = 0
+      original_object_key = ResTechDict.get_object_key_by_name(residential_dict[x]['name'], 'triplex_node')
+      original_object = ResTechDict[original_object_key]
+      
+      if residential_dict[x]['load'] > 0.0:
         if residential_dict[x]['parent'] != 'None':
           my_name = residential_dict[x]['parent'] + '_' + residential_dict[x]['name']
           my_parent = residential_dict[x]['parent']
@@ -35,38 +35,38 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
           my_name = residential_dict[x]['name']
           my_parent = residential_dict[x]['name']
           
-        no_houses = residential_dict[x]['number_of_houses']
         phase = residential_dict[x]['phases']
-        lg_vs_sm = residential_dict[x]['large_vs_small']
         classID = residential_dict[x]['load_classification']
+        load_to_allocate = residential_dict[x]['load']
         
         load_config_data = Configuration.LoadClassConfiguration(config_data,classID) 
-        # Find out how many houses in any sub-classifications
-        thermal_integrity = list(map(lambda a:math.ceil(a*no_houses),load_config_data['thermal_percentages']))
-        no_pool_pumps = math.fsum(load_config_data['SFH'])*no_houses # Total Single-Family Homes (only allow pool-pumps on SFH)
+        # Choose a sub-classifications (i.e., vintage)
+        vintage_index = helpers.get_bin_index(load_config_data['thermal_percentages'])
+        sfh = load_config_data['SFH'][vintage_index] # single family home fraction
         
-        # Find the number of houses in each thermal setpoint bin
-        cool_sp = []
-        heat_sp = []
-        sfh = list(map(lambda a,b:a*b,load_config_data['SFH'],thermal_integrity)) # Number of single-family homes in each subclass
-        
-        #range(thermal_integrity.length)
-        for y in range(len(thermal_integrity)):
-          cool_sp.append([])
-          heat_sp.append([])
-          for z in range(len(load_config_data['cooling_setpoint'])):
-            cool_sp[y].append(math.ceil(load_config_data['cooling_setpoint'][z][0] * thermal_integrity[y]))
-            heat_sp[y].append(math.ceil(load_config_data['heating_setpoint'][z][0] * thermal_integrity[y]))
-        #print('iterating over number of houses')
-        # Start adding house dictionaries
-        for y in range(no_houses):
+        # Fraction of houses in each thermal setpoint bin
+        cool_sp = []; heat_sp = []
+        for z in range(len(load_config_data['cooling_setpoint'])):
+          cool_sp.append(load_config_data['cooling_setpoint'][z][0])
+          heat_sp.append(load_config_data['heating_setpoint'][z][0])
+          
+        # allocate load
+        minimum_floor_area = load_config_data['floor_area'][classID] * 0.75
+        print('Minimum load to keep allocating {} houses: {:.1f} kW'.format(
+                  config_data['load_classifications'][classID], 
+                  minimum_floor_area * config_data['peak_load_intensities'][classID] / 1000.0))
+        print('{} total load to allocate: {:.1f} kW'.format(
+                  config_data['load_classifications'][classID], 
+                  load_to_allocate / 1000.0))
+        while load_to_allocate > minimum_floor_area * config_data['peak_load_intensities'][classID]:
+          total_houses += 1; y = total_houses                  
           ResTechDict[last_object_key] = {'object' : 'triplex_meter',
-                          'phases' : '{:s}'.format(phase),
-                          'name' : 'tpm{:d}_{:s}'.format(y,my_name),
-                          'parent' : '{:s}'.format(my_parent),
-                          'groupid' : 'Residential_Meter',
-                          'meter_power_consumption' : '{:s}'.format(tech_data['res_meter_cons']),
-                          'nominal_voltage' : '120'}
+                                          'phases' : '{:s}'.format(phase),
+                                          'name' : 'tpm{:d}_{:s}'.format(y,my_name),
+                                          'parent' : '{:s}'.format(my_parent),
+                                          'groupid' : 'Residential_Meter',
+                                          'meter_power_consumption' : '{:s}'.format(tech_data['res_meter_cons']),
+                                           'nominal_voltage' : '120'}
                           
           if use_flags['use_billing'] == 1:
             ResTechDict[last_object_key]['bill_mode'] = 'UNIFORM'
@@ -126,66 +126,36 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
             
           ResTechDict[last_object_key]['schedule_skew'] = '{:.0f}'.format(skew_value)
           
-          # Choose what type of building we are going to use
-          # and set the thermal integrity of said building
-          size_a = len(thermal_integrity)
-          
-          for z in range(len(thermal_integrity)):
-            if type(thermal_integrity[z]) == type([]):# Checks to see if contents of thermal_integrity are lists
-              size_b = len(thermal_integrity[z])
-            else:
-              size_b = 1
-          
-          therm_int = int(math.ceil(size_a * size_b * random.random()))
-          
-          row_ti = therm_int % size_a
-          col_ti = therm_int % size_b
-          
-          while thermal_integrity[row_ti] < 1:
-            therm_int = int(math.ceil(size_a * size_b * random.random()))
-            row_ti = therm_int % size_a
-            col_ti = therm_int % size_b
-            
-          thermal_integrity[row_ti] -= 1
-          thermal_temp = load_config_data['thermal_properties'][row_ti]
+          thermal_temp = load_config_data['thermal_properties'][vintage_index]
           
           f_area = load_config_data['floor_area'][classID]
           story_rand = random.random()
           height_rand = random.randint(1,2)
           fa_rand = random.random()
           
-          if sfh[row_ti] > 0:
-            floor_area = f_area + (f_area / 2) * fa_rand * ((row_ti - 4) / 3)
-            
+          floor_area = f_area + (f_area / 2) * (0.5 - fa_rand)
+          if sfh == 1:
             if story_rand < load_config_data['one_story'][classID]:
               stories = 1
             else:
               stories = 2
-            
-            sfh[row_ti] = sfh[row_ti] - 1
           else:
-            floor_area = f_area + (f_area / 2) * (0.5 - fa_rand)
             stories = 1
             height_rand = 0
-          
-          # Now also adjust square footage as a factor of whether
-          # the load modifier (avg_house) rounded up or down
-          floor_area = (1 + lg_vs_sm) * floor_area
           
           if floor_area > 4000:
             floor_area = 3800 + fa_rand*200
           elif floor_area < 300:
             floor_area = 300 + fa_rand*100
           
-          fl_area.append(floor_area)
-          count_house += 1
-          
           ResTechDict[last_object_key]['floor_area'] = '{:.0f}'.format(floor_area)
           ResTechDict[last_object_key]['number_of_stories'] = '{:.0f}'.format(stories)
           
+          load_to_allocate -= floor_area * config_data['peak_load_intensities'][classID]
+          
           ceiling_height = 8 + height_rand
           ResTechDict[last_object_key]['ceiling_height'] = '{:.0f}'.format(ceiling_height)
-          #ResTechDict[last_object_key]['comment'] = '//Load Classification -> {:s} {:.0f}'.format(config_data['load_classifications'][classID],row_ti + 1)
+          #ResTechDict[last_object_key]['comment'] = '//Load Classification -> {:s} {:.0f}'.format(config_data['load_classifications'][classID],vintage_index + 1)
           ResTechDict[last_object_key]['comment'] = '//Load Classification -> {:s}'.format(config_data['load_classifications'][classID])
           
           rroof = thermal_temp[0] * (0.8 + (0.4 * random.random()))
@@ -286,34 +256,11 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
           
           # Choose a cooling bin
           coolsp = load_config_data['cooling_setpoint']
-          no_cool_bins = len(coolsp)
-          
-          # See if we have that bin left
-          cool_bin = random.randint(0,no_cool_bins - 1)
-            
-          while cool_sp[row_ti][cool_bin] < 1:
-            cool_bin = random.randint(0,no_cool_bins - 1)
-            
-          cool_sp[row_ti][cool_bin] -= 1
+          cool_bin = helpers.get_bin_index(cool_sp)
           
           # Choose a heating bin
           heatsp = load_config_data['heating_setpoint']
-          no_heat_bins = len(heatsp)
-          heat_bin = random.randint(0,no_heat_bins - 1)
-          heat_count = 1
-          
-          while heat_sp[row_ti][heat_bin] < 1 or heatsp[heat_bin][2] >= coolsp[cool_bin][3]:
-            heat_bin = random.randint(0,no_heat_bins - 1)
-            
-            # if we tried a few times, give up and take an extra
-            # draw from the lowest bin
-            if heat_count > 20:
-              heat_bin = 0
-              break;
-
-            heat_count = heat_count + 1
-            
-          heat_sp[row_ti][heat_bin] -= 1
+          heat_bin = helpers.get_bin_index(heat_sp)
           
           # Randomly choose within the bin, then +/- one
           # degree to seperate the deadbands
@@ -610,7 +557,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
           last_object_key += 1
           #print('finished unresponsive zipload')
           # Add pool pumps only on single-family homes
-          if pool_pump_perc < (2*load_config_data['perc_poolpumps']) and no_pool_pumps >= 1 and row_ti == 0:
+          if pool_pump_perc < (2*load_config_data['perc_poolpumps']) and sfh == 1 and vintage_index == 0:
             ResTechDict[last_object_key] = {'object' : 'ZIPload',
                             'name' : 'house{:d}_ppump_{:s}'.format(y,my_name),
                             'parent' : 'house{:d}_{:s}'.format(y,my_name),
@@ -672,7 +619,6 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                               'second_tier_price' : '{:f}'.format(config_data['CPP_prices'][2])}
               last_object_key += 1
             
-            no_pool_pumps -= 1
           #print('finished pool pump zipload')  
           # Add Water heater objects
           heat_element = 3.0 + (0.5 * random.randint(1,5))
@@ -754,6 +700,21 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                               'state_property' : 'override'}
               last_object_key += 1
         #print('finished water heater')
-      #print('finished iterating over number of houses')
+      #print('finished allocating load to houses')
+      print('Num houses: {}'.format(total_houses))
+      print('Unallocated load for {}: {:.1f} kW'.format(config_data['load_classifications'][classID], load_to_allocate / 1000.0))
+            
+      # add the "street light" loads
+      if total_houses == 0 and residential_dict[x]['load'] > 0 and use_flags['use_normalized_loadshapes'] == 0:
+        c_load = residential_dict[x]['complex_load']
+        original_object['power_12_real'] = 'street_lighting*{:.4f}'.format(c_load.real*tech_data['light_scalar_res'])
+        original_object['power_12_reac'] = 'street_lighting*{:.4f}'.format(c_load.imag*tech_data['light_scalar_res'])
+      else:
+        to_remove.append(original_object_key)       
+      
     #print('finished iterating over residential dict')
+    
+    for x in to_remove:
+      del ResTechDict[x]
+      
   return (ResTechDict, solar_residential_array, ts_residential_array, last_object_key)

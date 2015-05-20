@@ -66,8 +66,8 @@ def append_default_feeder_config_data(data, working_directory, resources_dir, di
   # Columns correspond to 'standard_transformer_ratings'.
   #                                [ 10,  15,  25,37.5,  50,  75, 100,150,167,250,333.3, 500,666.7]
   data['comm_load_class_dists'] = [[100, 100, 100, 100, 100, 100, 100, 15, 11,  0,    0,   0,    0], # Strip Mall - 6
-                                   [  0,   0,   0,   0,   0,   0,   0, 41, 32, 27,   17,   0,   50], # Big Box - 7
-                                   [  0,   0,   0,   0,   0,   0,   0, 44, 57, 73,   83, 100,   50]] # Office - 8
+                                   [  0,   0,   0,   0,   0,   0,   0, 85, 27, 22,   17,   0,    0], # Big Box - 7
+                                   [  0,   0,   0,   0,   0,   0,   0,  0, 62, 78,   83, 100,  100]] # Office - 8
   data['res_load_class_dists'] =  [[ 18,  43,  22,   0,  14,  10,   8,  2, 16, 16,   16,  16,   16], # Res 1 - Older SFH < 2000 ft2
                                    [ 76,  14,  61,   0,  48,   8,   4,  1, 16, 16,   16,  16,   16], # Res 2 - Newer SFH < 2000 ft2
                                    [  0,   0,   2, 100,   3,   8,  30,  1, 16, 16,   16,  16,   16], # Res 3 - Older SFH > 2000 ft2

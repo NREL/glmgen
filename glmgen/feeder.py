@@ -124,7 +124,7 @@ class GlmFile(dict):
         """
         Deprecated. See get_connector_keys_by_node.
         """
-        all_keys = get_connector_keys_by_node(self, to_node_key, 'to', connector_type)
+        all_keys = self.get_connector_keys_by_node(to_node_key, 'to', connector_type)
         return all_keys[0] if len(all_keys) > 0 else None
       
     def get_connector_keys_by_node(self, node_key, connector_field = 'to', connector_type=None):

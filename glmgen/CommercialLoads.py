@@ -37,9 +37,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
 
 
   # Check if last_object_key exists in glmCaseDict
-  if last_object_key in glmCaseDict:
-    while last_object_key in glmCaseDict:
-      last_object_key += 1
+  last_key = glmCaseDict.last_key()
 
   if len(commercial_dict) > 0 and use_flags["use_commercial"] == 1:
     # setup all of the line configurations we may need
@@ -241,12 +239,16 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
 
         median_office_area = 40000.0
         no_of_offices = 0
-        print('Office minimum load to keep allocating: {} W'.format(median_office_area * 0.5 * config_data['peak_load_intensities'][classID]))
+        print('Office minimum load to keep allocating: {:.1f} kW'.format(median_office_area * 0.5 * config_data['peak_load_intensities'][classID] / 1000.0))
+        print('Office total load to allocate: {:.1f} kW'.format(load_to_allocate / 1000.0))
         while load_to_allocate > median_office_area * 0.5 * config_data['peak_load_intensities'][classID]:
-          print('Office load to allocate: {} W'.format(load_to_allocate))
           floor_area_choose = median_office_area * (random.random() + 0.5); #up to -50# #config_data.floor_area
+          floor_area_choose = helpers.cap_floor_area(floor_area_choose,
+                                                     sum(commercial_dict[iii]['load']),
+                                                     load_to_allocate,
+                                                     config_data['peak_load_intensities'][classID])
           load_to_allocate -= floor_area_choose * config_data['peak_load_intensities'][classID]
-          no_of_offices += 1; total_comm_houses += 1
+          no_of_offices += 1; total_comm_houses += 1; jjj = no_of_offices
           ceiling_height = 13;
           airchange_per_hour = 0.69;
           Rroof = 19;
@@ -593,7 +595,8 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             #end # office zones (1-5)        
           #end  #office floors (1-3)
         #end # total offices needed
-        print('Office unallocated load: {} W'.format(load_to_allocate))
+        print('Num Offices: {}'.format(no_of_offices))
+        print('Office unallocated load: {:.1f} kW'.format(load_to_allocate / 1000.0))
         #print('finished iterating over number of offices')
       # Big box - has at least 2 phases and enough load for 6 zones
       #            *or* load is classified to be big boxes
@@ -636,12 +639,17 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
           last_object_key += 1;
         median_big_box_area = 20000.0
         no_of_bigboxes = 0
-        print('Big box minimum load to keep allocating: {} W'.format(median_big_box_area * 0.5 * config_data['peak_load_intensities'][classID])
+        print('Big box minimum load to keep allocating: {:.1f} kW'.format(
+                  median_big_box_area * 0.5 * config_data['peak_load_intensities'][classID] / 1000.0))
+        print('Big box total load to allocate: {:.1f} kW'.format(load_to_allocate / 1000.0))
         while load_to_allocate > median_big_box_area * 0.5 * config_data['peak_load_intensities'][classID]:
-          print('Big box load to allocate: {} W'.format(load_to_allocate))
           floor_area_choose = median_big_box_area * (0.5 + random.random()); #+/- 50#
+          floor_area_choose = helpers.cap_floor_area(floor_area_choose,
+                                                     sum(commercial_dict[iii]['load']),
+                                                     load_to_allocate,
+                                                     config_data['peak_load_intensities'][classID])
           load_to_allocate -= floor_area_choose * config_data['peak_load_intensities'][classID]
-          no_of_bigboxes += 1; total_comm_houses += 1
+          no_of_bigboxes += 1; total_comm_houses += 1; jjj = no_of_bigboxes
           ceiling_height = 14;
           airchange_per_hour = 1.5;
           Rroof = 19;
@@ -953,7 +961,8 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             #end #zone index
           #end #phase index
         #end #number of big boxes
-        print('Big box unallocated load: {} W'.format(load_to_allocate))
+        print('Num Bigboxes: {}'.format(no_of_bigboxes))
+        print('Big box unallocated load: {:.1f} kW'.format(load_to_allocate / 1000.0))
         #print('finished iterating over number of big boxes')
       # Strip mall
       elif (classID == 6): 
@@ -1013,12 +1022,12 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
         last_object_key += 1;
         
         if use_flags["use_solar"] != 0 or use_flags["use_solar_com"] != 0:
-              solar_stripmall_array[0] += 1
-              meters_stored = 0
+          solar_stripmall_array[0] += 1
+          meters_stored = 0
           
         # Store thermal storage technology parent information
         if use_flags["use_ts"] != 0:
-          ts_bigbox_array[0] += 1
+          ts_stripmall_array[0] += 1
           homes_stored = 0
           
         #print('iterating over number of stripmalls')    
@@ -1040,12 +1049,17 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
           median_strip_mall_area = 2400.0
           strip_per_phase = 0
           phase_load_to_allocate = load_per_phase
-          print('Strip mall minimum load to keep allocating on phase {}: {} W'.format(ph[phind], median_strip_mall_area * 0.7 * config_data['peak_load_intensities'][classID]))
+          print('Strip mall minimum load to keep allocating on phase {}: {:.1f} kW'.format(ph[phind], median_strip_mall_area * 0.7 * config_data['peak_load_intensities'][classID] / 1000.0))
+          print('Strip mall total load to allocate on phase {}: {:.1f} kW'.format(
+                    ph[phind], phase_load_to_allocate / 1000.0))
           while phase_load_to_allocate > median_strip_mall_area * 0.7 * config_data['peak_load_intensities'][classID]:
-            print('Strip mall load to allocate on phase {}: {} W'.format(ph[phind], phase_load_to_allocate))
             floor_area = median_strip_mall_area * (0.7 + 0.6 * random.random())
+            floor_area = helpers.cap_floor_area(floor_area,
+                                                load_per_phase,
+                                                phase_load_to_allocate,
+                                                config_data['peak_load_intensities'][classID])
             phase_load_to_allocate -= floor_area * config_data['peak_load_intensities'][classID]
-            strip_per_phase += 1; total_comm_houses += 1
+            strip_per_phase += 1; total_comm_houses += 1; jjj = strip_per_phase
           
             # skew each office zone identically per floor
             sk = round(2*random.normalvariate(0,1));
@@ -1312,14 +1326,15 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             last_object_key += 1
             #end
           #end #number of strip zones
-          print('Strip mall unallocated load on phase {}: {} W'.format(ph[phind], phase_load_to_allocate))
+          print('Num Strip Malls on phase {}: {}'.format(ph[phind], strip_per_phase))
+          print('Strip mall unallocated load on phase {}: {:.1f} kW'.format(ph[phind], phase_load_to_allocate / 1000.0))
         #end #phase index
       #end #commercial selection
-        #print('finished iterating over number of stripmalls')
+        
       # add the "street light" loads
       # parent them to the METER as opposed to the node, so we don't
       # have any "grandchildren"
-      elif total_comm_houses == 0 and sum(commercial_dict[iii]['load']) > 0:
+      if total_comm_houses == 0 and sum(commercial_dict[iii]['load']) > 0:
         #print('writing street_light')
         glmCaseDict[last_object_key] = {"object" : "load",
                         "parent" : "{:s}".format(my_parent),

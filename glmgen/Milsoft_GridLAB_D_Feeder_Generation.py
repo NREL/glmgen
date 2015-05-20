@@ -376,7 +376,6 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
         glmCaseDict[x]['groupid'] = 'Distribution_Line'
   
   # Create dictionary that houses the number of commercial 'load' objects where commercial house objects will be tacked on.
-  total_commercial_number = 0 # Variable that stores the total amount of houses that need to be added.
   commercial_dict = {}
   if use_flags['use_commercial'] == 1:
     commercial_key = 0
@@ -429,23 +428,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
                  break
             cum_perc += perc
             
-        # HERE -- Do not calculate number of houses here. Use a median peak kWh/ft^2 and determine number of 
-        # houses in Residential and Commercial scripts (keeping cumulative track). 
-        
         assert load_class is not None
         commercial_dict[commercial_key]['load_classification'] = load_class
-        
-        if load_A >= tech_data['load_cutoff']:
-          commercial_dict[commercial_key]['number_of_houses'][0] = int(math.ceil( load_A / config_data['avg_peak_loads'][load_class] ))
-          total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][0]
-
-        if load_B >= tech_data['load_cutoff']:
-          commercial_dict[commercial_key]['number_of_houses'][1] = int(math.ceil(load_B / config_data['avg_peak_loads'][load_class] ))
-          total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][1]
-
-        if load_C >= tech_data['load_cutoff']:
-          commercial_dict[commercial_key]['number_of_houses'][2] = int(math.ceil(load_C / config_data['avg_peak_loads'][load_class] ))
-          total_commercial_number += commercial_dict[commercial_key]['number_of_houses'][2] 
           
         # print('Replacing {:.0f} kW with buildings of type {}, on a transformer rated at {} kW.'.format(
         #       total_load,
@@ -474,11 +458,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
         
     for x in to_remove:
       del glmCaseDict[x]
-      
-    # print('Planning to replace {} load objects with {} commercial buildings.'.format(commercial_key, total_commercial_number))
         
   # Create dictionary that houses the number of residential 'load' objects where residential house objects will be tacked on.
-  total_house_number = 0
   residential_dict = {}
   if use_flags['use_homes'] == 1:
     residential_key = 0
@@ -506,6 +487,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           c_load = helpers.calculate_load(glmCaseDict[x], 'complex')
           
           residential_dict[residential_key]['load'] = load  
+          residential_dict[residential_key]['complex_load'] = c_load  
 
           # Determine load_rating
           total_load = load/1000 # kW
@@ -531,18 +513,10 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
                  break
                cum_perc += perc
             
-          # HERE -- Do not calculate number of houses here. Use a median peak kWh/ft^2 and determine number of 
-          # houses in Residential and Commercial scripts (keeping cumulative track). 
-            
           assert load_class is not None
           residential_dict[residential_key]['load_classification'] = load_class
-          residential_dict[residential_key]['number_of_houses'] = int(round( load / config_data['avg_peak_loads'][load_class] ))
-          total_house_number += residential_dict[residential_key]['number_of_houses']
-          # Determine whether we rounded down of up to help determine the square footage (neg. number => small homes)
-          residential_dict[residential_key]['large_vs_small'] = load / config_data['avg_peak_loads'][load_class] - residential_dict[residential_key]['number_of_houses']
-          # print('Replacing {:.0f} kW with {} houses of type {}, on a transformer rated at {} kW.'.format(
+          # print('Replacing {:.0f} kW with houses of type {}, on a transformer rated at {} kW.'.format(
           #     total_load,
-          #     residential_dict[residential_key]['number_of_houses'],
           #     config_data["load_classifications"][load_class],
           #     load_rating))
 
@@ -556,27 +530,14 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           if 'power_1' in glmCaseDict[x]:
             del glmCaseDict[x]['power_1']
 
-          if residential_dict[residential_key]['number_of_houses'] == 0 and load > 0 and use_flags['use_normalized_loadshapes'] == 0: # Residential street light
-            # print('No houses, making street lights instead.')
-            glmCaseDict[x]['power_12_real'] = 'street_lighting*{:.4f}'.format(c_load.real*tech_data['light_scalar_res'])
-            glmCaseDict[x]['power_12_reac'] = 'street_lighting*{:.4f}'.format(c_load.imag*tech_data['light_scalar_res'])
-          else:
-            # Remove the soon-to-be-dangling node
-            to_remove.append(x)
-
           residential_key += 1
-    
-    for x in to_remove:
-      del glmCaseDict[x]
-      
-    # print('Planning to replace {} triplex_node objects with {} houses.'.format(residential_key, total_house_number))
     
   # Calculate some random numbers needed for TOU/CPP and DLC technologies
   if use_flags['use_market'] != 0:
     # Initialize psuedo-random seed
     random.seed(2) if config_data["fix_random_seed"] else random.seed()
 
-    if total_house_number > 0:
+    if len(residential_dict) > 0:
       # Initialize random number arrays
       market_penetration_random = []
       dlc_rand = []
@@ -588,7 +549,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
       # Make a large array so we don't run out
       if len(residential_dict) > 0:
-        aa = len(residential_dict)*total_house_number
+        aa = len(residential_dict)*100 # was total_house_number -- just guessing at a big enough maximum number
         for x in range(aa):
           market_penetration_random.append(random.random())
           dlc_rand.append(random.random()) # Used for dlc randomization
