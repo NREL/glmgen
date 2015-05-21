@@ -119,3 +119,54 @@ def cap_floor_area(chosen_floor_area, total_node_load, load_left_to_allocate, pe
             return new_floor_area
     return chosen_floor_area
     
+def get_buildings(glm_file):
+    """
+    Returns list of tuples with
+      - (triplex_)meter_key
+      - classID
+      - floor_area
+    """
+    result = []
+    # ugly hardcoding to match the ugly hardcoding below
+    load_classes = ['Residential1', 'Residential2', 'Residential3', 'Residential4', 'Residential5', 'Residential6', 'Strip Mall', 'Big Box', 'Office'] 
+    for key, glm_object in glm_file.items():
+        if GlmFile.object_is_type(glm_object, 'meter') or GlmFile.object_is_type(glm_object, 'triplex_meter'):
+            if ('groupid' in glm_object) and (glm_object['groupid'] in ['Commercial_Meter', 'Residential_Meter']):
+                load_class, floor_area = extract_bldg_input_data(glm_file, key)
+                result.append((key, load_classes.index(load_class), floor_area))
+    return result
+    
+def extract_bldg_input_data(glm_file, bldg_meter_key):
+    load_class = None; floor_area = 0.0
+    bldg_meter = glm_file[bldg_meter_key]
+    if GlmFile.object_is_type(bldg_meter, 'meter'):
+        assert bldg_meter['groupid'] == 'Commercial_Meter'
+        if re.search('_office_', bldg_meter['name']):
+            load_class = 'Office'
+        else:
+            assert re.search('_bigbox_', bldg_meter['name'])
+            load_class = 'Big Box'
+        # to get floor_area follow meter -> transformer -> triplex_meter -> house
+        for transformer_key in glm_file.get_connector_keys_by_node(bldg_meter_key, 'from', 'transformer'):
+          assert 'to' in glm_file[transformer_key]
+          tm_name = glm_file[transformer_key]['to']
+          tm_key = glm_file.get_object_key_by_name(tm_name, 'triplex_meter')
+          for house_key in glm_file.get_children_keys(tm_key, 'house'):
+              assert 'floor_area' in glm_file[house_key]
+              floor_area += float(glm_file[house_key]['floor_area'])
+    else:
+        assert GlmFile.object_is_type(bldg_meter, 'triplex_meter')
+        child_house_keys = glm_file.get_children_keys(bldg_meter_key, 'house')
+        assert len(child_house_keys) == 1        
+        if bldg_meter['groupid'] == 'Commercial_Meter':
+            load_class = 'Strip Mall'
+        else:
+            assert bldg_meter['groupid'] == 'Residential_Meter'
+            assert 'comment' in glm_file[child_house_keys[0]]
+            m = re.match(r'.*Load Classification -> (.+)', 
+                         glm_file[child_house_keys[0]]['comment'])
+            load_class = m.group(1)
+        assert 'floor_area' in glm_file[child_house_keys[0]]
+        floor_area = float(glm_file[child_house_keys[0]]['floor_area'])
+    return load_class, floor_area    
+        

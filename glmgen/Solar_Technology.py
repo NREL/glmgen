@@ -1,39 +1,62 @@
 from __future__ import division
+
+from glmgen import helpers
+
 import math
 import random
 
-def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key, 
-                 solar_bigbox_array=None, solar_office_array=None, 
-                 solar_stripmall_array=None, solar_residential_array=None):
+def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key):
     # PV_Tech_Dict - the dictionary that we add solar objects to
     # use_flags - the output from TechnologyParameters.py
     # config_data - the output from Configuration.py
-    # solar_bigbox_array - contains a list of commercial houses, corresponding floor areas, parents,and phases that commercial PV can be attached to
-    # solar_office_array - contains a list of commercial houses, corresponding floor areas, parents,and phases that commercial PV can be attached to
-    # solar_stripmall_array - contains a list of commercial houses, corresponding floor areas, parents,and phases that commercial PV can be attached to
-    # solar_residential_array - contains a list of residential houses, corresponding floor areas, parents,and phases that residential PV can be attached to
     # last_key should be a numbered key that is the next key in PV_Tech_Dict
     last_key = PV_Tech_Dict.last_key()
     
     # Initialize psuedo-random seed
     random.seed(4) if config_data["fix_random_seed"] else random.seed()
-            
-    # Populating solar as percentage of feeder peak load
-    # Add Commercial PV
-    if use_flags['use_solar'] != 0 or use_flags['use_solar_com'] != 0:
-        # Initialize psuedo-random seed
-        random.seed(4) if config_data["fix_random_seed"] else random.seed()
+    
+    bldgs = None
+    if (use_flags['use_solar'] != 0 or use_flags['use_solar_com'] != 0 or use_flags['use_solar_res'] != 0) \
+       and config_data['solar_penetration'] > 0.0:
+        # list of tuples, ((triplex_)meter_key, classID, floor_area)
+        bldgs = helpers.get_buildings(PV_Tech_Dict)
+                
+    if (use_flags['use_solar'] != 0 or use_flags['use_solar_com'] != 0) and config_data['solar_penetration'] > 0.0:
+        # ADD COMMERCIAL PV
+        assert bldgs is not None
+        comm_bldgs = [x for x in bldgs where x[1] > 5]
         
-        # solar_penetration should apply equally to all solar-eligible building types
-        penetration_stripmall = config_data['solar_penetration']
-        penetration_bigbox = config_data['solar_penetration']
-        penetration_office = config_data['solar_penetration']
-        if solar_stripmall_array is None:
-            penetration_stripmall = 0
-        if solar_bigbox_array is None:
-            penetration_bigbox = 0
-        if solar_office_array is None: 
-            penetration_office = 0
+        # randomize list of indices
+        random_index = random.sample(list(range(len(comm_bldgs))), len(comm_bldgs))
+        
+        # set per-building sizing factor to 100.0%, unless solar_penetration is > 100.0%, and then use that
+        percent_bldg_annual_load = 100.0 if config_data['solar_penetration'] < 100.0 else config_data['solar_penetration']
+        
+        # determine how many buildings should have systems
+        annual_loads = []
+        solar_gen = []
+        cum_solar_gen = []
+        for i in random_index:
+            annual_loads.append(config_data['annual_load_intensities'][comm_bldgs[i][1]] * comm_bldgs[i][2])
+            solar_gen.append(annual_loads[-1] * percent_bldg_annual_load / 100.0)
+            if cum_solar_gen.empty:
+                cum_solar_gen.append(solar_gen[-1])
+            else:
+                cum_solar_gen.append(cum_solar_gen[-1] + solar_gen[-1])
+        target = sum(annual_loads) * config_data['solar_penetration'] / 100.0
+        abs_err = [abs(x - target) for x in cum_solar_gen]
+        i, val = min(enumerate(abs_err), key = lambda p: p[1])
+        num_solar = i + 1
+        print('Total commercial load: {:.0f} MWh'.format(sum(annual_loads) / 1000.0))
+        print('Solar penetration: {}%'.format(config_data['solar_penetration']))
+        print('Single building penetration: {}%'.format(percent_bldg_annual_load))
+        print('Target solar generation: {:.0f} MWh'.format(target / 1000.0))
+        print('Cumulative solar: {}'.format(cum_solar_gen))
+        print('Absolute errors compared to target: {}'.format(abs_err))
+        print('Num solar systems to make: {}'.format(num_solar))
+                
+        for i in range(num_solar):
+            bldg = comm_bldgs[random_index[i]]        
             
         solar_rating = config_data['solar_rating'] * 1000 # Convert kW to W
         #Determine total number of PV we must add to office

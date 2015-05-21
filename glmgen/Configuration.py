@@ -245,6 +245,15 @@ def FeederConfiguration(wdir, resources_dir, config_data = None):
         5: [6.644, 5.266, 6.744, 5.499, 6.0, 5.028, 5.873, 6.018, 6.266], 
         6: [  7.0,   5.5,   7.0,   6.0, 6.0,   5.5,   6.0,   6.5,   6.5] # punting on Hawaii for now -- calculate on next go-around        
     }
+    # As above, but median annual load intensity in kWh/ft^2.
+    default_annual_load_intensity_by_region_an_load_class = { \
+        1: [ 6.938, 7.348,  6.795, 7.257,  7.000, 5.955, 14.476, 18.971, 17.800],
+        2: [ 8.620, 8.349,  8.297, 8.346,  8.750, 7.336, 15.471, 20.280, 18.509],
+        3: [11.451, 9.714, 10.989, 9.613, 11.500, 9.103, 19.015, 24.324, 22.456],
+        4: [ 9.366, 8.762,  8.996, 8.684,  9.000, 7.738, 16.510, 21.688, 19.969],
+        5: [10.736, 9.760, 10.191, 9.693, 11.000, 8.378, 19.100, 25.170, 23.169],
+        6: [ 9.000, 8.000,  8.500, 8.000,  9.000, 6.000, 15.000, 20.000, 18.500]
+    }
     if region in default_weather_by_region:
         if 'weather' not in data or not data["weather"]:
             data["weather"] = '{:s}/'.format(resources_dir) + default_weather_by_region[region][0]
@@ -252,6 +261,8 @@ def FeederConfiguration(wdir, resources_dir, config_data = None):
             data["timezone"] = default_weather_by_region[region][1]
         if 'peak_load_intensities' not in data or not data['peak_load_intensities']:
             data['peak_load_intensities'] = default_peak_power_intensity_by_region_and_load_class[region]
+        if 'annual_load_intensities' not in data or not data['annual_load_intensities']:
+            data['annual_load_intensities'] = default_annual_load_intensity_by_region_an_load_class[region]
             
     n_trans = len(data['standard_transformer_ratings'])
     for percentages in data['comm_load_class_dists']:
