@@ -66,8 +66,8 @@ def append_default_feeder_config_data(data, working_directory, resources_dir, di
   # Columns correspond to 'standard_transformer_ratings'.
   #                                [ 10,  15,  25,37.5,  50,  75, 100,150,167,250,333.3, 500,666.7]
   data['comm_load_class_dists'] = [[100, 100, 100, 100, 100, 100, 100, 15, 11,  0,    0,   0,    0], # Strip Mall - 6
-                                   [  0,   0,   0,   0,   0,   0,   0, 41, 32, 27,   17,   0,   50], # Big Box - 7
-                                   [  0,   0,   0,   0,   0,   0,   0, 44, 57, 73,   83, 100,   50]] # Office - 8
+                                   [  0,   0,   0,   0,   0,   0,   0, 85, 27, 22,   17,   0,    0], # Big Box - 7
+                                   [  0,   0,   0,   0,   0,   0,   0,  0, 62, 78,   83, 100,  100]] # Office - 8
   data['res_load_class_dists'] =  [[ 18,  43,  22,   0,  14,  10,   8,  2, 16, 16,   16,  16,   16], # Res 1 - Older SFH < 2000 ft2
                                    [ 76,  14,  61,   0,  48,   8,   4,  1, 16, 16,   16,  16,   16], # Res 2 - Newer SFH < 2000 ft2
                                    [  0,   0,   2, 100,   3,   8,  30,  1, 16, 16,   16,  16,   16], # Res 3 - Older SFH > 2000 ft2
@@ -236,22 +236,45 @@ def FeederConfiguration(wdir, resources_dir, config_data = None):
     # keyed on region number,  the index position in the lists then represent load classifications, 
     # see data["load_classifications"], and Commercial1 = Strip Mall, Commercial2 = Big Box and 
     # Commercial 3 = Office
-    # Individual house power in W.
-    default_average_peak_load_by_region_and_load_class = { \
-        1: [9346.0, 6107.0, 9489.0, 6197.0, 6107.0, 9198.0, 7065.0, 105378.0, 176252.0],
-        2: [12351.0, 7814.0, 12447.0, 7836.0, 7814.0, 12067.0, 7104.0, 108561.0, 187000.0],
-        3: [11668.0, 7142.0, 11863.0, 7243.0, 7142.0, 11870.0, 8531.0, 128828.0, 218691.0],
-        4: [12342.0, 7820.0, 12528.0, 7879.0, 7820.0, 12231.0, 7470.0, 113591.0, 196630.0],
-        5: [9179.0, 6003.0, 9393.0, 6132.0, 6003.0, 9139.0, 6892.0, 105969.0, 184539.0], 
-        6: [10000.0, 6000.0, 9500.0, 6500.0, 6000.0, 9250.0, 7000.0, 105000.0, 185000.0] # punting on Hawaii for now -- calculate on next go-around        
+    # Third quartile of individual house power in W/ft^2.
+    default_peak_power_intensity_by_region_and_load_class = { \
+        #   Res1   Res2   Res3   Res4   Res5    Res6    StripM BigB   Office
+        1: [7.023, 5.863, 5.156, 4.135, 12.151, 12.905, 6.028, 6.224, 6.050],
+        2: [8.199, 6.279, 6.208, 4.570, 11.008, 12.398, 6.088, 6.362, 6.379],
+        3: [8.472, 6.313, 6.373, 4.578, 13.304, 13.542, 7.444, 7.583, 7.491],
+        4: [9.315, 6.431, 7.072, 4.930, 17.554, 16.810, 6.419, 6.665, 6.722],
+        5: [6.967, 5.491, 5.387, 4.088, 11.450, 11.463, 5.881, 6.160, 6.298], 
+        6: [6.664, 5.438, 5.084, 4.011,  8.653,  9.940, 5.624, 5.927, 6.078]
+    }
+    # As above, but median annual load intensity in kWh/ft^2.
+    default_annual_load_intensity_by_region_an_load_class = { \
+        #   Res1    Res2   Res3   Res4   Res5    Res6    StripM  BigB   Office
+        1: [ 9.329, 9.312, 7.261, 7.295, 13.100, 15.209, 15.542, 19.984, 18.350],
+        2: [ 9.572, 9.137, 7.746, 7.440, 12.284, 14.506, 16.532, 20.829, 18.944],
+        3: [10.845, 9.546, 8.528, 7.702, 14.728, 15.691, 20.436, 25.262, 23.106],
+        4: [ 9.818, 8.446, 7.992, 6.792, 14.087, 13.771, 17.723, 22.304, 20.440],
+        5: [10.736, 9.388, 8.669, 7.485, 13.693, 14.593, 20.559, 25.902, 23.693],
+        6: [10.549, 9.367, 8.393, 7.482, 13.027, 14.636, 20.430, 25.803, 23.588]
+    }
+    default_pv_capacity_factors_by_region = { \
+        1: 0.1731,
+        2: 0.1404,
+        3: 0.2058,
+        4: 0.1579,
+        5: 0.1711,
+        6: 0.1883
     }
     if region in default_weather_by_region:
         if 'weather' not in data or not data["weather"]:
             data["weather"] = '{:s}/'.format(resources_dir) + default_weather_by_region[region][0]
         if 'timezone' not in data.keys() or not data['timezone']:    
             data["timezone"] = default_weather_by_region[region][1]
-        if 'avg_peak_loads' not in data or not data['avg_peak_loads']:
-            data['avg_peak_loads'] = default_average_peak_load_by_region_and_load_class[region]
+        if 'peak_load_intensities' not in data or not data['peak_load_intensities']:
+            data['peak_load_intensities'] = default_peak_power_intensity_by_region_and_load_class[region]
+        if 'annual_load_intensities' not in data or not data['annual_load_intensities']:
+            data['annual_load_intensities'] = default_annual_load_intensity_by_region_an_load_class[region]
+        if 'pv_cf' not in data or not data['pv_cf']:
+            data['pv_cf'] = default_pv_capacity_factors_by_region[region]
             
     n_trans = len(data['standard_transformer_ratings'])
     for percentages in data['comm_load_class_dists']:
@@ -527,7 +550,7 @@ def LoadClassConfiguration(f_config_data, classID):
                                 [0.166, 73, 71],
                                 [0.306, 76, 74],
                                 [0.206, 79, 77],
-                                [0.084, 85, 80]]
+                                [0.084, 85, 80]]                                
     
     cooling_setpoint[1] =  [[0.098, 69, 65], #Res2
                                 [0.140, 70, 70],

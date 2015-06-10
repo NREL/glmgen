@@ -5,6 +5,7 @@ Created on Apr 9, 2013
 '''
 from __future__ import division
 from glmgen import Configuration
+from glmgen import helpers
 import random
 import math
 
@@ -36,117 +37,114 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
 
 
   # Check if last_object_key exists in glmCaseDict
-  if last_object_key in glmCaseDict:
-    while last_object_key in glmCaseDict:
-      last_object_key += 1
+  last_key = glmCaseDict.last_key()
 
   if len(commercial_dict) > 0 and use_flags["use_commercial"] == 1:
     # setup all of the line configurations we may need
     glmCaseDict[last_object_key] = {"object" : "triplex_line_conductor",
-                    "name" : "comm_line_cfg_cnd1",
-                    "resistance" : "0.48",
-                    "geometric_mean_radius" : "0.0158"}
+                                    "name" : "comm_line_cfg_cnd1",
+                                    "resistance" : "0.48",
+                                    "geometric_mean_radius" : "0.0158"}
     last_object_key += 1
     
     glmCaseDict[last_object_key] = {"object" : "triplex_line_conductor",
-                    "name" : "comm_line_cfg_cnd2",
-                    "resistance" : "0.48",
-                    "geometric_mean_radius" : "0.0158"}
+                                    "name" : "comm_line_cfg_cnd2",
+                                    "resistance" : "0.48",
+                                    "geometric_mean_radius" : "0.0158"}
 
     last_object_key += 1
     
     glmCaseDict[last_object_key] = {"object" : "triplex_line_conductor",
-                    "name" : "comm_line_cfg_cndN",
-                    "resistance" : "0.48",
-                    "geometric_mean_radius" : "0.0158"}
+                                    "name" : "comm_line_cfg_cndN",
+                                    "resistance" : "0.48",
+                                    "geometric_mean_radius" : "0.0158"}
     last_object_key += 1
     
     glmCaseDict[last_object_key] = {"object" : "triplex_line_configuration",
-                    "name" : "commercial_line_config",
-                    "conductor_1" : "comm_line_cfg_cnd1", 
-                    "conductor_2" : "comm_line_cfg_cnd2",
-                    "conductor_N" : "comm_line_cfg_cndN",
-                    "insulation_thickness" : "0.08",
-                    "diameter" : "0.522"}
+                                    "name" : "commercial_line_config",
+                                    "conductor_1" : "comm_line_cfg_cnd1", 
+                                    "conductor_2" : "comm_line_cfg_cnd2",
+                                    "conductor_N" : "comm_line_cfg_cndN",
+                                    "insulation_thickness" : "0.08",
+                                    "diameter" : "0.522"}
     last_object_key += 1
     
     glmCaseDict[last_object_key] = {"object" : "line_spacing",     
-                    "name" : "line_spacing_commABC",     
-                    "distance_AB" : "53.19999999996 in",    
-                    "distance_BC" : "53.19999999996 in",    
-                    "distance_AC" : "53.19999999996 in",    
-                    "distance_AN" : "69.80000000004 in",    
-                    "distance_BN" : "69.80000000004 in",    
-                    "distance_CN" : "69.80000000004 in"}
+                                    "name" : "line_spacing_commABC",     
+                                    "distance_AB" : "53.19999999996 in",    
+                                    "distance_BC" : "53.19999999996 in",    
+                                    "distance_AC" : "53.19999999996 in",    
+                                    "distance_AN" : "69.80000000004 in",    
+                                    "distance_BN" : "69.80000000004 in",    
+                                    "distance_CN" : "69.80000000004 in"}
     last_object_key += 1;
 
     glmCaseDict[last_object_key] = {"object" : "overhead_line_conductor",     
-                    "name" : "overhead_line_conductor_comm",     
-                    "rating.summer.continuous" : "443.0",     
-                    "geometric_mean_radius" : "0.02270 ft",    
-                    "resistance" : "0.05230"}
+                                    "name" : "overhead_line_conductor_comm",     
+                                    "rating.summer.continuous" : "443.0",     
+                                    "geometric_mean_radius" : "0.02270 ft",    
+                                    "resistance" : "0.05230"}
     last_object_key += 1
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commABC",     
-                    "conductor_A" : "overhead_line_conductor_comm",     
-                    "conductor_B" : "overhead_line_conductor_comm",     
-                    "conductor_C" : "overhead_line_conductor_comm",     
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}
+                                    "name" : "line_configuration_commABC",     
+                                    "conductor_A" : "overhead_line_conductor_comm",     
+                                    "conductor_B" : "overhead_line_conductor_comm",     
+                                    "conductor_C" : "overhead_line_conductor_comm",     
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}
     last_object_key += 1 
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commAB",     
-                    "conductor_A" : "overhead_line_conductor_comm",     
-                    "conductor_B" : "overhead_line_conductor_comm",         
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}
+                                    "name" : "line_configuration_commAB",     
+                                    "conductor_A" : "overhead_line_conductor_comm",     
+                                    "conductor_B" : "overhead_line_conductor_comm",         
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}
     last_object_key += 1 
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commAC",     
-                    "conductor_A" : "overhead_line_conductor_comm",          
-                    "conductor_C" : "overhead_line_conductor_comm",     
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}     
+                                    "name" : "line_configuration_commAC",     
+                                    "conductor_A" : "overhead_line_conductor_comm",          
+                                    "conductor_C" : "overhead_line_conductor_comm",     
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}     
     last_object_key += 1
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commBC",         
-                    "conductor_B" : "overhead_line_conductor_comm",     
-                    "conductor_C" : "overhead_line_conductor_comm",     
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}
+                                    "name" : "line_configuration_commBC",         
+                                    "conductor_B" : "overhead_line_conductor_comm",     
+                                    "conductor_C" : "overhead_line_conductor_comm",     
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}
     last_object_key += 1 
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commA",     
-                    "conductor_A" : "overhead_line_conductor_comm",        
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}     
+                                    "name" : "line_configuration_commA",     
+                                    "conductor_A" : "overhead_line_conductor_comm",        
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}     
     last_object_key += 1
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commB",        
-                    "conductor_B" : "overhead_line_conductor_comm",         
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}     
+                                    "name" : "line_configuration_commB",        
+                                    "conductor_B" : "overhead_line_conductor_comm",         
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}     
     last_object_key += 1
 
     glmCaseDict[last_object_key] = {"object" : "line_configuration",     
-                    "name" : "line_configuration_commC",        
-                    "conductor_C" : "overhead_line_conductor_comm",         
-                    "conductor_N" : "overhead_line_conductor_comm",     
-                    "spacing" : "line_spacing_commABC"}
+                                    "name" : "line_configuration_commC",        
+                                    "conductor_C" : "overhead_line_conductor_comm",         
+                                    "conductor_N" : "overhead_line_conductor_comm",     
+                                    "spacing" : "line_spacing_commABC"}
     last_object_key += 1
 
     #initializations for the commercial "house" list
 
     #print('iterating over commercial_dict')
-    for iii in commercial_dict:
-      total_comm_houses = commercial_dict[iii]['number_of_houses'][0] + commercial_dict[iii]['number_of_houses'][1] + commercial_dict[iii]['number_of_houses'][2]
-      
+    for iii in commercial_dict:      
+      total_comm_houses = 0
       my_phases = 'ABC'
       
       # read through the phases and do some bit-wise math
@@ -178,12 +176,16 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
         my_parent = commercial_dict[iii]['name']
 
       nom_volt = float(commercial_dict[iii]['nom_volt'])
+      transformer_rating = helpers.get_transformer_size(commercial_dict[iii]['load_rating'] / float(no_of_phases), 
+                                                        config_data['standard_transformer_ratings'], 
+                                                        1.0)
+      
+      # size of original load object
+      load_to_allocate = sum(commercial_dict[iii]['load']) # W
 
       # Grab the load classification
       classID = commercial_dict[iii]['load_classification'] # Get load classification
       load_config_data = Configuration.LoadClassConfiguration(config_data,classID) 
-      # Determine how many houses and of what building type the classification designates
-      com_buildings_classified = [config_data["com_buildings"][0][classID] * total_comm_houses,config_data["com_buildings"][1][classID] * total_comm_houses,config_data["com_buildings"][2][classID] * total_comm_houses] # cID-1 for index fixing
 
       # Same for everyone - TODO: move to tech specs?
       air_heat_fraction = 0
@@ -202,44 +204,51 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
       # Office building - must have all three phases and enough load for 15 zones
       #                     *or* load is classified to be office buildings 
       if (classID == 8): #jlh
-        no_of_offices = int(round(total_comm_houses / 15))
-        if (no_of_offices == 0):
-          no_of_offices = 1
         glmCaseDict[last_object_key] = {"object" : "transformer_configuration",
-                        "name" : "CTTF_config_A_{:s}".format(my_name),
-                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
-                        "install_type" : "POLETOP",
-                        "impedance" : "0.00033+0.0022j",
-                        "shunt_impedance" : "10000+10000j",
-                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
-                        "secondary_voltage" : "{:.3f}".format(120),
-                        "powerA_rating" : "50 kVA"}
+                                        "name" : "CTTF_config_A_{:s}".format(my_name),
+                                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
+                                        "install_type" : "POLETOP",
+                                        "impedance" : "0.00033+0.0022j",
+                                        "shunt_impedance" : "10000+10000j",
+                                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
+                                        "secondary_voltage" : "{:.3f}".format(120),
+                                        "powerA_rating" : "50 kVA"}
         last_object_key += 1
         
         glmCaseDict[last_object_key] = {"object" : "transformer_configuration",
-                        "name" : "CTTF_config_B_{:s}".format(my_name),
-                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
-                        "install_type" : "POLETOP",
-                        "impedance" : "0.00033+0.0022j",
-                        "shunt_impedance" : "10000+10000j",
-                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
-                        "secondary_voltage" : "{:.3f}".format(120),
-                        "powerB_rating" : "50 kVA"}
+                                        "name" : "CTTF_config_B_{:s}".format(my_name),
+                                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
+                                        "install_type" : "POLETOP",
+                                        "impedance" : "0.00033+0.0022j",
+                                        "shunt_impedance" : "10000+10000j",
+                                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
+                                        "secondary_voltage" : "{:.3f}".format(120),
+                                        "powerB_rating" : "50 kVA"}
         last_object_key += 1
 
         glmCaseDict[last_object_key] = {"object" : "transformer_configuration",
-                        "name" : "CTTF_config_C_{:s}".format(my_name),
-                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
-                        "install_type" : "POLETOP",
-                        "impedance" : "0.00033+0.0022j",
-                        "shunt_impedance" : "10000+10000j",
-                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
-                        "secondary_voltage" : "{:.3f}".format(120),
-                        "powerC_rating" : "50 kVA"}
+                                        "name" : "CTTF_config_C_{:s}".format(my_name),
+                                        "connect_type" : "SINGLE_PHASE_CENTER_TAPPED",
+                                        "install_type" : "POLETOP",
+                                        "impedance" : "0.00033+0.0022j",
+                                        "shunt_impedance" : "10000+10000j",
+                                        "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
+                                        "secondary_voltage" : "{:.3f}".format(120),
+                                        "powerC_rating" : "50 kVA"}
         last_object_key += 1
-        #print('iterating over number of offices')
-        for jjj in range(no_of_offices):
-          floor_area_choose = 40000 * (0.5 * random.random() + 0.5); #up to -50# #config_data.floor_area
+
+        median_office_area = 40000.0
+        no_of_offices = 0
+        # print('Office minimum load to keep allocating: {:.1f} kW'.format(median_office_area * 0.5 * config_data['peak_load_intensities'][classID] / 1000.0))
+        # print('Office total load to allocate: {:.1f} kW'.format(load_to_allocate / 1000.0))
+        while load_to_allocate > median_office_area * 0.5 * config_data['peak_load_intensities'][classID]:
+          floor_area_choose = median_office_area * (random.random() + 0.5); #up to -50# #config_data.floor_area
+          floor_area_choose = helpers.cap_floor_area(floor_area_choose,
+                                                     sum(commercial_dict[iii]['load']),
+                                                     load_to_allocate,
+                                                     config_data['peak_load_intensities'][classID])
+          load_to_allocate -= floor_area_choose * config_data['peak_load_intensities'][classID]
+          no_of_offices += 1; total_comm_houses += 1; jjj = no_of_offices
           ceiling_height = 13;
           airchange_per_hour = 0.69;
           Rroof = 19;
@@ -477,6 +486,9 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
               else:
                 parent_house["cooling_setpoint"] = "office_cooling"
                 if (use_flags["use_market"] == 3):
+                  # no_of_offices is likely not the thing to use here now that no_of_offices is not
+                  # determined prior to creating all of the offices. 
+                  # TODO: SHOULD BE FIXED BEFORE USING MARKETS
                   c_on = 600 + 600*dlc_c_rand( (iii-1) * no_of_offices + jjj );
                   temp_c = 0.2+0.3*dlc_c_rand2( (iii-1) * no_of_offices + jjj );
                   c_off = c_on * ( temp_c / (1 - temp_c) ); # 30-50# of the total time should be "off"
@@ -583,13 +595,12 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             #end # office zones (1-5)        
           #end  #office floors (1-3)
         #end # total offices needed
+        # print('Num Offices: {}'.format(no_of_offices))
+        # print('Office unallocated load: {:.1f} kW'.format(load_to_allocate / 1000.0))
         #print('finished iterating over number of offices')
       # Big box - has at least 2 phases and enough load for 6 zones
       #            *or* load is classified to be big boxes
       elif (classID == 7): #jlh
-        no_of_bigboxes = int(round(total_comm_houses / 6))
-        if (no_of_bigboxes == 0): #jlh
-          no_of_bigboxes = 1
 
         if (has_phase_A == 1):
           glmCaseDict[last_object_key] = {"object" : "transformer_configuration",
@@ -626,9 +637,19 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                           "secondary_voltage" : "{:.3f}".format(120),
                           "powerC_rating" : "50 kVA"}
           last_object_key += 1;
-        #print('iterating over number of big boxes')
-        for jjj in range(no_of_bigboxes):
-          floor_area_choose = 20000 * (0.5 + 1 * random.random()); #+/- 50#
+        median_big_box_area = 20000.0
+        no_of_bigboxes = 0
+        # print('Big box minimum load to keep allocating: {:.1f} kW'.format(
+        #          median_big_box_area * 0.5 * config_data['peak_load_intensities'][classID] / 1000.0))
+        # print('Big box total load to allocate: {:.1f} kW'.format(load_to_allocate / 1000.0))
+        while load_to_allocate > median_big_box_area * 0.5 * config_data['peak_load_intensities'][classID]:
+          floor_area_choose = median_big_box_area * (0.5 + random.random()); #+/- 50#
+          floor_area_choose = helpers.cap_floor_area(floor_area_choose,
+                                                     sum(commercial_dict[iii]['load']),
+                                                     load_to_allocate,
+                                                     config_data['peak_load_intensities'][classID])
+          load_to_allocate -= floor_area_choose * config_data['peak_load_intensities'][classID]
+          no_of_bigboxes += 1; total_comm_houses += 1; jjj = no_of_bigboxes
           ceiling_height = 14;
           airchange_per_hour = 1.5;
           Rroof = 19;
@@ -833,6 +854,9 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
               else:
                 parent_house["cooling_setpoint"] = "bigbox_cooling"
                 if (use_flags["use_market"] == 3):
+                  # no_of_bigboxes is likely not the thing to use here now that no_of_bigboxes is not
+                  # determined prior to creating all of the big boxes. 
+                  # TODO: SHOULD BE FIXED BEFORE USING MARKETS
                   c_on = 600 + 600*dlc_c_rand( (iii-1) * no_of_bigboxes + jjj + phind)
                   temp_c = 0.2+0.3*dlc_c_rand2((iii-1)*no_of_bigboxes + jjj +phind)
                   c_off = c_on * ( temp_c / (1 - temp_c) ); # 30-50# of the total time should be "off"
@@ -933,15 +957,16 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                               "power_pf" : "1.0",
                               "base_power" : "bigbox_occupancy*{:.2f}".format(adj_occ)}
               last_object_key += 1
-                              
+        
             #end #zone index
-          #end #phase index    
+          #end #phase index
         #end #number of big boxes
+        # print('Num Bigboxes: {}'.format(no_of_bigboxes))
+        # print('Big box unallocated load: {:.1f} kW'.format(load_to_allocate / 1000.0))
         #print('finished iterating over number of big boxes')
       # Strip mall
-      elif (classID == 6 and total_comm_houses > 0): # unlike for big boxes and offices, if total house number = 0, just don't populate anything.
-        no_of_strip = total_comm_houses;
-        strip_per_phase = int(math.ceil(no_of_strip / no_of_phases))
+      elif (classID == 6): 
+        load_per_phase = load_to_allocate / float(no_of_phases)
         if (has_phase_A == 1):
           glmCaseDict[last_object_key] = {"object" : "transformer_configuration",
                           "name" : "CTTF_config_A_{:s}".format(my_name),
@@ -951,7 +976,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                           "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
-                          "powerA_rating" : "{:.0f} kVA".format(50*strip_per_phase)}
+                          "powerA_rating" : "50 kVA"}
 
           last_object_key += 1;
 
@@ -964,7 +989,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                           "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
-                          "powerB_rating" : "{:.0f} kVA".format(50*strip_per_phase)}
+                          "powerB_rating" : "50 kVA"}
 
           last_object_key += 1;
 
@@ -977,7 +1002,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                           "shunt_impedance" : "10000+10000j",
                           "primary_voltage" : "{:.3f}".format(nom_volt), #might have to change to 7200/sqrt(3)
                           "secondary_voltage" : "{:.3f}".format(120),
-                          "powerC_rating" : "{:.0f} kVA".format(50*strip_per_phase)}
+                          "powerC_rating" : "50 kVA"}
 
           last_object_key += 1;
 
@@ -997,17 +1022,16 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
         last_object_key += 1;
         
         if use_flags["use_solar"] != 0 or use_flags["use_solar_com"] != 0:
-              solar_stripmall_array[0] += 1
-              meters_stored = 0
+          solar_stripmall_array[0] += 1
+          meters_stored = 0
           
         # Store thermal storage technology parent information
         if use_flags["use_ts"] != 0:
-          ts_bigbox_array[0] += 1
+          ts_stripmall_array[0] += 1
           homes_stored = 0
           
         #print('iterating over number of stripmalls')    
         for phind in range(no_of_phases):
-          floor_area_choose = 2400 * (0.7 + 0.6 * random.random()); #+/- 30#
           ceiling_height = 12;
           airchange_per_hour = 1.76;
           Rroof = 19;
@@ -1022,7 +1046,21 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
           thermal_mass_per_floor_area = 3.9 * (0.5 + 1 * random.random()); #+/- 50#
           exterior_ceiling_fraction = 1;
 
-          for jjj in range(strip_per_phase):
+          median_strip_mall_area = 2400.0
+          strip_per_phase = 0
+          phase_load_to_allocate = load_per_phase
+          # print('Strip mall minimum load to keep allocating on phase {}: {:.1f} kW'.format(ph[phind], median_strip_mall_area * 0.7 * config_data['peak_load_intensities'][classID] / 1000.0))
+          # print('Strip mall total load to allocate on phase {}: {:.1f} kW'.format(
+          #          ph[phind], phase_load_to_allocate / 1000.0))
+          while phase_load_to_allocate > median_strip_mall_area * 0.7 * config_data['peak_load_intensities'][classID]:
+            floor_area = median_strip_mall_area * (0.7 + 0.6 * random.random())
+            floor_area = helpers.cap_floor_area(floor_area,
+                                                load_per_phase,
+                                                phase_load_to_allocate,
+                                                config_data['peak_load_intensities'][classID])
+            phase_load_to_allocate -= floor_area * config_data['peak_load_intensities'][classID]
+            strip_per_phase += 1; total_comm_houses += 1; jjj = strip_per_phase
+          
             # skew each office zone identically per floor
             sk = round(2*random.normalvariate(0,1));
             skew_value = tech_data["commercial_skew_std"] * sk
@@ -1030,32 +1068,22 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
               skew_value = -tech_data["commercial_skew_max"]
             elif (skew_value > tech_data["commercial_skew_max"]):
               skew_value = tech_data["commercial_skew_max"]
-
-            if (jjj == 1 or jjj == (math.floor(strip_per_phase/2)+1)):
-              floor_area = floor_area_choose;
+           
+            if random.random() < 0.5:
               aspect_ratio = 1.5;
               window_wall_ratio = 0.05;
-
-              #if (j == jjj):
-              #    exterior_wall_fraction = 0.7;
-              #    exterior_floor_fraction = 1.4;                    
-              #else:
               exterior_wall_fraction = 0.4;
               exterior_floor_fraction = 0.8;
-
               interior_exterior_wall_ratio = -0.05;
             else:
-              floor_area = floor_area_choose/2;
               aspect_ratio = 3.0;
               window_wall_ratio = 0.03;
-
-              if (jjj == strip_per_phase):
+              if random.random() < 0.5:
                 exterior_wall_fraction = 0.63;
                 exterior_floor_fraction = 2;
               else:
                 exterior_wall_fraction = 0.25;
                 exterior_floor_fraction = 0.8;
-
               interior_exterior_wall_ratio = -0.40;
 
             no_of_doors = 1;
@@ -1193,6 +1221,9 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             else:
               parent_house["cooling_setpoint"] = "stripmall_cooling"
               if (use_flags["use_market"] == 3):
+                # strip per phase is likely not the thing to use here now that strip_per_phase is not
+                # determined prior to creating all of the strip malls. 
+                # TODO: SHOULD BE FIXED BEFORE USING MARKETS
                 c_on = 600 + 600*dlc_c_rand( (iii-1) * strip_per_phase + jjj + phind );
                 temp_c = 0.2+0.3*dlc_c_rand2((iii-1)*strip_per_phase + jjj + phind);
                 c_off = c_on * ( temp_c / (1 - temp_c) ); # 30-50# of the total time should be "off"
@@ -1295,13 +1326,15 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             last_object_key += 1
             #end
           #end #number of strip zones
+          # print('Num Strip Malls on phase {}: {}'.format(ph[phind], strip_per_phase))
+          # print('Strip mall unallocated load on phase {}: {:.1f} kW'.format(ph[phind], phase_load_to_allocate / 1000.0))
         #end #phase index
       #end #commercial selection
-        #print('finished iterating over number of stripmalls')
+        
       # add the "street light" loads
       # parent them to the METER as opposed to the node, so we don't
       # have any "grandchildren"
-      elif total_comm_houses == 0 and sum(commercial_dict[iii]['load']) > 0:
+      if total_comm_houses == 0 and sum(commercial_dict[iii]['load']) > 0:
         #print('writing street_light')
         glmCaseDict[last_object_key] = {"object" : "load",
                         "parent" : "{:s}".format(my_parent),
