@@ -52,12 +52,12 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
           
         # allocate load
         minimum_floor_area = load_config_data['floor_area'][classID] * 0.75
-        print('Minimum load to keep allocating {} houses: {:.1f} kW'.format(
-                  config_data['load_classifications'][classID], 
-                  minimum_floor_area * config_data['peak_load_intensities'][classID] / 1000.0))
-        print('{} total load to allocate: {:.1f} kW'.format(
-                  config_data['load_classifications'][classID], 
-                  load_to_allocate / 1000.0))
+        #print('Minimum load to keep allocating {} houses: {:.1f} kW'.format(
+        #          config_data['load_classifications'][classID], 
+        #          minimum_floor_area * config_data['peak_load_intensities'][classID] / 1000.0))
+        #print('{} total load to allocate: {:.1f} kW'.format(
+        #          config_data['load_classifications'][classID], 
+        #          load_to_allocate / 1000.0))
         while load_to_allocate > minimum_floor_area * config_data['peak_load_intensities'][classID]:
           total_houses += 1; y = total_houses                  
           ResTechDict[last_object_key] = {'object' : 'triplex_meter',
@@ -70,7 +70,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                           
           if use_flags['use_billing'] == 1:
             ResTechDict[last_object_key]['bill_mode'] = 'UNIFORM'
-            ResTechDict[last_object_key]['price'] = '{:.5f}'.format(tech_data['flat_price'][config_data['region']])
+            ResTechDict[last_object_key]['price'] = '{:.5f}'.format(tech_data['flat_price'][config_data['region']-1])
             ResTechDict[last_object_key]['monthly_fee'] = '{:d}'.format(tech_data['monthly_fee'])
             ResTechDict[last_object_key]['bill_day'] = '1'
           elif use_flags['use_billing'] == 3:
@@ -261,6 +261,21 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
           # Choose a heating bin
           heatsp = load_config_data['heating_setpoint']
           heat_bin = helpers.get_bin_index(heat_sp)
+          
+          # Make sure they don't overlap
+          #print('cool_bin: {}'.format(coolsp[cool_bin]))
+          #print('heat_bin: {}'.format(heatsp[heat_bin]))
+          while heatsp[heat_bin][2] + heatsp[heat_bin][1] > coolsp[cool_bin][3]:
+              if random.random() < 0.5:
+                # try to increase cool_bin
+                if cool_bin + 1 < len(cool_sp):
+                    cool_bin += 1
+                    #print('shift cool_bin up')
+              else:
+                # try to decrease heat_bin
+                if heat_bin - 1 >= 0:
+                    heat_bin -= 1
+                    #print('shift heat_bin down')
           
           # Randomly choose within the bin, then +/- one
           # degree to seperate the deadbands
@@ -701,8 +716,8 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
               last_object_key += 1
         #print('finished water heater')
       #print('finished allocating load to houses')
-      print('Num houses: {}'.format(total_houses))
-      print('Unallocated load for {}: {:.1f} kW'.format(config_data['load_classifications'][classID], load_to_allocate / 1000.0))
+      #print('Num houses: {}'.format(total_houses))
+      #print('Unallocated load for {}: {:.1f} kW'.format(config_data['load_classifications'][classID], load_to_allocate / 1000.0))
             
       # add the "street light" loads
       if total_houses == 0 and residential_dict[x]['load'] > 0 and use_flags['use_normalized_loadshapes'] == 0:

@@ -115,7 +115,7 @@ def cap_floor_area(chosen_floor_area, total_node_load, load_left_to_allocate, pe
         if abs(remainder) > tol * total_node_load:
             this_load = load_left_to_allocate + tol * total_node_load
             new_floor_area = this_load / peak_load_intensity
-            print('Cutting floor area off at {:.0f} ft^2 (was {:.0f} ft^2).'.format(new_floor_area, chosen_floor_area))
+            # print('Cutting floor area off at {:.0f} ft^2 (was {:.0f} ft^2).'.format(new_floor_area, chosen_floor_area))
             return new_floor_area
     return chosen_floor_area
     
@@ -130,7 +130,7 @@ def get_buildings(glm_file):
     # ugly hardcoding to match the ugly hardcoding below
     load_classes = ['Residential1', 'Residential2', 'Residential3', 'Residential4', 'Residential5', 'Residential6', 'Strip Mall', 'Big Box', 'Office'] 
     for key, glm_object in glm_file.items():
-        if GlmFile.object_is_type(glm_object, 'meter') or GlmFile.object_is_type(glm_object, 'triplex_meter'):
+        if feeder.GlmFile.object_is_type(glm_object, 'meter') or feeder.GlmFile.object_is_type(glm_object, 'triplex_meter'):
             if ('groupid' in glm_object) and (glm_object['groupid'] in ['Commercial_Meter', 'Residential_Meter']):
                 load_class, floor_area = extract_bldg_input_data(glm_file, key)
                 result.append((key, load_classes.index(load_class), floor_area))
@@ -139,7 +139,7 @@ def get_buildings(glm_file):
 def extract_bldg_input_data(glm_file, bldg_meter_key):
     load_class = None; floor_area = 0.0
     bldg_meter = glm_file[bldg_meter_key]
-    if GlmFile.object_is_type(bldg_meter, 'meter'):
+    if feeder.GlmFile.object_is_type(bldg_meter, 'meter'):
         assert bldg_meter['groupid'] == 'Commercial_Meter'
         if re.search('_office_', bldg_meter['name']):
             load_class = 'Office'
@@ -155,7 +155,7 @@ def extract_bldg_input_data(glm_file, bldg_meter_key):
               assert 'floor_area' in glm_file[house_key]
               floor_area += float(glm_file[house_key]['floor_area'])
     else:
-        assert GlmFile.object_is_type(bldg_meter, 'triplex_meter')
+        assert feeder.GlmFile.object_is_type(bldg_meter, 'triplex_meter')
         child_house_keys = glm_file.get_children_keys(bldg_meter_key, 'house')
         assert len(child_house_keys) == 1        
         if bldg_meter['groupid'] == 'Commercial_Meter':

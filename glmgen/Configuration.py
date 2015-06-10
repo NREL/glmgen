@@ -238,21 +238,31 @@ def FeederConfiguration(wdir, resources_dir, config_data = None):
     # Commercial 3 = Office
     # Third quartile of individual house power in W/ft^2.
     default_peak_power_intensity_by_region_and_load_class = { \
-        1: [6.496, 5.387, 6.471, 5.780, 5.5, 5.056, 6.021, 5.927, 5.952],
-        2: [9.684, 6.903, 9.246, 7.583, 7.0, 7.075, 6.236, 6.130, 6.297],
-        3: [8.655, 6.098, 8.569, 6.477, 7.0, 6.731, 7.443, 7.286, 7.357],
-        4: [9.519, 6.758, 9.103, 7.262, 7.5, 6.940, 6.413, 6.458, 6.646],
-        5: [6.644, 5.266, 6.744, 5.499, 6.0, 5.028, 5.873, 6.018, 6.266], 
-        6: [  7.0,   5.5,   7.0,   6.0, 6.0,   5.5,   6.0,   6.5,   6.5] # punting on Hawaii for now -- calculate on next go-around        
+        #   Res1   Res2   Res3   Res4   Res5    Res6    StripM BigB   Office
+        1: [7.023, 5.863, 5.156, 4.135, 12.151, 12.905, 6.028, 6.224, 6.050],
+        2: [8.199, 6.279, 6.208, 4.570, 11.008, 12.398, 6.088, 6.362, 6.379],
+        3: [8.472, 6.313, 6.373, 4.578, 13.304, 13.542, 7.444, 7.583, 7.491],
+        4: [9.315, 6.431, 7.072, 4.930, 17.554, 16.810, 6.419, 6.665, 6.722],
+        5: [6.967, 5.491, 5.387, 4.088, 11.450, 11.463, 5.881, 6.160, 6.298], 
+        6: [6.664, 5.438, 5.084, 4.011,  8.653,  9.940, 5.624, 5.927, 6.078]
     }
     # As above, but median annual load intensity in kWh/ft^2.
     default_annual_load_intensity_by_region_an_load_class = { \
-        1: [ 6.938, 7.348,  6.795, 7.257,  7.000, 5.955, 14.476, 18.971, 17.800],
-        2: [ 8.620, 8.349,  8.297, 8.346,  8.750, 7.336, 15.471, 20.280, 18.509],
-        3: [11.451, 9.714, 10.989, 9.613, 11.500, 9.103, 19.015, 24.324, 22.456],
-        4: [ 9.366, 8.762,  8.996, 8.684,  9.000, 7.738, 16.510, 21.688, 19.969],
-        5: [10.736, 9.760, 10.191, 9.693, 11.000, 8.378, 19.100, 25.170, 23.169],
-        6: [ 9.000, 8.000,  8.500, 8.000,  9.000, 6.000, 15.000, 20.000, 18.500]
+        #   Res1    Res2   Res3   Res4   Res5    Res6    StripM  BigB   Office
+        1: [ 9.329, 9.312, 7.261, 7.295, 13.100, 15.209, 15.542, 19.984, 18.350],
+        2: [ 9.572, 9.137, 7.746, 7.440, 12.284, 14.506, 16.532, 20.829, 18.944],
+        3: [10.845, 9.546, 8.528, 7.702, 14.728, 15.691, 20.436, 25.262, 23.106],
+        4: [ 9.818, 8.446, 7.992, 6.792, 14.087, 13.771, 17.723, 22.304, 20.440],
+        5: [10.736, 9.388, 8.669, 7.485, 13.693, 14.593, 20.559, 25.902, 23.693],
+        6: [10.549, 9.367, 8.393, 7.482, 13.027, 14.636, 20.430, 25.803, 23.588]
+    }
+    default_pv_capacity_factors_by_region = { \
+        1: 0.1731,
+        2: 0.1404,
+        3: 0.2058,
+        4: 0.1579,
+        5: 0.1711,
+        6: 0.1883
     }
     if region in default_weather_by_region:
         if 'weather' not in data or not data["weather"]:
@@ -263,6 +273,8 @@ def FeederConfiguration(wdir, resources_dir, config_data = None):
             data['peak_load_intensities'] = default_peak_power_intensity_by_region_and_load_class[region]
         if 'annual_load_intensities' not in data or not data['annual_load_intensities']:
             data['annual_load_intensities'] = default_annual_load_intensity_by_region_an_load_class[region]
+        if 'pv_cf' not in data or not data['pv_cf']:
+            data['pv_cf'] = default_pv_capacity_factors_by_region[region]
             
     n_trans = len(data['standard_transformer_ratings'])
     for percentages in data['comm_load_class_dists']:
@@ -538,7 +550,7 @@ def LoadClassConfiguration(f_config_data, classID):
                                 [0.166, 73, 71],
                                 [0.306, 76, 74],
                                 [0.206, 79, 77],
-                                [0.084, 85, 80]]
+                                [0.084, 85, 80]]                                
     
     cooling_setpoint[1] =  [[0.098, 69, 65], #Res2
                                 [0.140, 70, 70],
