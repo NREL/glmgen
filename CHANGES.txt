@@ -1,3 +1,8 @@
+v4.0.0, 6/10/2015  -- Continued refactor of Configuration, and the residential, commercial, and 
+                      PV population scripts. Buildings are added based on original load, and peak 
+                      intensity per unit floor area. PV is now added based on the building floor 
+                      area and annual energy intensity per unit floor area, with randomized azimuth 
+                      and tilt, rather than a uniform 5 kW with default azimuth and tilt system.
 v3.0.0, 5/11/2015  -- Refactored the Configuration module and its dependencies to improve the 
                       replacement of loads with house models. 
 v2.3.0, 2/20/2014  -- GlmFile methods for setting the clock and voltage player files.
