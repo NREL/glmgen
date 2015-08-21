@@ -4,7 +4,7 @@ Created on Jun 7, 2013
 @author: fish334
 '''
 
-def add_recorders(recorder_dict, io_opts, time_opts, last_key=0):
+def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = False):
 
     # check if last_key is already in glm dictionary
     def unused_key(last_key):
@@ -78,93 +78,94 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0):
         return unused_key(last_key)
                                        
     last_key = unused_key(last_key)            
-    # set up sql modules if needed
-    if io_opts['output_type'] == 'mysql':
-        recorder_dict[last_key] = {'module' : 'mysql'}
-        last_key = unused_key(last_key)
-    
-        recorder_dict[last_key] = { 'object' : 'database',
-                                    'name': io_opts['schema_name'],
-                                    'schema': io_opts['schema_name'] }
-        last_key = unused_key(last_key)   
+    if not solar_only:
+        # set up sql modules if needed
+        if io_opts['output_type'] == 'mysql':
+            recorder_dict[last_key] = {'module' : 'mysql'}
+            last_key = unused_key(last_key)
         
-    # Add recorder to swing bus for calibration
-    last_key = add_recorder('network_node',
-                            'recorder',
-                            { 'parent' :   'network_node',
-                              'property' : 'measured_real_power, measured_real_energy, voltage_A, voltage_B, voltage_C' },
-                            last_key)
-                 
-    last_key = add_recorder('substation_transformer_power',
-                            'recorder',
-                            { 'parent' :   'substation_transformer',
-                              'property' :  'power_out_A.real, power_out_A.imag, power_out_B.real, power_out_B.imag, power_out_C.real, power_out_C.imag, power_out.real, power_out.imag, power_losses_A.real, power_losses_A.imag, power_losses_B.real, power_losses_B.imag, power_losses_C.real, power_losses_C.imag' },
-                            last_key)
-        
-    if swing_node != None:
-        last_key = add_recorder('swing_bus',
+            recorder_dict[last_key] = { 'object' : 'database',
+                                        'name': io_opts['schema_name'],
+                                        'schema': io_opts['schema_name'] }
+            last_key = unused_key(last_key)   
+            
+        # Add recorder to swing bus for calibration
+        last_key = add_recorder('network_node',
                                 'recorder',
-                                {'parent' : '{:s}'.format(swing_node),
-                                 'property' : 'measured_current_A.real, measured_current_A.imag, measured_current_B.real, measured_current_B.imag, measured_current_C.real, measured_current_C.imag, measured_voltage_A.real, measured_voltage_A.imag, measured_voltage_B.real, measured_voltage_B.imag, measured_voltage_C.real, measured_voltage_C.imag, measured_real_power, measured_reactive_power' },
+                                { 'parent' :   'network_node',
+                                  'property' : 'measured_real_power, measured_real_energy, voltage_A, voltage_B, voltage_C' },
                                 last_key)
-        
-    # Measure outside temperature
-    if climate_name != None:
-        last_key = add_recorder('outside_temp',
+                     
+        last_key = add_recorder('substation_transformer_power',
                                 'recorder',
-                                { 'parent' : '{:s}'.format(climate_name),
-                                  'property' : 'temperature' },
+                                { 'parent' :   'substation_transformer',
+                                  'property' :  'power_out_A.real, power_out_A.imag, power_out_B.real, power_out_B.imag, power_out_C.real, power_out_C.imag, power_out.real, power_out.imag, power_losses_A.real, power_losses_A.imag, power_losses_B.real, power_losses_B.imag, power_losses_C.real, power_losses_C.imag' },
                                 last_key)
-    
-    # Measure residential data
-    if have_resp_zips == 1:
-        last_key = add_recorder('res_responsive_load',
-                                'collector',
-                                { 'group' : '"class=ZIPload AND groupid=Responsive_load"',
-                                  'property' : 'sum(base_power)' },
-                                last_key)
+            
+        if swing_node != None:
+            last_key = add_recorder('swing_bus',
+                                    'recorder',
+                                    {'parent' : '{:s}'.format(swing_node),
+                                     'property' : 'measured_current_A.real, measured_current_A.imag, measured_current_B.real, measured_current_B.imag, measured_current_C.real, measured_current_C.imag, measured_voltage_A.real, measured_voltage_A.imag, measured_voltage_B.real, measured_voltage_B.imag, measured_voltage_C.real, measured_voltage_C.imag, measured_real_power, measured_reactive_power' },
+                                    last_key)
+            
+        # Measure outside temperature
+        if climate_name != None:
+            last_key = add_recorder('outside_temp',
+                                    'recorder',
+                                    { 'parent' : '{:s}'.format(climate_name),
+                                      'property' : 'temperature' },
+                                    last_key)
         
-    if have_unresp_zips == 1:
-        last_key = add_recorder('res_unresponsive_load',
-                                'collector',
-                                { 'group' : '"class=ZIPload AND groupid=Unresponsive_load"',
-                                  'property' : 'sum(base_power)' },
-                                last_key)
-        
-    if have_waterheaters == 1:
-        last_key = add_recorder('waterheater',
-                                'collector',
-                                { 'group' : '"class=waterheater"',
-                                  'property' : 'sum(actual_load)' },
-                                last_key)
-        
-    if have_lights == 1:
-        last_key = add_recorder('lights',
-                                'collector',
-                                { 'group' : '"class=ZIPload AND groupid=Lights"',
-                                  'property' : 'sum(base_power)' },
-                                last_key)
-        
-    if have_plugs == 1:
-        last_key = add_recorder('plugs',
-                                'collector',
-                                { 'group' : '"class=ZIPload AND groupid=Plugs"',
-                                  'property' : 'sum(base_power)' },
-                                last_key)
-        
-    if have_gas_waterheaters == 1:
-        last_key = add_recorder('gas_waterheater',
-                                'collector',
-                                { 'group' : '"class=ZIPload AND groupid=Gas_waterheater"',
-                                  'property' : 'sum(base_power)' },
-                                last_key)
-        
-    if have_occupancy == 1:
-        last_key = add_recorder('occupancy',
-                                'collector',
-                                { 'group' : '"class=ZIPload AND groupid=Occupancy"',
-                                  'property' : 'sum(base_power)' },
-                                last_key)
+        # Measure residential data
+        if have_resp_zips == 1:
+            last_key = add_recorder('res_responsive_load',
+                                    'collector',
+                                    { 'group' : '"class=ZIPload AND groupid=Responsive_load"',
+                                      'property' : 'sum(base_power)' },
+                                    last_key)
+            
+        if have_unresp_zips == 1:
+            last_key = add_recorder('res_unresponsive_load',
+                                    'collector',
+                                    { 'group' : '"class=ZIPload AND groupid=Unresponsive_load"',
+                                      'property' : 'sum(base_power)' },
+                                    last_key)
+            
+        if have_waterheaters == 1:
+            last_key = add_recorder('waterheater',
+                                    'collector',
+                                    { 'group' : '"class=waterheater"',
+                                      'property' : 'sum(actual_load)' },
+                                    last_key)
+            
+        if have_lights == 1:
+            last_key = add_recorder('lights',
+                                    'collector',
+                                    { 'group' : '"class=ZIPload AND groupid=Lights"',
+                                      'property' : 'sum(base_power)' },
+                                    last_key)
+            
+        if have_plugs == 1:
+            last_key = add_recorder('plugs',
+                                    'collector',
+                                    { 'group' : '"class=ZIPload AND groupid=Plugs"',
+                                      'property' : 'sum(base_power)' },
+                                    last_key)
+            
+        if have_gas_waterheaters == 1:
+            last_key = add_recorder('gas_waterheater',
+                                    'collector',
+                                    { 'group' : '"class=ZIPload AND groupid=Gas_waterheater"',
+                                      'property' : 'sum(base_power)' },
+                                    last_key)
+            
+        if have_occupancy == 1:
+            last_key = add_recorder('occupancy',
+                                    'collector',
+                                    { 'group' : '"class=ZIPload AND groupid=Occupancy"',
+                                      'property' : 'sum(base_power)' },
+                                    last_key)
                                 
     if have_solar_meter == 1:
         last_key = add_recorder('pv_meter_summed_real_power',
@@ -190,45 +191,46 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0):
                                   'property': 'measured_real_power' },
                                 last_key)
     
-    last_key = add_recorder('all_meters_real_power',
-                            'group_recorder',
-                            { 'group' : '"class=meter"',
-                              'property': 'measured_real_power' },
-                            last_key)
-                            
-    last_key = add_recorder('voltA',
-                            'group_recorder',
-                            { 'group': '"class=node"',
-                              'property': 'voltage_A',
-                              'complex_part': 'MAG' },
-                            last_key)
-                            
-    last_key = add_recorder('voltB',
-                            'group_recorder',
-                            { 'group': '"class=node"',
-                              'property': 'voltage_B',
-                              'complex_part': 'MAG' },
-                            last_key)
-            
-    last_key = add_recorder('voltC',
-                            'group_recorder',
-                            { 'group': '"class=node"',
-                              'property': 'voltage_C',
-                              'complex_part': 'MAG' },
-                            last_key)
-                            
-    last_key = add_recorder('all_triplex_nodes_voltage',
-                            'group_recorder',
-                            { 'group': '"class=triplex_node"',
-                              'property': 'voltage_12',
-                              'complex_part': 'MAG' },
-                            last_key)                            
-                            
-    last_key = add_recorder('all_triplex_meters_real_power',
-                            'group_recorder',
-                            { 'group': '"class=triplex_meter"',
-                              'property': 'measured_real_power' },
-                            last_key)
+    if not solar_only:
+        last_key = add_recorder('all_meters_real_power',
+                                'group_recorder',
+                                { 'group' : '"class=meter"',
+                                  'property': 'measured_real_power' },
+                                last_key)
+                                
+        last_key = add_recorder('voltA',
+                                'group_recorder',
+                                { 'group': '"class=node"',
+                                  'property': 'voltage_A',
+                                  'complex_part': 'MAG' },
+                                last_key)
+                                
+        last_key = add_recorder('voltB',
+                                'group_recorder',
+                                { 'group': '"class=node"',
+                                  'property': 'voltage_B',
+                                  'complex_part': 'MAG' },
+                                last_key)
+                
+        last_key = add_recorder('voltC',
+                                'group_recorder',
+                                { 'group': '"class=node"',
+                                  'property': 'voltage_C',
+                                  'complex_part': 'MAG' },
+                                last_key)
+                                
+        last_key = add_recorder('all_triplex_nodes_voltage',
+                                'group_recorder',
+                                { 'group': '"class=triplex_node"',
+                                  'property': 'voltage_12',
+                                  'complex_part': 'MAG' },
+                                last_key)                            
+                                
+        last_key = add_recorder('all_triplex_meters_real_power',
+                                'group_recorder',
+                                { 'group': '"class=triplex_meter"',
+                                  'property': 'measured_real_power' },
+                                last_key)
                             
     return (recorder_dict, last_key)
                             
