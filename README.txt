@@ -1,8 +1,5 @@
-=================
-omf-glm-utilities
-=================
+======
+glmgen
+======
 
-Private version of public fork https://github.com/elainethale/omf. Forking to use PNNL's latest 
-taxonomy feeder generator code as a starting point for scripted generation of glm files. (The 
-omf project is a web application to make it easier for MILSOFT users to evaluate grid technology 
-changes.)
+Fork of the [Open Modeling Framework (OMF)](https://github.com/dpinney/omf) that has been pruned down to just its functionality for editing glm files, and then further developed in that direction.

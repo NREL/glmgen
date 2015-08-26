@@ -724,6 +724,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
         c_load = residential_dict[x]['complex_load']
         original_object['power_12_real'] = 'street_lighting*{:.4f}'.format(c_load.real*tech_data['light_scalar_res'])
         original_object['power_12_reac'] = 'street_lighting*{:.4f}'.format(c_load.imag*tech_data['light_scalar_res'])
+        original_object['schedule_skew'] = '%d' % int(random.uniform(-3600, 3600)) #add a +/- one hour window for street lighting -TMH'
       else:
         to_remove.append(original_object_key)       
       

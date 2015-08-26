@@ -19,32 +19,7 @@ from glmgen import AddLoadShapes
 from glmgen import ResidentialLoads
 from glmgen import CommercialLoads
 
-def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
-  """
-  glmDict is a dictionary containing all the objects in WindMIL model represented as equivalent GridLAB-D objects
-
-  model_opts['tech_flag'] is an integer indicating which technology case to tack on to the GridLAB-D model
-    -1 : Loadshape Case
-     0 : Base Case
-     1 : CVR
-     2 : Automation
-     3 : FDIR
-     4 : TOU/CPP w/ tech
-     5 : TOU/CPP w/o tech
-     6 : TOU w/ tech
-     7 : TOU w/o tech
-     8 : DLC
-     9 : Thermal Storage
-    10 : PHEV
-    11 : Solar Residential
-    12 : Solar Commercial
-    13 : Solar Combined
-
-  io_opts['config_file'] is the name of the file to use for getting feeder information
-
-  GLD_Feeder returns a dictionary, glmCaseDict, similar to glmDict with additional object dictionaries added according to the model_opts['tech_flag'] selected.
-  """
-
+def get_parameters(io_opts, model_opts):
   # Check to make sure we have a valid case flag
   if model_opts['tech_flag'] < -1:
     model_opts['tech_flag'] = 0
@@ -77,6 +52,56 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
       
   for key, value in model_opts['use_flags'].items():
       use_flags[key] = value
+  
+  return model_opts, config_data, tech_data, use_flags
+
+def Append_Solar(glmDict, io_opts, time_opts, location_opts, model_opts):
+  """
+  glmDict is a feeder already processed by GLD_Feeder, but with no solar yet appended.
+  """
+  
+  model_opts, config_data, tech_data, use_flags = get_parameters(io_opts, model_opts)
+  
+  glmDict.set_no_reindexing()
+  last_key = len(glmDict)
+  
+  # Append Solar: Call append_solar(feeder_dict, use_flags, config_file, solar_bigbox_array, solar_office_array, solar_stripmall_array, solar_residential_array, last_key)
+  if use_flags['use_solar'] != 0 or use_flags['use_solar_res'] != 0 or use_flags['use_solar_com'] != 0:
+    glmDict = Solar_Technology.Append_Solar(glmDict, use_flags, config_data, tech_data, last_key)
+    
+  # Append recorders
+  glmDict, last_key = AddTapeObjects.add_recorders(glmDict, io_opts, time_opts, last_key, solar_only = True)
+
+  return (glmDict, last_key)  
+  
+
+def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
+  """
+  glmDict is a dictionary containing all the objects in WindMIL model represented as equivalent GridLAB-D objects
+
+  model_opts['tech_flag'] is an integer indicating which technology case to tack on to the GridLAB-D model
+    -1 : Loadshape Case
+     0 : Base Case
+     1 : CVR
+     2 : Automation
+     3 : FDIR
+     4 : TOU/CPP w/ tech
+     5 : TOU/CPP w/o tech
+     6 : TOU w/ tech
+     7 : TOU w/o tech
+     8 : DLC
+     9 : Thermal Storage
+    10 : PHEV
+    11 : Solar Residential
+    12 : Solar Commercial
+    13 : Solar Combined
+
+  io_opts['config_file'] is the name of the file to use for getting feeder information
+
+  GLD_Feeder returns a dictionary, glmCaseDict, similar to glmDict with additional object dictionaries added according to the model_opts['tech_flag'] selected.
+  """
+
+  model_opts, config_data, tech_data, use_flags = get_parameters(io_opts, model_opts)
   
   #tmy = 'schedules\\\\SCADA_weather_ISW_gld.csv'
   tmy = config_data['weather']

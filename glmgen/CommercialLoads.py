@@ -1340,7 +1340,8 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                         "parent" : "{:s}".format(my_parent),
                         "name" : "str_light_{:s}{:s}".format(ph,commercial_dict[iii]['name']),
                         "nominal_voltage" : "{:.2f}".format(nom_volt),
-                        "phases" : "{:s}".format(ph)
+                        "phases" : "{:s}".format(ph),
+                        'schedule_skew':'%d' % int(random.uniform(-3600, 3600)) #add a +/- one hour window for street lighting -TMH
                         }
         if has_phase_A == 1 and commercial_dict[iii]['load'][0] > 0:
           glmCaseDict[last_object_key]["base_power_A"] = "street_lighting*{:f}".format(tech_data["light_scalar_comm"]*commercial_dict[iii]['load'][0])
