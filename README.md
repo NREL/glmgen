@@ -8,7 +8,7 @@ Fork of the [Open Modeling Framework (OMF)](https://github.com/dpinney/omf) that
 
 or 
 
-`pip install git+ssh://git@github.nrel.gov/ESI/omf-glm-generator.git@v4.0.0`
+`pip install git+ssh://git@github.nrel.gov/ESI/omf-glm-generator.git@v4.1.0`
 
 Previous versions are listed at https://github.nrel.gov/ESI/omf-glm-generator/releases.
 

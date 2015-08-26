@@ -1,22 +1,26 @@
-v4.0.0, 6/10/2015  -- Continued refactor of Configuration, and the residential, commercial, and 
+v4.1.0, 08/26/2015 -- Previously populated feeder models can now have solar appended to them by setting 
+                      glmgen.makeGLM.makeGLM's model_opts['append_solar'] parameter to True.
+                      Refined street lighting schedule to be seasonal and to use a +/- 1 hour skew.
+                      Made the solar inverter power factor a parameter (instead of being hard-coded to 1).
+v4.0.0, 06/10/2015 -- Continued refactor of Configuration, and the residential, commercial, and 
                       PV population scripts. Buildings are added based on original load, and peak 
                       intensity per unit floor area. PV is now added based on the building floor 
                       area and annual energy intensity per unit floor area, with randomized azimuth 
                       and tilt, rather than a uniform 5 kW with default azimuth and tilt system.
-v3.0.0, 5/11/2015  -- Refactored the Configuration module and its dependencies to improve the 
+v3.0.0, 05/11/2015 -- Refactored the Configuration module and its dependencies to improve the 
                       replacement of loads with house models. 
-v2.3.0, 2/20/2014  -- GlmFile methods for setting the clock and voltage player files.
+v2.3.0, 02/20/2014 -- GlmFile methods for setting the clock and voltage player files.
                       (Optional) overload of __setitem__ and __delitem__ to support 
                       inserts and dense keying.
                       Bug fix for not using homes while specifying one of the solar 
                       technologies.
-v2.2.0, 1/16/2015  -- Added option to put .keep file in csv_output folder
+v2.2.0, 01/16/2015 -- Added option to put .keep file in csv_output folder
 v2.1.0, 12/31/2014 -- Added 'no voltage players' feature. Rescaled voltage player files.
-v2.0.0, 12/1/2014  -- Final changes from FY14. Includes API changes in makeGLM
+v2.0.0, 12/01/2014 -- Final changes from FY14. Includes API changes in makeGLM
                       and Milsoft_GridLAB_D_Feeder_Generation.
-v1.1.0, 7/23/2014  -- Added measured values to the slack bus to support co-simulation with transmission.
-v1.0.1, 7/14/2014  -- Improved glm parsing speed by storing tokenList in a deque instead of a list.
-v1.0.0, 7/7/2014   -- Started refactoring feeder.py to be more object-oriented. 
+v1.1.0, 07/23/2014 -- Added measured values to the slack bus to support co-simulation with transmission.
+v1.0.1, 07/14/2014 -- Improved glm parsing speed by storing tokenList in a deque instead of a list.
+v1.0.0, 07/07/2014 -- Started refactoring feeder.py to be more object-oriented. 
                       Broke the old write API (use GlmFile.__str__ and GlmFile.save instead). 
                       Continued to fix bugs and add externally-specified options. 
 v0.1.0, 5-6/2014   -- Initial (informal) release.
