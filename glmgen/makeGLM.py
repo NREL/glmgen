@@ -70,6 +70,9 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
             Defaulted:
                 - 'tech_flag': Technology flag, which is an integer [-1,13], defaults 
                                to 0.
+                - 'append_solar': Defaults to False. If True, baseGLM has already been processed
+                                  with no solar, and the only further processing being asked for
+                                  is to add solar to it.
             Optional:
                 - 'config_data': dict of key, value pairs with which to overwrite config_data
                                  (defaults from the Configuration module).
@@ -144,20 +147,29 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
                                           
   # model_opts
   set_default(model_opts, 'tech_flag', 0)
+  set_default(model_opts, 'append_solar', False)
   set_default(model_opts, 'config_data', {})
   set_default(model_opts, 'tech_data', {})
   set_default(model_opts, 'use_flags', {})
- 
-  # Create populated dictionary.
-  glm_file, last_key = Milsoft_GridLAB_D_Feeder_Generation.GLD_Feeder(
-      baseGLM,
-      io_opts,
-      time_opts,
-      location_opts,
-      model_opts) 
-    
-  # Get into clock object and set start and stop timestamp.
-  glm_file.set_clock(time_opts['start_time'],time_opts['stop_time'])
+  
+  if model_opts['append_solar']:
+    glm_file, last_key = Milsoft_GridLAB_D_Feeder_Generation.Append_Solar(
+        baseGLM,
+        io_opts,
+        time_opts,
+        location_opts,
+        model_opts)
+  else: 
+    # Create populated dictionary.
+    glm_file, last_key = Milsoft_GridLAB_D_Feeder_Generation.GLD_Feeder(
+        baseGLM,
+        io_opts,
+        time_opts,
+        location_opts,
+        model_opts) 
+      
+    # Get into clock object and set start and stop timestamp.
+    glm_file.set_clock(time_opts['start_time'],time_opts['stop_time'])
 
   # Turn dictionary into a *.glm string and print it to a file in the given directory.
   glm_file.save(os.path.join(io_opts['dir'],io_opts['filename']))
