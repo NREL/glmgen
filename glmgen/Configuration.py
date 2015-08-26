@@ -92,8 +92,10 @@ def append_default_feeder_config_data(data, working_directory, resources_dir, di
   # Additional Solar Modules
   # - penetration (%)
   # - solar rating (kVA)
+  # - inverter power factor (fraction)
   data["solar_penetration"] = 0.0
   data["solar_rating"] = 5  
+  data["inverter_power_factor"] = 1.0
   
   # Existing Solar (modules in utility database)
   # - inverter object properties to be used

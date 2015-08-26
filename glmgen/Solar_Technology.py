@@ -149,6 +149,7 @@ def get_inverter_panel_dicts(bldg, percent_bldg_annual_load, parent, phases, pv_
     desired_solar_gen = config_data['annual_load_intensities'][classID] * floor_area * percent_bldg_annual_load / 100.0 # kWh
     solar_rating = desired_solar_gen * 1000.0 / (capacity_factor * 8760.0) # W
     panel_area = round(solar_rating / (92.902 * cell_efficiency)) # standard conditions are 92.902 W/ft^2
+    power_factor = config_data['inverter_power_factor']
     
     inverter = {'object' : 'inverter',
                 'name' : 'pv_inv_{:s}'.format(parent),
@@ -157,7 +158,7 @@ def get_inverter_panel_dicts(bldg, percent_bldg_annual_load, parent, phases, pv_
                 'generator_mode' : 'CONSTANT_PF',
                 'generator_status' : 'ONLINE',
                 'inverter_type' : 'PWM',
-                'power_factor' : '1.0',
+                'power_factor' : '{:.4f}'.format(power_factor),
                 'inverter_efficiency' : '0.95',
                 'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
                                                   
