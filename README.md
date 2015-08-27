@@ -4,13 +4,13 @@ Fork of the [Open Modeling Framework (OMF)](https://github.com/dpinney/omf) that
 
 #### Install
 
-`pip install git+ssh://git@github.nrel.gov/ESI/omf-glm-generator.git@master`
+`pip install git+https://github.com/NREL/glmgen.git@master`
 
 or 
 
-`pip install git+ssh://git@github.nrel.gov/ESI/omf-glm-generator.git@v4.1.0`
+`pip install git+https://github.com/NREL/glmgen.git@v4.1.0`
 
-Previous versions are listed at https://github.nrel.gov/ESI/omf-glm-generator/releases.
+Previous versions are listed at https://github.com/NREL/glmgen/releases.
 
 Unfortunately on Windows, while this command nominally works (after running it, `pip list` will show glmgen as installed), it [exits with errors](http://stackoverflow.com/q/23938896/1470262).
 
