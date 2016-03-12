@@ -296,10 +296,10 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
           elif (use_flags["use_billing"] == 2): # TIERED
             raise Exception('use_flag.use_billing == 2 not functional at this time');
           elif (use_flags["use_billing"] == 3): # TOU or RTP
-            glmCaseDict[last_object_key].update({"bill_mode" : "HOURLY",
-                               "monthly_fee" : "{:.2f}".format(tech_data["comm_monthly_fee"]),
-                               "bill_day" : "1",
-                               "power_market" : "{:s}".format(tech_data["market_info"][0])})
+            glmCaseDict[last_object_key].update({ "bill_mode" : "HOURLY",
+                                                  "monthly_fee" : "{:.2f}".format(tech_data["comm_monthly_fee"]),
+                                                  "bill_day" : "1",
+                                                  "power_market" : "{:s}".format(tech_data["market_info"]['name']) })
           last_object_key += 1;
           
           #for phind = 1:3 #for each of three floors (5 zones each)
@@ -463,7 +463,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                                 "name" : parent_house["name"]+"_cntlr",
                                 "parent" : parent_house["name"],
                                 "schedule_skew" : "{:.0f}".format(skew_value),
-                                "market" : "{:s}".format(tech_data["market_info"][0]),
+                                "market" : "{:s}".format(tech_data["market_info"]['name']),
                                 "bid_mode" : "OFF",
                                 "control_mode" : "RAMP",
                                 "range_high" : "{:.3f}".format(crh),
@@ -471,9 +471,9 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                                 "ramp_high" : "{:.3f}".format(crh2),
                                 "ramp_low" : "{:.3f}".format(crl2),
                                 "base_setpoint" : "office_cooling",
-                                "period" : "{:.0f}".format(tech_data["market_info"][1]),
-                                "average_target" : "my_avg",
-                                "standard_deviation_target" : "my_std",
+                                "period" : "{:.0f}".format(tech_data["market_info"]['period']),
+                                "average_target" : tech_data["market_info"]["avg_name"],
+                                "standard_deviation_target" : tech_data["market_info"]["std_name"],
                                 "target" : "air_temperature",
                                 "setpoint" : "cooling_setpoint",
                                 "demand" : "last_cooling_load",
@@ -501,7 +501,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                                   "cycle_length_off" : "{:.0f}".format(c_off),
                                   "period" : "0",
                                   "state_property" : "override",
-                                  "observation_object" : "{:s}".format(tech_data["market_info"][0]),
+                                  "observation_object" : "{:s}".format(tech_data["market_info"]['name']),
                                   "observation_property" : "past_market.clearing_price",
                                   "second_tier_price" : "{:f}".format(config_data["CPP_prices"][2])}
                   last_object_key += 1
@@ -701,7 +701,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
             glmCaseDict[last_object_key].update({"bill_mode" : "HOURLY",
                                "monthly_fee" : "{:.2f}".format(tech_data["comm_monthly_fee"]),
                                "bill_day" : "1",
-                               "power_market" : "{:s}".format(tech_data["market_info"][0])})
+                               "power_market" : "{:s}".format(tech_data["market_info"]['name'])})
           last_object_key += 1;
 
           # skew each big box zone identically
@@ -829,7 +829,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                 glmCaseDict[last_object_key] = {"object" : "controller",
                                 "parent" : parent_house["name"],
                                 "schedule_skew" : "{:.0f}".format(skew_value),
-                                "market" : "{:s}".format(tech_data["market_info"][0]),
+                                "market" : "{:s}".format(tech_data["market_info"]['name']),
                                 "bid_mode" : "OFF",
                                 "control_mode" : "RAMP",
                                 "range_high" : "{:.3f}".format(crh),
@@ -837,9 +837,9 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                                 "ramp_high" : "{:.3f}".format(crh2),
                                 "ramp_low" : "{:.3f}".format(crl2),
                                 "base_setpoint" : "bigbox_cooling",
-                                "period" : "{:.0f}".format(tech_data["market_info"][1]),
-                                "average_target" : "my_avg",
-                                "standard_deviation_target" : "my_std",
+                                "period" : "{:.0f}".format(tech_data["market_info"]['period']),
+                                "average_target" : tech_data["market_info"]["avg_name"],
+                                "standard_deviation_target" : tech_data["market_info"]["std_name"],
                                 "target" : "air_temperature",
                                 "setpoint" : "cooling_setpoint",
                                 "demand" : "last_cooling_load",
@@ -868,7 +868,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                                   "cycle_length_off" : "{:.0f}".format(c_off),
                                   "period" : "0",
                                   "state_property" : "override",
-                                  "observation_object" : "{:s}".format(tech_data["market_info"][0]),
+                                  "observation_object" : "{:s}".format(tech_data["market_info"]['name']),
                                   "observation_property" : "past_market.clearing_price",
                                   "second_tier_price" : "{:f}".format(config_data["CPP_prices"](3))}
                   last_object_key += 1
@@ -1132,7 +1132,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
               glmCaseDict[last_object_key].update( {"bill_mode" : "HOURLY",
                         "monthly_fee" : "{:.2f}".format(tech_data["comm_monthly_fee"]),
                         "bill_day" : "1",
-                        "power_market" : "{:s}".format(tech_data["market_info"][0])} )
+                        "power_market" : "{:s}".format(tech_data["market_info"]['name'])} )
             last_object_key += 1;
             
             init_temp = 68 + 4*random.random();
@@ -1197,7 +1197,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
               glmCaseDict[last_object_key] = {"object" : "controller",
                               "parent" : parent_house["name"],
                               "schedule_skew" : "{:.0f}".format(skew_value),
-                              "market" : "{:s}".format(tech_data["market_info"][0]),
+                              "market" : "{:s}".format(tech_data["market_info"]['name']),
                               "bid_mode" : "OFF",
                               "control_mode" : "RAMP",
                               "range_high" : "{:.3f}".format(crh),
@@ -1205,9 +1205,9 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                               "ramp_high" : "{:.3f}".format(crh2),
                               "ramp_low" : "{:.3f}".format(crl2),
                               "base_setpoint" : "stripmall_cooling",
-                              "period" : "{:.0f}".format(tech_data["market_info"][1]),
-                              "average_target" : "my_avg",
-                              "standard_deviation_target" : "my_std",
+                              "period" : "{:.0f}".format(tech_data["market_info"]['period']),
+                              "average_target" : tech_data["market_info"]["avg_name"],
+                              "standard_deviation_target" : tech_data["market_info"]["std_name"],
                               "target" : "air_temperature",
                               "setpoint" : "cooling_setpoint",
                               "demand" : "last_cooling_load",
@@ -1234,7 +1234,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                                 "cycle_length_off" : "{:.0f}".format(c_off),
                                 "period" : "0",
                                 "state_property" : "override",
-                                "observation_object" : "{:s}".format(tech_data["market_info"][0]),
+                                "observation_object" : "{:s}".format(tech_data["market_info"]['name']),
                                 "observation_property" : "past_market.clearing_price",
                                 "second_tier_price" : "{:f}".format(config_data["CPP_prices"](3))}
 

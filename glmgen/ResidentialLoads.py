@@ -75,7 +75,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
             ResTechDict[last_object_key]['bill_day'] = '1'
           elif use_flags['use_billing'] == 3:
             ResTechDict[last_object_key]['bill_mode'] = 'UNIFORM'
-            ResTechDict[last_object_key]['power_market'] = '{:d}'.format(tech_data['market_info'][1])
+            ResTechDict[last_object_key]['power_market'] = '{:d}'.format(tech_data['market_info']['period'])
             ResTechDict[last_object_key]['monthly_fee'] = '{:d}'.format(tech_data['monthly_fee'])
             ResTechDict[last_object_key]['bill_day'] = '1'
           last_object_key += 1
@@ -297,23 +297,25 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
           if use_flags['use_market'] == 3:
             ResTechDict[last_object_key]['dlc_offset'] = '6'
 
-          if (use_flags['use_market'] == 1 or use_flags['use_market'] == 2) and tech_data['use_tech'] == 1:
+          #if (use_flags['use_market'] == 1 or use_flags['use_market'] == 2) and tech_data['use_tech'] == 1:
             # brute force way to avoid crash
-            if ((y*len(residential_dict) + x) < len(market_penetration_random)) and \
-               (7 < len(tech_data['market_info'])) and \
-               (market_penetration_random[y*len(residential_dict) + x] <= tech_data['market_info'][7]):
-              if ht == 'HP':
-                ResTechDict[last_object_key]['cooling_setpoint'] = '{:.2f}'.format(cool_night)
-                ResTechDict[last_object_key]['heating_setpoint'] = '{:.2f}'.format(cool_night - 3)
-              elif ht == 'ELEC':
-                ResTechDict[last_object_key]['cooling_setpoint'] = '{:.2f}'.format(cool_night)
-                ResTechDict[last_object_key]['heating_setpoint'] = '{:.2f}'.format(cool_night - 3)
-              elif ct == 'ELEC':
-                ResTechDict[last_object_key]['cooling_setpoint'] = '{:.2f}'.format(cool_night)
-                ResTechDict[last_object_key]['heating_setpoint'] = 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night)
-              else:
-                ResTechDict[last_object_key]['cooling_setpoint'] = 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night)
-                ResTechDict[last_object_key]['heating_setpoint'] = 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night)
+            # 20160312 - I don't see a way for this block to get activated, and am changing tech_data['market_info'] 
+            # from a tuple to a dict
+            #if ((y*len(residential_dict) + x) < len(market_penetration_random)) and \
+            #   (7 < len(tech_data['market_info'])) and \
+            #   (market_penetration_random[y*len(residential_dict) + x] <= tech_data['market_info'][7]):
+            #  if ht == 'HP':
+            #    ResTechDict[last_object_key]['cooling_setpoint'] = '{:.2f}'.format(cool_night)
+            #    ResTechDict[last_object_key]['heating_setpoint'] = '{:.2f}'.format(cool_night - 3)
+            #  elif ht == 'ELEC':
+            #    ResTechDict[last_object_key]['cooling_setpoint'] = '{:.2f}'.format(cool_night)
+            #    ResTechDict[last_object_key]['heating_setpoint'] = '{:.2f}'.format(cool_night - 3)
+            #  elif ct == 'ELEC':
+            #    ResTechDict[last_object_key]['cooling_setpoint'] = '{:.2f}'.format(cool_night)
+            #    ResTechDict[last_object_key]['heating_setpoint'] = 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night)
+            #  else:
+            #    ResTechDict[last_object_key]['cooling_setpoint'] = 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night)
+            #    ResTechDict[last_object_key]['heating_setpoint'] = 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night)
 
           if (use_flags['use_market'] == 1 or use_flags['use_market'] == 2) and tech_data['use_tech'] == 0:
             # TOU/CPP w/o technology - assumes people offset
@@ -332,7 +334,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                             'dlc_mode' : 'CYCLING',
                             'period' : '0',
                             'state_property' : 'override',
-                            'observation_object' : tech_data['market_info'][0],
+                            'observation_object' : tech_data['market_info']['name'],
                             'observation_property' : 'past_market.clearing_price',
                             'second_tier_price' : config_data['CPP_prices'][2]}
             
@@ -372,7 +374,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                 ResTechDict[last_object_key] = {'object' : 'controller',
                                 'parent' : 'house{:s}_{:s}'.format(y,my_name),
                                 'schedule_skew' : '{:.0f}'.format(skew_value),
-                                'market' : '{:s}'.format(tech_data['market_info'][0]),
+                                'market' : '{:s}'.format(tech_data['market_info']['name']),
                                 'bid_mode' : 'OFF',
                                 'control_mode' : 'DOUBLE_RAMP',
                                 'resolve_mode' : 'DEADBAND',
@@ -386,7 +388,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                                 'cooling_ramp_low' : '{:.3f}'.format(crl2),
                                 'cooling_base_setpoint' : 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night),
                                 'heating_base_setpoint' : 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night),
-                                'period' : '{:.0f}'.format(tech_data['market_info'][1]),
+                                'period' : '{:.0f}'.format(tech_data['market_info']['period']),
                                 'average_target' : 'my_avg',
                                 'standard_deviation_target' : 'my_std',
                                 'target' : 'air_temperature',
@@ -404,7 +406,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                   ResTechDict[last_object_key] = {'object' : 'controller',
                                   'parent' : 'house{:s}_{:s}'.format(y,my_name),
                                   'schedule_skew' : '{:.0f}'.format(skew_value),
-                                  'market' : '{:s}'.format(tech_data['market_info'][0]),
+                                  'market' : '{:s}'.format(tech_data['market_info']['name']),
                                   'bid_mode' : 'OFF',
                                   'control_mode' : 'DOUBLE_RAMP',
                                   'resolve_mode' : 'DEADBAND',
@@ -418,7 +420,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                                   'cooling_ramp_low' : '{:.3f}'.format(crl2),
                                   'cooling_base_setpoint' : 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night),
                                   'heating_base_setpoint' : 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night),
-                                  'period' : '{:.0f}'.format(tech_data['market_info'][1]),
+                                  'period' : '{:.0f}'.format(tech_data['market_info']['period']),
                                   'average_target' : 'my_avg',
                                   'standard_deviation_target' : 'my_std',
                                   'target' : 'air_temperature',
@@ -435,7 +437,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                   ResTechDict[last_object_key] = {'object' : 'controller',
                                   'parent' : 'house{:s}_{:s}'.format(y,my_name),
                                   'schedule_skew' : '{:.0f}'.format(skew_value),
-                                  'market' : '{:s}'.format(tech_data['market_info'][0]),
+                                  'market' : '{:s}'.format(tech_data['market_info']['name']),
                                   'bid_mode' : 'OFF',
                                   'control_mode' : 'RAMP',
                                   'range_high' : '{:.3f}'.format(hrh),
@@ -443,7 +445,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                                   'ramp_high' : '{:.3f}'.format(hrh2),
                                   'ramp_low' : '{:.3f}'.format(hrl2),
                                   'base_setpoint' : 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night),
-                                  'period' : '{:.0f}'.format(tech_data['market_info'][1]),
+                                  'period' : '{:.0f}'.format(tech_data['market_info']['period']),
                                   'average_target' : 'my_avg',
                                   'standard_deviation_target' : 'my_std',
                                   'target' : 'air_temperature',
@@ -458,7 +460,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                 ResTechDict[last_object_key] = {'object' : 'controller',
                                 'parent' : 'house{:s}_{:s}'.format(y,my_name),
                                 'schedule_skew' : '{:.0f}'.format(skew_value),
-                                'market' : '{:s}'.format(tech_data['market_info'][0]),
+                                'market' : '{:s}'.format(tech_data['market_info']['name']),
                                 'bid_mode' : 'OFF',
                                 'control_mode' : 'RAMP',
                                 'range_high' : '{:.3f}'.format(crh),
@@ -466,7 +468,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                                 'ramp_high' : '{:.3f}'.format(crh2),
                                 'ramp_low' : '{:.3f}'.format(crl2),
                                 'base_setpoint' : 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night),
-                                'period' : '{:.0f}'.format(tech_data['market_info'][1]),
+                                'period' : '{:.0f}'.format(tech_data['market_info']['period']),
                                 'average_target' : 'my_avg',
                                 'standard_deviation_target' : 'my_std',
                                 'target' : 'air_temperature',
@@ -520,10 +522,10 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
           if use_flags['use_market'] == 1 or use_flags['use_market'] == 2:
             ResTechDict[last_object_key] = {'object' : 'passive_controller',
                             'parent' : 'house{:d}_resp_{:s}'.format(y,my_name),
-                            'period' : '{:.0f}'.format(tech_data['market_info'][1]),
+                            'period' : '{:.0f}'.format(tech_data['market_info']['period']),
                             'control_mode' : 'ELASTICITY_MODEL',
                             'two_tier_cpp' : '{:s}'.format(tech_data['two_tier_cpp']),
-                            'observation_object' : '{:s}'.format(tech_data['market_info'][0]),
+                            'observation_object' : '{:s}'.format(tech_data['market_info']['name']),
                             'observation_property' : 'past_market.clearing_price',
                             'state_property' : 'multiplier',
                             'linearize_elasticity' : 'true',
@@ -600,10 +602,10 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
             if (use_flags['use_market'] == 1 or use_flags['use_market'] == 2) and tech_data['use_tech'] == 1: # TOU
               ResTechDict[last_object_key] = {'object' : 'passive_controller',
                               'parent' : 'house{:d}_ppump_{:s}'.format(y,my_name),
-                              'period' : '{:.0f}'.format(tech_data['market_info'][1]),
+                              'period' : '{:.0f}'.format(tech_data['market_info']['period']),
                               'control_mode' : 'DUTYCYCLE',
                               'pool_pump_model' : 'TRUE',
-                              'observation_object' : '{:s}'.format(tech_data['market_info'][0]),
+                              'observation_object' : '{:s}'.format(tech_data['market_info']['name']),
                               'observation_property' : 'past_market.clearing_price',
                               'state_property' : 'override',
                               'base_duty_cycle' : '{:.2f}'.format(pp_dutycycle),
@@ -628,7 +630,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                               'period' : '0',
                               'control_mode' : 'DIRECT_LOAD_CONTROL',
                               'dlc_mode' : 'OFF',
-                              'observation_object' : '{:s}'.format(tech_data['market_info'][0]),
+                              'observation_object' : '{:s}'.format(tech_data['market_info']['name']),
                               'observation_property' : 'past_market.clearing_price',
                               'state_property' : 'override',
                               'second_tier_price' : '{:f}'.format(config_data['CPP_prices'][2])}
@@ -687,13 +689,13 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
             if use_flags['use_market'] == 1 or use_flags['use_market'] == 2:
               ResTechDict[last_object_key] = {'object' : 'passive_controller',
                               'parent' : 'house{:d}_wh_{:s}'.format(y,my_name),
-                              'period' : '{:.0f}'.format(tech_data['market_info'][1]),
+                              'period' : '{:.0f}'.format(tech_data['market_info']['period']),
                               'control_mode' : 'PROBABILITY_OFF',
                               'distribution_type' : 'NORMAL',
-                              'observation_object' : '{:s}'.format(tech_data['market_info'][0]),
+                              'observation_object' : '{:s}'.format(tech_data['market_info']['name']),
                               'observation_property' : 'past_market.clearing_price',
                               'stdev_observation_property' : 'my_std',
-                              'expectation_object' : '{:s}'.format(tech_data['market_info'][0]),
+                              'expectation_object' : '{:s}'.format(tech_data['market_info']['name']),
                               'expectation_property' : 'my_avg',
                               'comfort_level' : '{:.2f}'.format(slider_random[y*len(residential_dict) + x]),
                               'state_property' : 'override'}
@@ -706,7 +708,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                               'period' : '0',
                               'control_mode' : 'DIRECT_LOAD_CONTROL',
                               'dlc_mode' : 'CYCLING',
-                              'observation_object' : '{:s}'.format(tech_data['market_info'][0]),
+                              'observation_object' : '{:s}'.format(tech_data['market_info']['name']),
                               'observation_property' : 'past_market.clearing_price',
                               'cycle_length_on' : '{:.0f}'.format(c_on),
                               'cycle_length_off' : '{:.0f}'.format(c_off),

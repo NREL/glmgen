@@ -21,11 +21,14 @@ from glmgen import CommercialLoads
 
 def get_parameters(io_opts, model_opts):
   # Check to make sure we have a valid case flag
-  if model_opts['tech_flag'] < -1:
-    model_opts['tech_flag'] = 0
-
-  if model_opts['tech_flag'] > 13:
-    model_opts['tech_flag'] = 13
+  if not isinstance(model_opts['tech_flag'], list):
+      model_opts['tech_flag'] = [model_opts['tech_flag']]
+      
+  for i, tech_flag in enumerate(model_opts['tech_flag']):
+      if tech_flag < -1:
+          model_opts['tech_flag'][i] = 0
+      if tech_flag > 14:
+          model_opts['tech_flag'][i] = 0
   
   # Get information about each feeder from Configuration() and  TechnologyParameters()
   config_data = Configuration.FeederConfiguration(io_opts['dir'], io_opts['resources_dir'])
@@ -79,7 +82,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   """
   glmDict is a dictionary containing all the objects in WindMIL model represented as equivalent GridLAB-D objects
 
-  model_opts['tech_flag'] is an integer indicating which technology case to tack on to the GridLAB-D model
+  model_opts['tech_flag'] is an integer or list of integers indicating which technology case(s) to tack onto 
+  the GridLAB-D model
     -1 : Loadshape Case
      0 : Base Case
      1 : CVR
@@ -95,6 +99,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     11 : Solar Residential
     12 : Solar Commercial
     13 : Solar Combined
+    14 : Co-Simulated Real Time Prices
 
   io_opts['config_file'] is the name of the file to use for getting feeder information
 
@@ -207,8 +212,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
   if use_flags['use_market'] != 0:
     # Add class auction dictionary to glmCaseDict
     glmCaseDict[last_key] = {'class' : 'auction',
-                 'variable_types' : ['double','double'],
-                 'variable_names' : ['my_avg','my_std']}
+                             'variable_types' : ['double','double'],
+                             'variable_names' : [tech_data['market_info']['avg_name'],tech_data['market_info']['std_name']]}
     last_key += 1
 
     # Add CPP player dictionary to glmCaseDict
@@ -227,30 +232,41 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     elif use_flags['use_market'] == 2 or use_flags['use_market'] == 3: #TOU/CPP
       temp_avg = config_data['CPP_stats'][0]
       temp_std = config_data['CPP_stats'][1]
+    elif use_flags['use_market'] == 4:
+      temp_avg = config_data['RTP_stats'][0]
+      temp_std = config_data['RTP_stats'][1]
 
     glmCaseDict[last_key] = {'object' : 'auction',
-                 'name' : tech_data['market_info'][0],
-                 'period' : "{:.0f}".format(tech_data['market_info'][1]),
+                 'name' : tech_data['market_info']['name'], 
+                 'period' : "{:.0f}".format(tech_data['market_info']['period']),
                  'special_mode' : 'BUYERS_ONLY',
-                 'unit' : 'kW',
-                 'my_avg' : temp_avg,
-                 'my_std' : temp_std}
+                 'unit' : tech_data['market_info']['unit'], 
+                 tech_data['market_info']['avg_name'] : temp_avg,
+                 tech_data['market_info']['std_name'] : temp_std}
     parent_key = last_key
     last_key += 1
 
     # Add player object dictionary for the auction object's clearing price
     # Determine which file to use for the clear_price
     if use_flags['use_market'] == 1: #TOU
+      auction_property = config_data['TOU_player_property']
       auction_price_file = config_data['TOU_price_player']
     elif use_flags['use_market'] == 2 or use_flags['use_market'] == 3: #TOU/CPP
+      auction_property = config_data['CPP_player_property']
       auction_price_file = config_data['CPP_price_player']
+    elif use_flags['use_market'] == 4:
+      auction_property = config_data['RTP_player_property']
+      auction_price_file = config_data['RTP_price_player']
 
-    glmCaseDict[last_key] = {'object' : 'player',
-                 'parent' : glmCaseDict[parent_key]['name'],
-                 'file' : auction_price_file,
-                 'loop' : '10',
-                 'property' : 'current_market.clearing_price'}
+    glmCaseDict[last_key] = { 'object' : 'player',
+                              'parent' : glmCaseDict[parent_key]['name'],
+                              'file' : auction_price_file,
+                              'loop' : '10',
+                              'property' : auction_property }
+    if use_flags['use_market'] == 4:
+        del glmCaseDict[last_key]['loop']
     last_key += 1
+
   else:
     CPP_flag_name = None;
 
@@ -584,8 +600,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
           # Limit slider randomization to Olypen style
           slider_random.append(random.normalvariate(0.45,0.2))
-          if slider_random[x] > tech_data['market_info'][4]:
-            slider_random[x] = tech_data['market_info'][4]
+          if slider_random[x] > tech_data['market_info']['slider_response_cutoff']:
+            slider_random[x] = tech_data['market_info']['slider_response_cutoff']
           if slider_random[x] < 0:
             slider_random[x] = 0
 
@@ -607,8 +623,8 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
         for x in range(aa):
           # Limit slider randomization to Olypen style
           comm_slider_random.append(random.normalvariate(0.45,0.2))
-          if comm_slider_random[x] > tech_data['market_info'][4]:
-            comm_slider_random[x] = tech_data['market_info'][4]
+          if comm_slider_random[x] > tech_data['market_info']['slider_response_cutoff']:
+            comm_slider_random[x] = tech_data['market_info']['slider_response_cutoff']
           if comm_slider_random[x] < 0:
             comm_slider_random[x] = 0
 

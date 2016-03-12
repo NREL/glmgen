@@ -53,13 +53,20 @@ def append_default_feeder_config_data(data, working_directory, resources_dir, di
   data["TOU_prices"] = [0.07590551, 0.15181102]
   data["TOU_hours"] = [12, 12, 6]
   data["TOU_stats"] = [0.11385826, 0.03795329]
+  data['TOU_player_property'] = 'current_market.clearing_price'
   data["TOU_price_player"] = 'R1_1247_1_t0_TOU.player'
       
   # Critical Peak Price (CPP) 
   data["CPP_prices"] = [0.06998667, 0.13997334, 0.69986670]
   data["CPP_stats"] = [0.10999954, 0.03795329]
+  data['CPP_player_property'] = 'current_market.clearing_price'
   data["CPP_price_player"] = 'R1_1247_1_t0_CPP.player'
   data["CPP_flag"] = 'CPP_days_R1.player' # Specifies critical day
+  
+  # Co-simulated Real Time Prices
+  data['RTP_stats'] = [18.99, 1e-6] # avg (MWh), stdev
+  data['RTP_player_property'] = 'fixed_price'
+  data['RTP_price_player'] = 'market.player'
       
   # Load Classifications
   data["load_classifications"] = ['Residential1', 'Residential2', 'Residential3', 'Residential4', 'Residential5', 'Residential6', 'Commercial1', 'Commercial2', 'Commercial3']    

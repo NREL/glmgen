@@ -68,8 +68,8 @@ def makeGLM(baseGLM, io_opts, time_opts, location_opts = {}, model_opts = {}):
                               parameters.
                               
             Defaulted:
-                - 'tech_flag': Technology flag, which is an integer [-1,13], defaults 
-                               to 0.
+                - 'tech_flag': Technology flag, which is an integer [-1,14] or a list of 
+                               integers, defaults to 0.
                 - 'append_solar': Defaults to False. If True, baseGLM has already been processed
                                   with no solar, and the only further processing being asked for
                                   is to add solar to it.
