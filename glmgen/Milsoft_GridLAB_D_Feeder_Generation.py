@@ -574,11 +574,20 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           residential_key += 1
     
   # Calculate some random numbers needed for TOU/CPP and DLC technologies
+  market_penetration_random = None
+  dlc_rand = None
+  pool_pump_recovery_random = None
+  slider_random = None
+  comm_slider_random = None
+  dlc_c_rand = None
+  dlc_c_rand2 = None
+  xval = None
+  elasticity_random = None
   if use_flags['use_market'] != 0:
     # Initialize psuedo-random seed
     random.seed(2) if config_data["fix_random_seed"] else random.seed()
 
-    if len(residential_dict) > 0:
+    if len(commercial_dict) + len(residential_dict) > 0:
       # Initialize random number arrays
       market_penetration_random = []
       dlc_rand = []
@@ -641,16 +650,6 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
       dlc_c_rand2 = None
       xval = None
       elasticity_random = None
-  else:
-    market_penetration_random = None
-    dlc_rand = None
-    pool_pump_recovery_random = None
-    slider_random = None
-    comm_slider_random = None
-    dlc_c_rand = None
-    dlc_c_rand2 = None
-    xval = None
-    elasticity_random = None
 
   # Tack on residential loads
   solar_residential_array = [0,[],[]]

@@ -317,7 +317,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
             #    ResTechDict[last_object_key]['cooling_setpoint'] = 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night)
             #    ResTechDict[last_object_key]['heating_setpoint'] = 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night)
 
-          if (use_flags['use_market'] == 1 or use_flags['use_market'] == 2) and tech_data['use_tech'] == 0:
+          if (use_flags['use_market'] in [1,2,4]) and tech_data['use_tech'] == 0:
             # TOU/CPP w/o technology - assumes people offset
             # their thermostats a little more
             new_rand = 1 + slider_random[y*len(residential_dict) + x]
@@ -347,7 +347,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
             last_object_key += 1
             
           # Put in Controller objects for use_flags.use_market = 1 or 2 line 2239
-          if (use_flags['use_market'] == 1 or use_flags['use_market'] == 2) and tech_data['use_tech'] == 1:
+          if (use_flags['use_market'] in [1,2,4]) and tech_data['use_tech'] == 1:
             # brute force way to avoid crash
             if ((y*len(residential_dict) + x) < len(market_penetration_random)) and \
                (7 < len(tech_data['market_info'])) and \
@@ -519,17 +519,17 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                           'power_fraction' : '{:f}'.format(tech_data['pfrac'])}
           last_object_key += 1
           #print('finished responsive zipload')
-          if use_flags['use_market'] == 1 or use_flags['use_market'] == 2:
+          if use_flags['use_market'] in [1,2]:
             ResTechDict[last_object_key] = {'object' : 'passive_controller',
-                            'parent' : 'house{:d}_resp_{:s}'.format(y,my_name),
-                            'period' : '{:.0f}'.format(tech_data['market_info']['period']),
-                            'control_mode' : 'ELASTICITY_MODEL',
-                            'two_tier_cpp' : '{:s}'.format(tech_data['two_tier_cpp']),
-                            'observation_object' : '{:s}'.format(tech_data['market_info']['name']),
-                            'observation_property' : 'past_market.clearing_price',
-                            'state_property' : 'multiplier',
-                            'linearize_elasticity' : 'true',
-                            'price_offset' : '0.01'}
+                                            'parent' : 'house{:d}_resp_{:s}'.format(y,my_name),
+                                            'period' : '{:.0f}'.format(tech_data['market_info']['period']),
+                                            'control_mode' : 'ELASTICITY_MODEL',
+                                            'two_tier_cpp' : '{:s}'.format(tech_data['two_tier_cpp']),
+                                            'observation_object' : '{:s}'.format(tech_data['market_info']['name']),
+                                            'observation_property' : 'past_market.clearing_price',
+                                            'state_property' : 'multiplier',
+                                            'linearize_elasticity' : 'true',
+                                            'price_offset' : '0.01'}
             
             if use_flags['use_market'] == 2: # CPP
               ResTechDict[last_object_key]['critical_day'] = '{:s}.value'.format(CPP_flag_name)
@@ -594,12 +594,12 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                             'power_fraction' : '{:f}'.format(tech_data['pfrac']),
                             'is_240' : 'TRUE'}
             
-            if (use_flags['use_market'] == 1 or use_flags['use_market'] == 2) and tech_data['use_tech'] == 1: # TOU
+            if (use_flags['use_market'] in [1,2,4]) and tech_data['use_tech'] == 1: # TOU
               ResTechDict[last_object_key]['recovery_duty_cycle'] = '{:.2f}'.format(pp_dutycycle * (1 + pool_pump_recovery_random[y*len(residential_dict) + x]))
             last_object_key += 1
             
             # Add passive_controllers to the pool pump ZIPloads
-            if (use_flags['use_market'] == 1 or use_flags['use_market'] == 2) and tech_data['use_tech'] == 1: # TOU
+            if (use_flags['use_market'] in [1,2,4]) and tech_data['use_tech'] == 1: # TOU
               ResTechDict[last_object_key] = {'object' : 'passive_controller',
                               'parent' : 'house{:d}_ppump_{:s}'.format(y,my_name),
                               'period' : '{:.0f}'.format(tech_data['market_info']['period']),
@@ -686,7 +686,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
             last_object_key += 1
               
             # Add passive controllers to the waterheaters
-            if use_flags['use_market'] == 1 or use_flags['use_market'] == 2:
+            if use_flags['use_market'] in [1,2,4]:
               ResTechDict[last_object_key] = {'object' : 'passive_controller',
                               'parent' : 'house{:d}_wh_{:s}'.format(y,my_name),
                               'period' : '{:.0f}'.format(tech_data['market_info']['period']),
