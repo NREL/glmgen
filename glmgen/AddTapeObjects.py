@@ -23,6 +23,12 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
     have_occupancy = 0
     have_solar_meter = 0
     have_solar_triplex_meter = 0
+    have_house = 0
+    have_passive_controller = 0
+    have_pass_contr_ramp = 0
+    have_controller_ramp = 0
+    have_auction = 0
+    auction_name = None
     swing_node = None
     climate_name = None
     for x in recorder_dict.keys():
@@ -59,6 +65,22 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
                 if 'groupid' in recorder_dict[x]:
                     if recorder_dict[x]['groupid'] == 'PV_Meter':
                         have_solar_triplex_meter = 1
+                        
+            if recorder_dict[x]['object'] == 'house':
+                have_house = 1
+
+            if recorder_dict[x]['object'] == 'passive_controller':
+                have_passive_controller = 1
+                if ('control_mode' in recorder_dict[x]) and (recorder_dict[x]['control_moce'] == 'RAMP'):
+                    have_pass_contr_ramp = 1
+            
+            if recorder_dict[x]['object'] == 'controller':
+                if ('control_mode' in recorder_dict[x]) and (recorder_dict[x]['control_moce'] == 'RAMP'):
+                    have_controller_ramp = 1
+                        
+            if recorder_dict[x]['object'] == 'auction':
+                have_auction = 1
+                auction_name = recorder_dict[x]['name']
                         
     def add_recorder(name,rec_type,common_data,last_key):
         common_data.update( { 'interval' : time_opts['rec_interval'].total_seconds(),
@@ -165,6 +187,49 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
                                     'collector',
                                     { 'group' : '"class=ZIPload AND groupid=Occupancy"',
                                       'property' : 'sum(base_power)' },
+                                    last_key)
+                                    
+        if have_house == 1:
+            properties = ['cooling_setpoint', 'heating_setpoint']
+            for property in properties:
+                last_key = add_recorder('house_{}'.format(property),
+                                        'collector',
+                                        { 'group': '"class=house"',
+                                          'property': property },
+                                        last_key)
+                                        
+        if have_passive_controller == 1:
+            properties = ['expectation', 'observation', 'stdev_observation']
+            for property in properties:
+                last_key = add_recorder('passive_controller_{}'.format(property),
+                                        'collector',
+                                        { 'group': '"class=passive_controller"',
+                                          'property': property },
+                                        last_key)
+            
+        if have_pass_contr_ramp == 1:
+            properties = ['range_low', 'range_high', 'ramp_low', 'ramp_high']
+            for property in properties:
+                last_key = add_recorder('passive_controller_{}'.format(property),
+                                        'collector',
+                                        { 'group': '"class=passive_controller AND control_mode=RAMP"',
+                                          'property': property },
+                                        last_key)
+        
+        if have_controller_ramp == 1:
+            properties = ['range_low', 'range_high', 'ramp_low', 'ramp_high']
+            for property in properties:
+                last_key = add_recorder('controller_{}'.format(property),
+                                        'collector',
+                                        { 'group': '"class=controller AND control_mode=RAMP"',
+                                          'property': property },
+                                        last_key)
+
+        if have_auction == 1:
+            last_key = add_recorder('market_prices_quantities',
+                                    'multi_recorder',
+                                    { 'parent' : auction_name,
+                                      'property': 'current_market.clearing_price,current_market.clearing_quantity,current_market.marginal_quantity' },
                                     last_key)
                                 
     if have_solar_meter == 1:

@@ -243,6 +243,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
                  'unit' : tech_data['market_info']['unit'], 
                  tech_data['market_info']['avg_name'] : temp_avg,
                  tech_data['market_info']['std_name'] : temp_std}
+    glmCaseDict[last_key].update(tech_data['market_info']['additional_items'])
     parent_key = last_key
     last_key += 1
 

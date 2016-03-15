@@ -75,7 +75,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
             ResTechDict[last_object_key]['bill_day'] = '1'
           elif use_flags['use_billing'] == 3:
             ResTechDict[last_object_key]['bill_mode'] = 'UNIFORM'
-            ResTechDict[last_object_key]['power_market'] = '{:d}'.format(tech_data['market_info']['period'])
+            ResTechDict[last_object_key]['power_market'] = '{}'.format(tech_data['market_info']['name'])
             ResTechDict[last_object_key]['monthly_fee'] = '{:d}'.format(tech_data['monthly_fee'])
             ResTechDict[last_object_key]['bill_day'] = '1'
           last_object_key += 1
@@ -389,8 +389,8 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                                 'cooling_base_setpoint' : 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night),
                                 'heating_base_setpoint' : 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night),
                                 'period' : '{:.0f}'.format(tech_data['market_info']['period']),
-                                'average_target' : 'my_avg',
-                                'standard_deviation_target' : 'my_std',
+                                'average_target' : tech_data['market_info']['avg_name'],
+                                'standard_deviation_target' : tech_data['market_info']['std_name'],
                                 'target' : 'air_temperature',
                                 'heating_setpoint' : 'heating_setpoint',
                                 'heating_demand' : 'last_heating_load',
@@ -421,8 +421,8 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                                   'cooling_base_setpoint' : 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night),
                                   'heating_base_setpoint' : 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night),
                                   'period' : '{:.0f}'.format(tech_data['market_info']['period']),
-                                  'average_target' : 'my_avg',
-                                  'standard_deviation_target' : 'my_std',
+                                  'average_target' : tech_data['market_info']['avg_name'],
+                                  'standard_deviation_target' : tech_data['market_info']['std_name'],
                                   'target' : 'air_temperature',
                                   'heating_setpoint' : 'heating_setpoint',
                                   'heating_demand' : 'last_heating_load',
@@ -446,8 +446,8 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                                   'ramp_low' : '{:.3f}'.format(hrl2),
                                   'base_setpoint' : 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night),
                                   'period' : '{:.0f}'.format(tech_data['market_info']['period']),
-                                  'average_target' : 'my_avg',
-                                  'standard_deviation_target' : 'my_std',
+                                  'average_target' : tech_data['market_info']['avg_name'],
+                                  'standard_deviation_target' : tech_data['market_info']['std_name'],
                                   'target' : 'air_temperature',
                                   'setpoint' : 'heating_setpoint',
                                   'demand' : 'last_heating_load',
@@ -469,8 +469,8 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                                 'ramp_low' : '{:.3f}'.format(crl2),
                                 'base_setpoint' : 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night),
                                 'period' : '{:.0f}'.format(tech_data['market_info']['period']),
-                                'average_target' : 'my_avg',
-                                'standard_deviation_target' : 'my_std',
+                                'average_target' : tech_data['market_info']['avg_name'],
+                                'standard_deviation_target' : tech_data['market_info']['std_name'],
                                 'target' : 'air_temperature',
                                 'setpoint' : 'cooling_setpoint',
                                 'demand' : 'last_cooling_load',
@@ -599,7 +599,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
             last_object_key += 1
             
             # Add passive_controllers to the pool pump ZIPloads
-            if (use_flags['use_market'] in [1,2,4]) and tech_data['use_tech'] == 1: # TOU
+            if (use_flags['use_market'] in [1,2]) and tech_data['use_tech'] == 1: # TOU
               ResTechDict[last_object_key] = {'object' : 'passive_controller',
                               'parent' : 'house{:d}_ppump_{:s}'.format(y,my_name),
                               'period' : '{:.0f}'.format(tech_data['market_info']['period']),
@@ -694,9 +694,9 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                               'distribution_type' : 'NORMAL',
                               'observation_object' : '{:s}'.format(tech_data['market_info']['name']),
                               'observation_property' : 'past_market.clearing_price',
-                              'stdev_observation_property' : 'my_std',
+                              'stdev_observation_property' : tech_data['market_info']['std_name'],
                               'expectation_object' : '{:s}'.format(tech_data['market_info']['name']),
-                              'expectation_property' : 'my_avg',
+                              'expectation_property' : tech_data['market_info']['avg_name'],
                               'comfort_level' : '{:.2f}'.format(slider_random[y*len(residential_dict) + x]),
                               'state_property' : 'override'}
               last_object_key += 1

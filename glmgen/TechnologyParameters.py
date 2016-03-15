@@ -513,7 +513,8 @@ def TechnologyParametersFunc(use_flags, TechsToTest):
                                 'avg_name': "my_avg",
                                 'std_name': "my_std",
                                 'slider_response_cutoff': 1.0,
-                                'unit': 'kW'
+                                'unit': 'kW',
+                                'additional_items': {}
                               } 
         
         if use_flags["use_market"] == 4:
@@ -521,7 +522,8 @@ def TechnologyParametersFunc(use_flags, TechsToTest):
                                           'unit': 'MWh',
                                           'period': 3600,
                                           'avg_name': 'init_price',
-                                          'std_name': 'init_stdev' } )
+                                          'std_name': 'init_stdev',
+                                          'additional_items': { 'warmup': '0' } } )
 
     ## Commercial building parameters
     if (use_flags["use_commercial"] == 0):
