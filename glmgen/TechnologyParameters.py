@@ -484,6 +484,7 @@ def TechnologyParametersFunc(use_flags, TechsToTest):
     # 1 - TOU
     # 2 - TOU/CPP
     # 3 - DLC
+    # 4 - Real Time Prices (RTP) designed for co-simulation
     if (use_flags["use_market"] != 0):
         # market name, 
         # period, 
@@ -520,7 +521,7 @@ def TechnologyParametersFunc(use_flags, TechsToTest):
         if use_flags["use_market"] == 4:
             data['market_info'].update( { 'name': 'RTP_Market',
                                           'unit': 'MWh',
-                                          'period': 3600,
+                                          'period': 300,
                                           'avg_name': 'init_price',
                                           'std_name': 'init_stdev',
                                           'additional_items': { 'warmup': '0' } } )
