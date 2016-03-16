@@ -216,13 +216,15 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
                              'variable_names' : [tech_data['market_info']['avg_name'],tech_data['market_info']['std_name']]}
     last_key += 1
 
-    # Add CPP player dictionary to glmCaseDict
-    CPP_flag_name = config_data['CPP_flag'] # Strip '.player' from config_data['CPP_flag']
-    CPP_flag_name.replace('.player','')
-    glmCaseDict[last_key] = {'object' : 'player',
-                 'name' : CPP_flag_name,
-                 'file' : config_data['CPP_flag']}
-    last_key += 1
+    #Add CPP player only for CPP markets
+    if use_flags['use_market'] in [2]:
+      # Add CPP player dictionary to glmCaseDict
+      CPP_flag_name = config_data['CPP_flag'] # Strip '.player' from config_data['CPP_flag']
+      CPP_flag_name.replace('.player','')
+      glmCaseDict[last_key] = {'object' : 'player',
+                   'name' : CPP_flag_name,
+                   'file' : config_data['CPP_flag']}
+      last_key += 1
 
     # Add auction object dictionary to glmCaseDict
     # Determine which stat to use for my_avg and my_std
