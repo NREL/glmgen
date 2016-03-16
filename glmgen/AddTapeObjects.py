@@ -71,11 +71,11 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
 
             if recorder_dict[x]['object'] == 'passive_controller':
                 have_passive_controller = 1
-                if ('control_mode' in recorder_dict[x]) and (recorder_dict[x]['control_moce'] == 'RAMP'):
+                if ('control_mode' in recorder_dict[x]) and (recorder_dict[x]['control_mode'] == 'RAMP'):
                     have_pass_contr_ramp = 1
             
             if recorder_dict[x]['object'] == 'controller':
-                if ('control_mode' in recorder_dict[x]) and (recorder_dict[x]['control_moce'] == 'RAMP'):
+                if ('control_mode' in recorder_dict[x]) and (recorder_dict[x]['control_mode'] == 'RAMP'):
                     have_controller_ramp = 1
                         
             if recorder_dict[x]['object'] == 'auction':
