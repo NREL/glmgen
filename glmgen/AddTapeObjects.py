@@ -202,7 +202,7 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
             properties = ['expectation', 'observation', 'stdev_observation']
             for property in properties:
                 last_key = add_recorder('passive_controller_{}'.format(property),
-                                        'collector',
+                                        'group_recorder',
                                         { 'group': '"class=passive_controller"',
                                           'property': property },
                                         last_key)
@@ -211,7 +211,7 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
             properties = ['range_low', 'range_high', 'ramp_low', 'ramp_high']
             for property in properties:
                 last_key = add_recorder('passive_controller_{}'.format(property),
-                                        'collector',
+                                        'group_recorder',
                                         { 'group': '"class=passive_controller AND control_mode=RAMP"',
                                           'property': property },
                                         last_key)
