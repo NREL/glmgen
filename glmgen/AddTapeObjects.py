@@ -141,49 +141,49 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
         
         # Measure residential data
         if have_resp_zips == 1:
-            last_key = add_recorder('res_responsive_load',
+            last_key = add_recorder('res_responsive_load_sum',
                                     'collector',
                                     { 'group' : '"class=ZIPload AND groupid=Responsive_load"',
                                       'property' : 'sum(base_power)' },
                                     last_key)
             
         if have_unresp_zips == 1:
-            last_key = add_recorder('res_unresponsive_load',
+            last_key = add_recorder('res_unresponsive_load_sum',
                                     'collector',
                                     { 'group' : '"class=ZIPload AND groupid=Unresponsive_load"',
                                       'property' : 'sum(base_power)' },
                                     last_key)
             
         if have_waterheaters == 1:
-            last_key = add_recorder('waterheater',
+            last_key = add_recorder('waterheater_sum',
                                     'collector',
                                     { 'group' : '"class=waterheater"',
                                       'property' : 'sum(actual_load)' },
                                     last_key)
             
         if have_lights == 1:
-            last_key = add_recorder('lights',
+            last_key = add_recorder('lights_sum',
                                     'collector',
                                     { 'group' : '"class=ZIPload AND groupid=Lights"',
                                       'property' : 'sum(base_power)' },
                                     last_key)
             
         if have_plugs == 1:
-            last_key = add_recorder('plugs',
+            last_key = add_recorder('plugs_sum',
                                     'collector',
                                     { 'group' : '"class=ZIPload AND groupid=Plugs"',
                                       'property' : 'sum(base_power)' },
                                     last_key)
             
         if have_gas_waterheaters == 1:
-            last_key = add_recorder('gas_waterheater',
+            last_key = add_recorder('gas_waterheater_sum',
                                     'collector',
                                     { 'group' : '"class=ZIPload AND groupid=Gas_waterheater"',
                                       'property' : 'sum(base_power)' },
                                     last_key)
             
         if have_occupancy == 1:
-            last_key = add_recorder('occupancy',
+            last_key = add_recorder('occupancy_sum',
                                     'collector',
                                     { 'group' : '"class=ZIPload AND groupid=Occupancy"',
                                       'property' : 'sum(base_power)' },
@@ -193,7 +193,7 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
             properties = ['cooling_setpoint', 'heating_setpoint']
             for property in properties:
                 last_key = add_recorder('house_{}'.format(property),
-                                        'collector',
+                                        'group_recorder',
                                         { 'group': '"class=house"',
                                           'property': property },
                                         last_key)
@@ -220,7 +220,7 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
             properties = ['range_low', 'range_high', 'ramp_low', 'ramp_high']
             for property in properties:
                 last_key = add_recorder('controller_{}'.format(property),
-                                        'collector',
+                                        'group_recorder',
                                         { 'group': '"class=controller AND control_mode=RAMP"',
                                           'property': property },
                                         last_key)

@@ -661,7 +661,7 @@ def attachRecorders(tree, recorderType, keyToJoin, valueToJoin, sample=False, fi
         # DEBUG:print 'just joined ' + parentObject
         newLeaf = copy.copy(recorders[recorderType])
         newLeaf['parent'] = parentObject
-        newLeaf['file'] = recorderType + '_' + parentObject + '.csv'
+        newLeaf['file'] = filePrefix + recorderType + '_' + parentObject + '.csv'
         tree[biggestKey] = newLeaf
         biggestKey += 1
 
