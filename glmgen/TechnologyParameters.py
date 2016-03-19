@@ -520,10 +520,10 @@ def TechnologyParametersFunc(use_flags, TechsToTest):
         
         if use_flags["use_market"] == 4:
             data['market_info'].update( { 'name': 'RTP_Market',
-                                          'unit': 'MWh',
+                                          'unit': 'kW', #Even with passive controllers Have to use power units (e.g. kW) for thermostat controls to work
                                           'period': 300,
-                                          'avg_name': 'init_price',
-                                          'std_name': 'init_stdev',
+                                          'avg_name': 'current_price_mean_12h',
+                                          'std_name': 'current_price_stdev_12h',
                                           'additional_items': { 'warmup': '0' } } )
 
     ## Commercial building parameters
