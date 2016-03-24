@@ -511,13 +511,14 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     for x in glmCaseDict:
       if 'object' in glmCaseDict[x] and re.match("triplex_node.*",glmCaseDict[x]['object']):
         if 'power_1' in glmCaseDict[x] or 'power_12' in glmCaseDict[x]:
-          residential_dict[residential_key] = {'name' : glmCaseDict[x]['name'],
-                             'parent' : 'None',
-                             'load_classification' : 'None',
-                             'number_of_houses' : 0,
-                             'load' : 0,
-                             'large_vs_small' : 0.0,
-                             'phases' : glmCaseDict[x]['phases']}
+          residential_dict[residential_key] = {
+              'name' : glmCaseDict[x]['name'],
+              'parent' : 'None',
+              'load_classification' : 'None',
+              'number_of_houses' : 0,
+              'load' : 0,
+              'large_vs_small' : 0.0,
+              'phases' : glmCaseDict[x]['phases'] }
           
           if 'parent' in glmCaseDict[x]:
             residential_dict[residential_key]['parent'] = glmCaseDict[x]['parent']
@@ -577,7 +578,6 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           residential_key += 1
     
   # Calculate some random numbers needed for TOU/CPP and DLC technologies
-  market_penetration_random = None
   dlc_rand = None
   pool_pump_recovery_random = None
   slider_random = None
@@ -592,7 +592,6 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
 
     if len(commercial_dict) + len(residential_dict) > 0:
       # Initialize random number arrays
-      market_penetration_random = []
       dlc_rand = []
       pool_pump_recovery_random = []
       slider_random = []
@@ -604,7 +603,6 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
       if len(residential_dict) > 0:
         aa = len(residential_dict)*100 # was total_house_number -- just guessing at a big enough maximum number
         for x in range(aa):
-          market_penetration_random.append(random.random())
           dlc_rand.append(random.random()) # Used for dlc randomization
 
           # 10 - 25% increase over normal cycle
@@ -644,7 +642,6 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
           dlc_c_rand2.append(random.random())
       
     else:
-      market_penetration_random = None
       dlc_rand = None
       pool_pump_recovery_random = None
       slider_random = None
@@ -662,7 +659,7 @@ def GLD_Feeder(glmDict, io_opts, time_opts, location_opts, model_opts):
     else:
       glmCaseDict, solar_residential_array, ts_residential_array, last_key = ResidentialLoads.append_residential(
           glmCaseDict, use_flags, config_data, tech_data, residential_dict, last_key, CPP_flag_name,
-          market_penetration_random, dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, 
+          dlc_rand, pool_pump_recovery_random, slider_random, xval, elasticity_random, 
           io_opts['dir'], io_opts['resources_dir'])
     
   # End addition of residential loads ########################################################################################################################

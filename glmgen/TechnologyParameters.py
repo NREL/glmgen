@@ -515,7 +515,8 @@ def TechnologyParametersFunc(use_flags, TechsToTest):
                                 'std_name': "my_std",
                                 'slider_response_cutoff': 1.0,
                                 'unit': 'kW',
-                                'additional_items': {}
+                                'additional_items': {},
+                                'fraction_enabled': 0.5
                               } 
         
         if use_flags["use_market"] == 4:

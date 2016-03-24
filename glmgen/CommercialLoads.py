@@ -459,30 +459,47 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                 crh2 = s_tstat + (1 - slider) * (3 - s_tstat);
                 hrl2 = -s_tstat - (1 - slider) * (3 - s_tstat);
                 crl2 = s_tstat + (1 - slider) * (3 - s_tstat);
-                glmCaseDict[last_object_key] = {"object" : "controller",
-                                "name" : parent_house["name"]+"_cntlr",
-                                "parent" : parent_house["name"],
-                                "schedule_skew" : "{:.0f}".format(skew_value),
-                                "market" : "{:s}".format(tech_data["market_info"]['name']),
-                                "bid_mode" : "OFF",
-                                "control_mode" : "RAMP",
-                                "range_high" : "{:.3f}".format(crh),
-                                "range_low" : "{:.3f}".format(crl),
-                                "ramp_high" : "{:.3f}".format(crh2),
-                                "ramp_low" : "{:.3f}".format(crl2),
-                                "base_setpoint" : "office_cooling",
-                                "period" : "{:.0f}".format(tech_data["market_info"]['period']),
-                                "average_target" : tech_data["market_info"]["avg_name"],
-                                "standard_deviation_target" : tech_data["market_info"]["std_name"],
-                                "target" : "air_temperature",
-                                "setpoint" : "cooling_setpoint",
-                                "demand" : "last_cooling_load",
-                                "deadband" : "thermostat_deadband",
-                                "total" : "hvac_load",
-                                "load" : "hvac_load",
-                                "state" : "power_state"}
+                
+                # common elements
+                glmCaseDict[last_object_key] = {
+                    "name" : parent_house["name"]+"_cntlr",
+                    "parent" : parent_house["name"],
+                    "schedule_skew" : "{:.0f}".format(skew_value),
+                    "control_mode" : "RAMP",
+                    "range_high" : "{:.3f}".format(crh),
+                    "range_low" : "{:.3f}".format(crl),
+                    "ramp_high" : "{:.3f}".format(crh2),
+                    "ramp_low" : "{:.3f}".format(crl2),
+                    "base_setpoint" : "office_cooling",
+                    "period" : "{:.0f}".format(tech_data["market_info"]['period']),}
+                
+                # differentiate by market type
+                if use_flags['use_market'] in [1,2]:
+                  glmCaseDict[last_object_key].update({
+                      "object" : "controller",
+                      "market" : "{:s}".format(tech_data["market_info"]['name']),
+                      "bid_mode" : "OFF",
+                      "average_target" : tech_data["market_info"]["avg_name"],
+                      "standard_deviation_target" : tech_data["market_info"]["std_name"],
+                      "target" : "air_temperature",
+                      "setpoint" : "cooling_setpoint",
+                      "demand" : "last_cooling_load",
+                      "deadband" : "thermostat_deadband",
+                      "total" : "hvac_load",
+                      "load" : "hvac_load",
+                      "state" : "power_state"})
+                else:
+                  assert use_flags['use_market'] == 4
+                  glmCaseDict[last_object_key].update({
+                      'object' : 'passive_controller',
+                      'expectation_object' : tech_data['market_info']['name'],
+                      'expectation_property': tech_data['market_info']['avg_name'],
+                      'observation_object': tech_data['market_info']['name'],
+                      'observation_property': 'current_market.clearing_price',
+                      'stdev_observation_property': tech_data['market_info']['std_name'] })
+
                 last_object_key += 1
-                parent_house["cooling_setpoint"] = "85"
+                parent_house["cooling_setpoint"] = "75" # ETH@20160324 - Was 85!
               else:
                 parent_house["cooling_setpoint"] = "office_cooling"
                 if (use_flags["use_market"] == 3):
@@ -826,31 +843,47 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                 crh2 = s_tstat + (1 - slider) * (3 - s_tstat);
                 hrl2 = -s_tstat - (1 - slider) * (3 - s_tstat);
                 crl2 = s_tstat + (1 - slider) * (3 - s_tstat);
-                glmCaseDict[last_object_key] = {"object" : "controller",
-                                "parent" : parent_house["name"],
-                                "schedule_skew" : "{:.0f}".format(skew_value),
-                                "market" : "{:s}".format(tech_data["market_info"]['name']),
-                                "bid_mode" : "OFF",
-                                "control_mode" : "RAMP",
-                                "range_high" : "{:.3f}".format(crh),
-                                "range_low" : "{:.3f}".format(crl),
-                                "ramp_high" : "{:.3f}".format(crh2),
-                                "ramp_low" : "{:.3f}".format(crl2),
-                                "base_setpoint" : "bigbox_cooling",
-                                "period" : "{:.0f}".format(tech_data["market_info"]['period']),
-                                "average_target" : tech_data["market_info"]["avg_name"],
-                                "standard_deviation_target" : tech_data["market_info"]["std_name"],
-                                "target" : "air_temperature",
-                                "setpoint" : "cooling_setpoint",
-                                "demand" : "last_cooling_load",
-                                "deadband" : "thermostat_deadband",
-                                "total" : "hvac_load",
-                                "load" : "hvac_load",
-                                "state" : "power_state"}
+                
+                # common elements
+                glmCaseDict[last_object_key] = {
+                    "name" : parent_house["name"]+"_cntlr",
+                    "parent" : parent_house["name"],
+                    "schedule_skew" : "{:.0f}".format(skew_value),
+                    "control_mode" : "RAMP",
+                    "range_high" : "{:.3f}".format(crh),
+                    "range_low" : "{:.3f}".format(crl),
+                    "ramp_high" : "{:.3f}".format(crh2),
+                    "ramp_low" : "{:.3f}".format(crl2),
+                    "base_setpoint" : "bigbox_cooling",
+                    "period" : "{:.0f}".format(tech_data["market_info"]['period']),}
+                
+                # differentiate by market type
+                if use_flags['use_market'] in [1,2]:
+                  glmCaseDict[last_object_key].update({
+                      "object" : "controller",
+                      "market" : "{:s}".format(tech_data["market_info"]['name']),
+                      "bid_mode" : "OFF",
+                      "average_target" : tech_data["market_info"]["avg_name"],
+                      "standard_deviation_target" : tech_data["market_info"]["std_name"],
+                      "target" : "air_temperature",
+                      "setpoint" : "cooling_setpoint",
+                      "demand" : "last_cooling_load",
+                      "deadband" : "thermostat_deadband",
+                      "total" : "hvac_load",
+                      "load" : "hvac_load",
+                      "state" : "power_state"})
+                else:
+                  assert use_flags['use_market'] == 4
+                  glmCaseDict[last_object_key].update({
+                      'object' : 'passive_controller',
+                      'expectation_object' : tech_data['market_info']['name'],
+                      'expectation_property': tech_data['market_info']['avg_name'],
+                      'observation_object': tech_data['market_info']['name'],
+                      'observation_property': 'current_market.clearing_price',
+                      'stdev_observation_property': tech_data['market_info']['std_name'] })
+
                 last_object_key += 1
-
-                parent_house["cooling_setpoint"] = "85"
-
+                parent_house["cooling_setpoint"] = "75" # ETH@20160324 - Was 85!
               else:
                 parent_house["cooling_setpoint"] = "bigbox_cooling"
                 if (use_flags["use_market"] == 3):
@@ -1194,30 +1227,47 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
               crh2 = s_tstat + (1 - slider) * (3 - s_tstat);
               hrl2 = -s_tstat - (1 - slider) * (3 - s_tstat);
               crl2 = s_tstat + (1 - slider) * (3 - s_tstat);
-              glmCaseDict[last_object_key] = {"object" : "controller",
-                              "parent" : parent_house["name"],
-                              "schedule_skew" : "{:.0f}".format(skew_value),
-                              "market" : "{:s}".format(tech_data["market_info"]['name']),
-                              "bid_mode" : "OFF",
-                              "control_mode" : "RAMP",
-                              "range_high" : "{:.3f}".format(crh),
-                              "range_low" : "{:.3f}".format(crl),
-                              "ramp_high" : "{:.3f}".format(crh2),
-                              "ramp_low" : "{:.3f}".format(crl2),
-                              "base_setpoint" : "stripmall_cooling",
-                              "period" : "{:.0f}".format(tech_data["market_info"]['period']),
-                              "average_target" : tech_data["market_info"]["avg_name"],
-                              "standard_deviation_target" : tech_data["market_info"]["std_name"],
-                              "target" : "air_temperature",
-                              "setpoint" : "cooling_setpoint",
-                              "demand" : "last_cooling_load",
-                              "deadband" : "thermostat_deadband",
-                              "total" : "hvac_load",
-                              "load" : "hvac_load",
-                              "state" : "power_state"}
+              
+              # common elements
+              glmCaseDict[last_object_key] = {
+                  "name" : parent_house["name"]+"_cntlr",
+                  "parent" : parent_house["name"],
+                  "schedule_skew" : "{:.0f}".format(skew_value),
+                  "control_mode" : "RAMP",
+                  "range_high" : "{:.3f}".format(crh),
+                  "range_low" : "{:.3f}".format(crl),
+                  "ramp_high" : "{:.3f}".format(crh2),
+                  "ramp_low" : "{:.3f}".format(crl2),
+                  "base_setpoint" : "stripmall_cooling",
+                  "period" : "{:.0f}".format(tech_data["market_info"]['period']),}
+              
+              # differentiate by market type
+              if use_flags['use_market'] in [1,2]:
+                glmCaseDict[last_object_key].update({
+                    "object" : "controller",
+                    "market" : "{:s}".format(tech_data["market_info"]['name']),
+                    "bid_mode" : "OFF",
+                    "average_target" : tech_data["market_info"]["avg_name"],
+                    "standard_deviation_target" : tech_data["market_info"]["std_name"],
+                    "target" : "air_temperature",
+                    "setpoint" : "cooling_setpoint",
+                    "demand" : "last_cooling_load",
+                    "deadband" : "thermostat_deadband",
+                    "total" : "hvac_load",
+                    "load" : "hvac_load",
+                    "state" : "power_state"})
+              else:
+                assert use_flags['use_market'] == 4
+                glmCaseDict[last_object_key].update({
+                    'object' : 'passive_controller',
+                    'expectation_object' : tech_data['market_info']['name'],
+                    'expectation_property': tech_data['market_info']['avg_name'],
+                    'observation_object': tech_data['market_info']['name'],
+                    'observation_property': 'current_market.clearing_price',
+                    'stdev_observation_property': tech_data['market_info']['std_name'] })
 
-              parent_house["cooling_setpoint"] = "85"
               last_object_key += 1
+              parent_house["cooling_setpoint"] = "75" # ETH@20160324 - Was 85!
             else:
               parent_house["cooling_setpoint"] = "stripmall_cooling"
               if (use_flags["use_market"] == 3):
