@@ -402,9 +402,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                       'cooling_base_setpoint' : 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night),
                       'heating_base_setpoint' : 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night),
                       'heating_setpoint' : 'heating_setpoint',
-                      'heating_demand' : 'last_heating_load',
-                      'cooling_setpoint' : 'cooling_setpoint',
-                      'cooling_demand' : 'last_cooling_load' })
+                      'cooling_setpoint' : 'cooling_setpoint'})
                 elif ht == 'ELEC':
                   # control only the heat
                   ResTechDict[last_object_key].update({ 
@@ -414,8 +412,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                       'ramp_high' : '{:.3f}'.format(hrh2),
                       'ramp_low' : '{:.3f}'.format(hrl2),
                       'base_setpoint' : 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night),
-                      'setpoint' : 'heating_setpoint',
-                      'demand' : 'last_heating_load' })
+                      'setpoint' : 'heating_setpoint'})
                 else:
                   assert ct == 'ELEC'
                   # control only cooling
@@ -426,8 +423,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                       'ramp_high' : '{:.3f}'.format(crh2),
                       'ramp_low' : '{:.3f}'.format(crl2),
                       'base_setpoint' : 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night),
-                      'setpoint' : 'cooling_setpoint',
-                      'demand' : 'last_cooling_load' })
+                      'setpoint' : 'cooling_setpoint'})
                   
                 last_object_key += 1
                 
