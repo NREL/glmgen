@@ -376,7 +376,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                       'deadband' : 'thermostat_deadband',
                       'total' : 'hvac_load',
                       'load' : 'hvac_load',
-                      'state' : 'power_state'
+                      'state' : 'power_state',
                       'control_mode' : 'DOUBLE_RAMP',
                       'resolve_mode' : 'DEADBAND',
                       'heating_range_high' : '{:.3f}'.format(hrh),

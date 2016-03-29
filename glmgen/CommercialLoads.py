@@ -470,6 +470,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                     "range_low" : "{:.3f}".format(crl),
                     "ramp_high" : "{:.3f}".format(crh2),
                     "ramp_low" : "{:.3f}".format(crl2),
+                    "setpoint" : "cooling_setpoint",
                     "base_setpoint" : "office_cooling",
                     "period" : "{:.0f}".format(tech_data["market_info"]['period']),}
                 
@@ -482,7 +483,6 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                       "average_target" : tech_data["market_info"]["avg_name"],
                       "standard_deviation_target" : tech_data["market_info"]["std_name"],
                       "target" : "air_temperature",
-                      "setpoint" : "cooling_setpoint",
                       "demand" : "last_cooling_load",
                       "deadband" : "thermostat_deadband",
                       "total" : "hvac_load",
@@ -854,6 +854,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                     "range_low" : "{:.3f}".format(crl),
                     "ramp_high" : "{:.3f}".format(crh2),
                     "ramp_low" : "{:.3f}".format(crl2),
+                    "setpoint" : "cooling_setpoint",
                     "base_setpoint" : "bigbox_cooling",
                     "period" : "{:.0f}".format(tech_data["market_info"]['period']),}
                 
@@ -866,7 +867,6 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                       "average_target" : tech_data["market_info"]["avg_name"],
                       "standard_deviation_target" : tech_data["market_info"]["std_name"],
                       "target" : "air_temperature",
-                      "setpoint" : "cooling_setpoint",
                       "demand" : "last_cooling_load",
                       "deadband" : "thermostat_deadband",
                       "total" : "hvac_load",
@@ -1238,6 +1238,7 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                   "range_low" : "{:.3f}".format(crl),
                   "ramp_high" : "{:.3f}".format(crh2),
                   "ramp_low" : "{:.3f}".format(crl2),
+                  "setpoint" : "cooling_setpoint",
                   "base_setpoint" : "stripmall_cooling",
                   "period" : "{:.0f}".format(tech_data["market_info"]['period']),}
               
@@ -1250,7 +1251,6 @@ def append_commercial(glmCaseDict, use_flags, config_data, tech_data, last_objec
                     "average_target" : tech_data["market_info"]["avg_name"],
                     "standard_deviation_target" : tech_data["market_info"]["std_name"],
                     "target" : "air_temperature",
-                    "setpoint" : "cooling_setpoint",
                     "demand" : "last_cooling_load",
                     "deadband" : "thermostat_deadband",
                     "total" : "hvac_load",
