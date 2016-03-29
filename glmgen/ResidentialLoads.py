@@ -362,9 +362,11 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                       'schedule_skew' : '{:.0f}'.format(skew_value),
                       'period' : '{:.0f}'.format(tech_data['market_info']['period']) }
 
-                # now differentiate by market type
-                if use_flags['use_market'] in [1,2]:
-                  ResTechDict[last_object_key].update({
+                # Differentiate on HVAC type
+                if (ht == 'HP') or (ht == 'ELEC' and ct == 'ELEC'):
+                  # control the heat pump (heating and cooling)
+                  # NOTE: for dual control (e.g. DOUBLE_RAMP) have to use controller not passive_controller
+                  ResTechDict[last_object_key].update({ 
                       'object' : 'controller',
                       'market' : '{:s}'.format(tech_data['market_info']['name']),
                       'bid_mode' : 'OFF',
@@ -374,21 +376,7 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                       'deadband' : 'thermostat_deadband',
                       'total' : 'hvac_load',
                       'load' : 'hvac_load',
-                      'state' : 'power_state' })
-                else:
-                  assert use_flags['use_market'] == 4
-                  ResTechDict[last_object_key].update({
-                      'object' : 'passive_controller',
-                      'expectation_object' : tech_data['market_info']['name'],
-                      'expectation_property': tech_data['market_info']['avg_name'],
-                      'observation_object': tech_data['market_info']['name'],
-                      'observation_property': 'current_market.clearing_price',
-                      'stdev_observation_property': tech_data['market_info']['std_name'] })
-                  
-                # now differentiate on HVAC type
-                if (ht == 'HP') or (ht == 'ELEC' and ct == 'ELEC'):
-                  # control the heat pump (heating and cooling)
-                  ResTechDict[last_object_key].update({ 
+                      'state' : 'power_state'
                       'control_mode' : 'DOUBLE_RAMP',
                       'resolve_mode' : 'DEADBAND',
                       'heating_range_high' : '{:.3f}'.format(hrh),
@@ -402,10 +390,34 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                       'cooling_base_setpoint' : 'cooling{:d}*{:.2f}+{:.2f}'.format(cooling_set,cool_night_diff,cool_night),
                       'heating_base_setpoint' : 'heating{:d}*{:.2f}+{:.2f}'.format(heating_set,heat_night_diff,heat_night),
                       'heating_setpoint' : 'heating_setpoint',
-                      'cooling_setpoint' : 'cooling_setpoint'})
+                      'cooling_setpoint' : 'cooling_setpoint',
+                      'heating_demand' : 'last_heating_load',
+                      'cooling_demand' : 'last_cooling_load'})
+                      
+                # For market types 1&2, use a non-bid controller for single technologies, too
+                elif use_flags['use_market'] in [1,2]:
+                  ResTechDict[last_object_key].update({
+                      'object' : 'controller',
+                      'market' : '{:s}'.format(tech_data['market_info']['name']),
+                      'bid_mode' : 'OFF',
+                      'average_target' : tech_data['market_info']['avg_name'],
+                      'standard_deviation_target' : tech_data['market_info']['std_name'],
+                      'target' : 'air_temperature',
+                      'deadband' : 'thermostat_deadband',
+                      'total' : 'hvac_load',
+                      'load' : 'hvac_load',
+                      'state' : 'power_state' })
+
                 elif ht == 'ELEC':
-                  # control only the heat
+                  # with RTP, control heat only with a passive controller
+                  assert use_flags['use_market'] == 4;
                   ResTechDict[last_object_key].update({ 
+                      'object' : 'passive_controller',
+                      'expectation_object' : tech_data['market_info']['name'],
+                      'observation_object': tech_data['market_info']['name'],
+                      'expectation_property': tech_data['market_info']['avg_name'],
+                      'observation_property': 'current_market.clearing_price',
+                      'stdev_observation_property': tech_data['market_info']['std_name'],
                       'control_mode' : 'RAMP',
                       'range_high' : '{:.3f}'.format(hrh),
                       'range_low' : '{:.3f}'.format(hrl),
@@ -415,8 +427,15 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                       'setpoint' : 'heating_setpoint'})
                 else:
                   assert ct == 'ELEC'
-                  # control only cooling
+                  # with RTP, control cool only with a passive controller
+                  assert use_flags['use_market'] == 4;
                   ResTechDict[last_object_key].update({
+                      'object' : 'passive_controller',
+                      'expectation_object' : tech_data['market_info']['name'],
+                      'observation_object': tech_data['market_info']['name'],
+                      'expectation_property': tech_data['market_info']['avg_name'],
+                      'observation_property': 'current_market.clearing_price',
+                      'stdev_observation_property': tech_data['market_info']['std_name'],
                       'control_mode' : 'RAMP',
                       'range_high' : '{:.3f}'.format(crh),
                       'range_low' : '{:.3f}'.format(crl),
