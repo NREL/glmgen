@@ -363,7 +363,12 @@ def append_residential(ResTechDict, use_flags, config_data, tech_data, residenti
                       'period' : '{:.0f}'.format(tech_data['market_info']['period']) }
 
                 # Differentiate on HVAC type
-                if (ht == 'HP') or (ht == 'ELEC' and ct == 'ELEC'):
+                if (ht == 'NONE') and (ct == 'NONE'):
+                    pass
+                # Use double ramp objects for heat pumps or any time there are both heating and cooling units
+                #  This is required to prevent "invalid ramp parameters" when "thermostat setpoints 
+                #  deadbands overlap," Which may occur even if only one unit is electric
+                elif (ht == 'HP') or (ht != 'NONE' and ct != 'NONE'):
                   # control the heat pump (heating and cooling)
                   # NOTE: for dual control (e.g. DOUBLE_RAMP) have to use controller not passive_controller
                   ResTechDict[last_object_key].update({ 
