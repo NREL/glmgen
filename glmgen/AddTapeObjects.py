@@ -140,47 +140,47 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
                                     last_key)
         
         # Measure residential data
-        if have_resp_zips == 1:
-            last_key = add_recorder('res_responsive_load_sum',
-                                    'collector',
-                                    { 'group' : '"class=ZIPload AND groupid=Responsive_load"',
-                                      'property' : 'sum(base_power)' },
-                                    last_key)
+#        if have_resp_zips == 1:
+#            last_key = add_recorder('res_responsive_load_sum',
+#                                    'collector',
+#                                    { 'group' : '"class=ZIPload AND groupid=Responsive_load"',
+#                                      'property' : 'sum(base_power)' },
+#                                    last_key)
             
-        if have_unresp_zips == 1:
-            last_key = add_recorder('res_unresponsive_load_sum',
-                                    'collector',
-                                    { 'group' : '"class=ZIPload AND groupid=Unresponsive_load"',
-                                      'property' : 'sum(base_power)' },
-                                    last_key)
+#        if have_unresp_zips == 1:
+#            last_key = add_recorder('res_unresponsive_load_sum',
+#                                    'collector',
+#                                    { 'group' : '"class=ZIPload AND groupid=Unresponsive_load"',
+#                                      'property' : 'sum(base_power)' },
+#                                    last_key)
             
-        if have_waterheaters == 1:
-            last_key = add_recorder('waterheater_sum',
-                                    'collector',
-                                    { 'group' : '"class=waterheater"',
-                                      'property' : 'sum(actual_load)' },
-                                    last_key)
+#        if have_waterheaters == 1:
+#            last_key = add_recorder('waterheater_sum',
+#                                    'collector',
+#                                    { 'group' : '"class=waterheater"',
+#                                      'property' : 'sum(actual_load)' },
+#                                    last_key)
             
-        if have_lights == 1:
-            last_key = add_recorder('lights_sum',
-                                    'collector',
-                                    { 'group' : '"class=ZIPload AND groupid=Lights"',
-                                      'property' : 'sum(base_power)' },
-                                    last_key)
+#        if have_lights == 1:
+#            last_key = add_recorder('lights_sum',
+#                                    'collector',
+#                                    { 'group' : '"class=ZIPload AND groupid=Lights"',
+#                                      'property' : 'sum(base_power)' },
+#                                    last_key)
             
-        if have_plugs == 1:
-            last_key = add_recorder('plugs_sum',
-                                    'collector',
-                                    { 'group' : '"class=ZIPload AND groupid=Plugs"',
-                                      'property' : 'sum(base_power)' },
-                                    last_key)
+#        if have_plugs == 1:
+#            last_key = add_recorder('plugs_sum',
+#                                    'collector',
+#                                    { 'group' : '"class=ZIPload AND groupid=Plugs"',
+#                                      'property' : 'sum(base_power)' },
+#                                    last_key)
             
-        if have_gas_waterheaters == 1:
-            last_key = add_recorder('gas_waterheater_sum',
-                                    'collector',
-                                    { 'group' : '"class=ZIPload AND groupid=Gas_waterheater"',
-                                      'property' : 'sum(base_power)' },
-                                    last_key)
+#        if have_gas_waterheaters == 1:
+#            last_key = add_recorder('gas_waterheater_sum',
+#                                    'collector',
+#                                    { 'group' : '"class=ZIPload AND groupid=Gas_waterheater"',
+#                                      'property' : 'sum(base_power)' },
+#                                    last_key)
             
         if have_occupancy == 1:
             last_key = add_recorder('occupancy_sum',
@@ -189,14 +189,14 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
                                       'property' : 'sum(base_power)' },
                                     last_key)
                                     
-        if have_house == 1:
-            properties = ['cooling_setpoint', 'heating_setpoint']
-            for property in properties:
-                last_key = add_recorder('house_{}'.format(property),
-                                        'group_recorder',
-                                        { 'group': '"class=house"',
-                                          'property': property },
-                                        last_key)
+#        if have_house == 1:
+#            properties = ['cooling_setpoint', 'heating_setpoint']
+#            for property in properties:
+#                last_key = add_recorder('house_{}'.format(property),
+#                                        'group_recorder',
+#                                        { 'group': '"class=house"',
+#                                          'property': property },
+#                                        last_key)
                                         
         if have_passive_controller == 1:
             properties = ['expectation', 'observation', 'stdev_observation']
@@ -243,6 +243,20 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
                                 { 'group': '"class=meter AND groupid=PV_Meter"',
                                   'property': 'measured_real_power' },
                                 last_key)
+
+        last_key = add_recorder('pv_meter_summed_reactive_power',
+                                'collector',
+                                { 'group': '"class=meter AND groupid=PV_Meter"',
+                                  'property': 'sum(measured_reactive_power)' },
+                                last_key)
+        last_key = add_recorder('pv_meter_reactive_power',
+                                'group_recorder',
+                                { 'group': '"class=meter AND groupid=PV_Meter"',
+                                  'property': 'measured_reactive_power' },
+                                last_key)
+
+
+
                                 
     if have_solar_triplex_meter == 1:
         last_key = add_recorder('pv_triplex_meter_summed_real_power',
@@ -255,36 +269,76 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
                                 { 'group': '"class=triplex_meter AND groupid=PV_Meter"',
                                   'property': 'measured_real_power' },
                                 last_key)
-    
+        last_key = add_recorder('pv_triplex_meter_summed_reactive_power',
+                                'collector',
+                                { 'group': '"class=triplex_meter AND groupid=PV_Meter"',
+                                  'property': 'sum(measured_reactive_power)' },
+                                last_key)
+        last_key = add_recorder('pv_triplex_meter_reactive_power',
+                                'group_recorder',
+                                { 'group': '"class=triplex_meter AND groupid=PV_Meter"',
+                                  'property': 'measured_reactive_power' },
+                                last_key)
+ 
+
     if not solar_only:
+#### Voltage magnitude and real power ###
+
+
         last_key = add_recorder('all_meters_real_power',
                                 'group_recorder',
                                 { 'group' : '"class=meter"',
                                   'property': 'measured_real_power' },
                                 last_key)
                                 
-        last_key = add_recorder('voltA',
+        last_key = add_recorder('voltA_mag',
                                 'group_recorder',
                                 { 'group': '"class=node"',
                                   'property': 'voltage_A',
                                   'complex_part': 'MAG' },
                                 last_key)
                                 
-        last_key = add_recorder('voltB',
+        last_key = add_recorder('voltB_mag',
                                 'group_recorder',
                                 { 'group': '"class=node"',
                                   'property': 'voltage_B',
                                   'complex_part': 'MAG' },
                                 last_key)
                 
-        last_key = add_recorder('voltC',
+        last_key = add_recorder('voltC_mag',
                                 'group_recorder',
                                 { 'group': '"class=node"',
                                   'property': 'voltage_C',
                                   'complex_part': 'MAG' },
                                 last_key)
                                 
-        last_key = add_recorder('all_triplex_nodes_voltage',
+								
+        last_key = add_recorder('voltA_mag_meter',
+                                'group_recorder',
+                                { 'group': '"class=meter"',
+                                  'property': 'voltage_A',
+                                  'complex_part': 'MAG' },
+                                last_key)
+                                
+        last_key = add_recorder('voltB_mag_meter',
+                                'group_recorder',
+                                { 'group': '"class=meter"',
+                                  'property': 'voltage_B',
+                                  'complex_part': 'MAG' },
+                                last_key)
+                
+        last_key = add_recorder('voltC_mag_meter',
+                                'group_recorder',
+                                { 'group': '"class=meter"',
+                                  'property': 'voltage_C',
+                                  'complex_part': 'MAG' },
+                                last_key)
+
+
+
+
+
+        last_key = add_recorder('all_triplex_nodes_voltage_mag',
                                 'group_recorder',
                                 { 'group': '"class=triplex_node"',
                                   'property': 'voltage_12',
@@ -296,7 +350,111 @@ def add_recorders(recorder_dict, io_opts, time_opts, last_key=0, solar_only = Fa
                                 { 'group': '"class=triplex_meter"',
                                   'property': 'measured_real_power' },
                                 last_key)
-                            
+
+
+#### Phase angles and reactive power ###
+
+
+        last_key = add_recorder('all_meters_reactive_power',
+                                'group_recorder',
+                                { 'group' : '"class=meter"',
+                                  'property': 'measured_reactive_power' },
+                                last_key)
+                                
+        last_key = add_recorder('voltA_angle',
+                                'group_recorder',
+                                { 'group': '"class=node"',
+                                  'property': 'voltage_A',
+                                  'complex_part': 'ANG_RAD' },
+                                last_key)
+                                
+        last_key = add_recorder('voltB_angle',
+                                'group_recorder',
+                                { 'group': '"class=node"',
+                                  'property': 'voltage_B',
+                                  'complex_part': 'ANG_RAD' },
+                                last_key)
+                
+        last_key = add_recorder('voltC_angle',
+                                'group_recorder',
+                                { 'group': '"class=node"',
+                                  'property': 'voltage_C',
+                                  'complex_part': 'ANG_RAD' },
+                                last_key)
+                                
+        last_key = add_recorder('voltA_angle_meter',
+                                'group_recorder',
+                                { 'group': '"class=meter"',
+                                  'property': 'voltage_A',
+                                  'complex_part': 'ANG_RAD' },
+                                last_key)
+                                
+        last_key = add_recorder('voltB_angle_meter',
+                                'group_recorder',
+                                { 'group': '"class=meter"',
+                                  'property': 'voltage_B',
+                                  'complex_part': 'ANG_RAD' },
+                                last_key)
+                
+        last_key = add_recorder('voltC_angle_meter',
+                                'group_recorder',
+                                { 'group': '"class=meter"',
+                                  'property': 'voltage_C',
+                                  'complex_part': 'ANG_RAD' },
+                                last_key)
+
+
+
+
+        last_key = add_recorder('all_triplex_nodes_voltage_angle',
+                                'group_recorder',
+                                { 'group': '"class=triplex_node"',
+                                  'property': 'voltage_12',
+                                  'complex_part': 'ANG_RAD' },
+                                last_key)                            
+                                
+        last_key = add_recorder('all_triplex_meters_reactive_power',
+                                'group_recorder',
+                                { 'group': '"class=triplex_meter"',
+                                  'property': 'measured_reactive_power' },
+                                last_key)
+
+        last_key = add_recorder('overhead_line_flow_direction', 'group_recorder',{'group': '"class=overhead_line"','property': 'flow_direction'},last_key)
+        last_key = add_recorder('overhead_line_current_in_A', 'group_recorder',{'group': '"class=overhead_line"','property': 'current_in_A'},last_key)
+        last_key = add_recorder('overhead_line_current_in_B', 'group_recorder',{'group': '"class=overhead_line"','property': 'current_in_B'},last_key)
+        last_key = add_recorder('overhead_line_current_in_C', 'group_recorder',{'group': '"class=overhead_line"','property': 'current_in_C'},last_key)
+ 
+        last_key = add_recorder('overhead_line_current_out_A', 'group_recorder',{'group': '"class=overhead_line"','property': 'current_out_A'},last_key)
+        last_key = add_recorder('overhead_line_current_out_B', 'group_recorder',{'group': '"class=overhead_line"','property': 'current_out_B'},last_key)
+        last_key = add_recorder('overhead_line_current_out_C', 'group_recorder',{'group': '"class=overhead_line"','property': 'current_out_C'},last_key)
+
+        last_key = add_recorder('underground_line_flow_direction', 'group_recorder',{'group': '"class=underground_line"','property': 'flow_direction'},last_key)
+        last_key = add_recorder('underground_line_current_in_A', 'group_recorder',{'group': '"class=underground_line"','property': 'current_in_A'},last_key)
+        last_key = add_recorder('underground_line_current_in_B', 'group_recorder',{'group': '"class=underground_line"','property': 'current_in_B'},last_key)
+        last_key = add_recorder('underground_line_current_in_C', 'group_recorder',{'group': '"class=underground_line"','property': 'current_in_C'},last_key)
+ 
+        last_key = add_recorder('underground_line_current_out_A', 'group_recorder',{'group': '"class=underground_line"','property': 'current_out_A'},last_key)
+        last_key = add_recorder('underground_line_current_out_B', 'group_recorder',{'group': '"class=underground_line"','property': 'current_out_B'},last_key)
+        last_key = add_recorder('underground_line_current_out_C', 'group_recorder',{'group': '"class=underground_line"','property': 'current_out_C'},last_key)
+        
+        last_key = add_recorder('switch_flow_direction', 'group_recorder',{'group': '"class=switch"','property': 'flow_direction'},last_key)
+        last_key = add_recorder('switch_current_in_A', 'group_recorder',{'group': '"class=switch"','property': 'current_in_A'},last_key)
+        last_key = add_recorder('switch_current_in_B', 'group_recorder',{'group': '"class=switch"','property': 'current_in_B'},last_key)
+        last_key = add_recorder('switch_current_in_C', 'group_recorder',{'group': '"class=switch"','property': 'current_in_C'},last_key)
+ 
+        last_key = add_recorder('switch_current_out_A', 'group_recorder',{'group': '"class=switch"','property': 'current_out_A'},last_key)
+        last_key = add_recorder('switch_current_out_B', 'group_recorder',{'group': '"class=switch"','property': 'current_out_B'},last_key)
+        last_key = add_recorder('switch_current_out_C', 'group_recorder',{'group': '"class=switch"','property': 'current_out_C'},last_key)
+
+        last_key = add_recorder('fuse_flow_direction', 'group_recorder',{'group': '"class=fuse"','property': 'flow_direction'},last_key)
+        last_key = add_recorder('fuse_current_in_A', 'group_recorder',{'group': '"class=fuse"','property': 'current_in_A'},last_key)
+        last_key = add_recorder('fuse_current_in_B', 'group_recorder',{'group': '"class=fuse"','property': 'current_in_B'},last_key)
+        last_key = add_recorder('fuse_current_in_C', 'group_recorder',{'group': '"class=fuse"','property': 'current_in_C'},last_key)
+ 
+        last_key = add_recorder('fuse_current_out_A', 'group_recorder',{'group': '"class=fuse"','property': 'current_out_A'},last_key)
+        last_key = add_recorder('fuse_current_out_B', 'group_recorder',{'group': '"class=fuse"','property': 'current_out_B'},last_key)
+        last_key = add_recorder('fuse_current_out_C', 'group_recorder',{'group': '"class=fuse"','property': 'current_out_C'},last_key)
+
     return (recorder_dict, last_key)
                             
 if __name__ == '__main__':
