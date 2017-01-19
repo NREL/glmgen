@@ -4,6 +4,91 @@ from glmgen import helpers
 
 import math
 import random
+import csv
+import os
+from math import cos, asin, sqrt,sin,atan2,sin,pi
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    r=6371
+    dlat=deg2rad(lat2-lat1)
+    dlon=deg2rad(lon2-lon1)
+    a= sin(dlat/2)*sin(dlat/2)+cos(deg2rad(lat1))*cos(deg2rad(lat2))*sin(dlon/2)*sin(dlon/2)
+    c=2*atan2(sqrt(a),sqrt(1-a))
+    d=r*c
+    return d
+
+def deg2rad(deg):
+    return deg*pi/180.0
+
+
+def generate_player(parent,desoto_data,desoto_locations,dir):
+    location_name_split = parent.split('_')
+    location_name=''
+    location_coord=[]
+    sensor_coords={}
+    if location_name_split[0]=='R2-25-00-1':
+        location_name=location_name_split[0]+'_'+location_name_split[1]+'_'+location_name_split[2]
+    else:
+        location_name=location_name_split[1]+'_'+location_name_split[2]+'_'+location_name_split[3]
+
+    with open(desoto_locations) as csvfile:
+        reader=csv.reader(csvfile,delimiter=',')
+        header=next(reader,None)
+        for row in reader:
+            if row[0][0:3]=='P2-':
+                sensor_coords[row[0]]=(float(row[1]),float(row[2]))
+            if row[0]==location_name: 
+                #import pdb; pdb.set_trace()												  
+                location_coord=[float(row[2]),float(row[1])] #they're backwards here.
+                break
+    distances=[]
+#    min_val = 1000000000000
+#    min_pos = -1
+#    count = 0
+#    weight=[0 for i in range(len(sensor_coords))]
+    for i in sorted(sensor_coords):
+        print calculate_distance(location_coord[0],location_coord[1],sensor_coords[i][0],sensor_coords[i][1])
+        distances.append(calculate_distance(location_coord[0],location_coord[1],sensor_coords[i][0],sensor_coords[i][1]))
+#        if distances[-1]<min_val:
+#            min_val=distances[-1]
+#            min_pos=count
+#        count=count+1
+#    weight[min_pos]=1
+    #weighted averaging gives values which are too smooth.
+##    min_val=min(distances)
+ ##   distances=[(i-min_val+1) for i in distances] # translate so that the smallest distance is 1. (subtract min value from all and add 1 so min_value is 1)
+    min_val=min(distances)
+    ratios=[min_val/i for i in distances]
+    total=sum(ratios)
+    weight=[i/total for i in ratios]
+    print weight
+
+
+    data=[0 for i in range(60*60*24)] #second data
+    ordered_columns=[] # The 0th element is Global Hoiz P2-01, the 1st element is Global Horiz P2-02 etc. This should have length of 15
+    start_time=60*60*5
+    counter=0
+    with open(desoto_data) as csvfile:
+        reader=csv.reader(csvfile,delimiter=',')
+        header=next(reader,None) # the header
+        desoto_index=1
+        #import pdb; pdb.set_trace()												  
+        for i in range(len(header)):
+            if header[i]=='Global Horiz P2-%02d [W/m^2]'%(desoto_index):
+                ordered_columns.append(i)
+                desoto_index=desoto_index+1
+        for row in reader:
+        # for now only look at the first desoto data location.
+        # later we iterate through all the ordered columns and the data variable is a matrix, not a vector
+            data[start_time+counter]=0
+            for sensor in range(len(ordered_columns)):
+                data[start_time+counter]=data[start_time+counter]+float(row[ordered_columns[sensor]])*weight[sensor]
+            counter=counter+1
+    with open('%s/pv_%s.player'%(dir,parent),'wb') as outputfile:
+        for i in range(len(data)):
+            outputfile.write('2014-04-30 %02d:%02d:%02d, %.3f\n'%(i/3600,(i/60)%60,i%60,data[i]))
+        # currently omitting the timezone and using whatever TZ is set to be.
+
 
 def Append_Solar(PV_Tech_Dict, use_flags, config_data, tech_data, last_key):
     # PV_Tech_Dict - the dictionary that we add solar objects to
@@ -151,6 +236,8 @@ def get_inverter_panel_dicts(bldg, percent_bldg_annual_load, parent, phases, pv_
     panel_area = round(solar_rating / (92.902 * cell_efficiency)) # standard conditions are 92.902 W/ft^2
     power_factor = config_data['inverter_power_factor']
     
+    feeder_name=parent.split('_')[0]
+    feeder_name2=parent.split('_')[1]
     inverter = {'object' : 'inverter',
                 'name' : 'pv_inv_{:s}'.format(parent),
                 'parent' : pv_meter_name,
@@ -162,7 +249,44 @@ def get_inverter_panel_dicts(bldg, percent_bldg_annual_load, parent, phases, pv_
                 'inverter_efficiency' : '0.95',
                 'rated_power' : '{:.0f}'.format(math.ceil(solar_rating))}
                                                   
-    panel = {'object' : 'solar',
+    #import pdb; pdb.set_trace()												  
+    if feeder_name=='R2-25-00-1' or feeder_name2=='R2-25-00-1':
+        print config_data['directory']
+        # This may fail because resources folder not built yet.
+        #generate_player(parent,config_data['desoto_data'],config_data['desoto_locations'])
+        generate_player(parent,'/projects/igms/inputs/ieee118_csv/desoto_20140430.csv','/projects/igms/inputs/ieee118_csv/desoto_locations.csv',config_data['directory'].split('\\')[0])
+
+#TODO:
+# use name (i.e. pv_{parent}.player as the player file
+# do correct inerpoloation for the player file.
+#	read in all the solar irradiance data and produce a new player file which is the weighted sum of the values accross all locations, based on their co-ordinates. Write the player files to the resource data folders.
+# Check what feeder we're on and hence whether to use panel or panel2
+# Check that all the entries are right.
+
+        panel = {'object' : 'solar',
+             'name' : 'pv_{:s}'.format(parent),
+             'parent' : 'pv_inv_{:s}'.format(parent),
+             'generator_mode' : 'SUPPLY_DRIVEN',
+             'generator_status' : 'ONLINE',
+             'panel_type' : 'SINGLE_CRYSTAL_SILICON',
+             'efficiency' : '{:.4f}'.format(cell_efficiency),
+             'area' : '{:.0f}'.format(panel_area),
+         #    'orientation': 'FIXED_AXIS', #Not used in PLAYERVALUE mode
+             'tilt_angle': '{:.2f}'.format(tilt_angle),
+             'orientation_azimuth': '{:.2f}'.format(orientation_azimuth),
+             'SOLAR_TILT_MODEL': 'PLAYERVALUE',
+             'SOLAR_POWER_MODEL': 'FLATPLATE',
+             'a_coeff': '-2.98',
+             'b_coeff': '-0.0471',
+             'dT_coeff': '1.0',
+             'T_coeff': '-0.5',
+			 1: {'object': 'player','property':'Insolation','file':'"pv_{:s}.player"'.format(parent)},
+			 'ambient_temperature':'50',
+			 'wind_speed':'1'}
+
+
+    else:
+        panel = {'object' : 'solar',
              'name' : 'pv_{:s}'.format(parent),
              'parent' : 'pv_inv_{:s}'.format(parent),
              'generator_mode' : 'SUPPLY_DRIVEN',
@@ -174,6 +298,9 @@ def get_inverter_panel_dicts(bldg, percent_bldg_annual_load, parent, phases, pv_
              'tilt_angle': '{:.2f}'.format(tilt_angle),
              'orientation_azimuth': '{:.2f}'.format(orientation_azimuth)}
 
+
+
+    #CHECK FEEDER BEFORE APPLYING PANEL1 OR PANEL2
     return inverter, panel             
             
 def main():
